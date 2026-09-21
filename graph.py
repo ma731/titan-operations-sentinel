@@ -393,6 +393,27 @@ def approval_gate(state: OpsState) -> dict:
                "ceiling_eur": COST_CEILING_EUR,
                "supply_summary": str(state.get("ops_context", {}).get("supply_chain", ""))[:400]}
     write_event(rid, "approval_request", request, "orchestrator")
+
+    # Reach the approver wherever they are. Slack or email when configured, console
+    # otherwise. This only carries the question out; the decision still comes back
+    # through the same interrupt() resume path the web console uses, so there is one
+    # place a run can be approved and one place it gets recorded.
+    try:
+        from integrations.approval import send_approval_request
+        delivery = send_approval_request(
+            rid, state["alert"],
+            reason=f"The recommended option exceeds the EUR {COST_CEILING_EUR} "
+                   f"autonomous ceiling or does not fit the failure window.",
+        )
+        if delivery.get("channel") != "console":
+            log.info("GATE          | approval request sent via %s (%s)",
+                     delivery.get("channel"),
+                     "delivered" if delivery.get("sent") else delivery.get("error"))
+            write_event(rid, "decision", {"message": "Approval request dispatched",
+                                          **delivery}, "orchestrator")
+    except Exception as exc:  # noqa: BLE001 — a notification failure must not block the gate
+        log.warning("GATE          | approval notification failed: %s", str(exc)[:120])
+
     log.info("GATE          | ⏸ awaiting human decision (ceiling €%d)…", COST_CEILING_EUR)
     decision = interrupt(request)
     log.info("GATE          | human decided: %s", decision)
