@@ -4,6 +4,11 @@ import AgentGraph from './AgentGraph.jsx'
 import Logo from './Logo.jsx'
 
 // a frozen "mid-run" state so the hero graph glows with energy
+// Public assets have to carry the deploy base path. GitHub Pages serves this site from
+// /<repo>/, so a hardcoded '/shots/x.png' resolves to the domain root and 404s. Vite fills
+// import.meta.env.BASE_URL with '/' locally and '/<repo>/' in the Pages build.
+const shot = (name) => `${import.meta.env.BASE_URL}shots/${name}.png`
+
 const HERO_STATE = { reliability: 'done', supply_chain: 'done', production: 'active', quality: 'idle', compliance_safety: 'idle' }
 const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€180,000 / day AT RISK', 'ROI 79.7:1', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
 
@@ -17,33 +22,33 @@ const STATS = [
 const PROJECTS = [
   {
     id: 'console', cat: 'Demo', tag: 'Live Demo', title: 'Live Operations Console', year: '2026',
-    bg: 'var(--c-dark)', dark: true, feature: true, span: 2, img: '/shots/console.png',
+    bg: 'var(--c-dark)', dark: true, feature: true, span: 2, img: shot('console'),
     blurb: 'Watch six agents perceive, reason across five domains, and converge on one costed plan, live.',
     launch: true,
   },
   {
     id: 'agents', cat: 'Architecture', tag: 'Architecture', title: 'Six-Agent Orchestrator', year: '2026',
-    bg: 'var(--c-lav)', img: '/shots/agents.png',
+    bg: 'var(--c-lav)', img: shot('agents'),
     blurb: 'An LLM supervisor routes autonomous ReAct specialists and lets them converse through a shared transcript.',
   },
   {
     id: 'approval', cat: 'Safety', tag: 'Human-in-the-loop', title: 'The €500 Approval Gate', year: '2026',
-    bg: 'var(--c-cream)', img: '/shots/approval.png',
+    bg: 'var(--c-cream)', img: shot('approval'),
     blurb: 'Any spend beyond the autonomy ceiling pauses the whole plan for a human decision.',
   },
   {
     id: 'cascade', cat: 'Demo', tag: 'Scenario', title: 'The Friday Cascade', year: '2026',
-    bg: 'var(--c-mint)', img: '/shots/cascade.png',
+    bg: 'var(--c-mint)', img: shot('cascade'),
     blurb: 'Six agents converse through one shared transcript as the bearing-failure crisis unfolds in real time.',
   },
   {
     id: 'compliance', cat: 'Safety', tag: 'Compliance', title: 'Safety Can HALT', year: '2026',
-    bg: 'var(--c-blush)', img: '/shots/compliance.png',
+    bg: 'var(--c-blush)', img: shot('compliance'),
     blurb: 'Every action is checked against OSHA / OEM limits and written to a full audit trail, Compliance can stop the plan outright.',
   },
   {
     id: 'feasible', cat: 'Engineering', tag: 'Feasibility', title: 'Zero-Cost Demo', year: '2026',
-    bg: 'var(--c-sky)', img: '/shots/feasible.png', span: 2,
+    bg: 'var(--c-sky)', img: shot('feasible'), span: 2,
     blurb: 'A full six-agent run is ~18k tokens, €0 on Gemini\'s free tier, with a recorded replay fallback so it can never fail.',
   },
 ]
