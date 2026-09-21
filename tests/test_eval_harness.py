@@ -13,8 +13,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest
 
 from eval import policy_eval, rag_eval
-from eval.metrics import (BinaryConfusion, SetScore, Tally, precision_at_k,
-                          recall_at_k, reciprocal_rank)
+from eval.metrics import (
+    BinaryConfusion,
+    SetScore,
+    Tally,
+    precision_at_k,
+    recall_at_k,
+    reciprocal_rank,
+)
 from eval.scenarios import dataset_meta, load_rag_queries, load_scenarios
 
 VALID_RISK = {"HIGH", "LOW", "ESCALATE"}
@@ -42,7 +48,7 @@ def test_every_scenario_is_well_formed():
         assert isinstance(exp["needs_approval"], bool), s.id
         assert len(exp.get("action_tiers", [])) == len(s.proposed_actions), s.id
         assert set(exp.get("action_tiers", [])) <= VALID_TIER, s.id
-        assert set((exp.get("tool_calls") or {})) <= VALID_AGENTS, s.id
+        assert set(exp.get("tool_calls") or {}) <= VALID_AGENTS, s.id
 
 
 def test_expected_labels_are_internally_consistent():

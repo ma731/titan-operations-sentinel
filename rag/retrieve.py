@@ -94,7 +94,7 @@ def search(query: str, k: int = DEFAULT_K, mode: Mode | None = None) -> dict:
     that it is a paraphrase."""
     ranked = rank(query, k=k, mode=mode)
     passages = []
-    for chunk, score, used in ranked:
+    for chunk, score, _mode in ranked:
         p = chunk.to_passage(score)
         text = p["text"]
         if len(text) > MAX_PASSAGE_CHARS:

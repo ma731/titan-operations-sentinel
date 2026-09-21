@@ -24,10 +24,10 @@ Three paths via `scenario`: happy / edge / escalation.
 """
 from __future__ import annotations
 
+import ast
 import json
 import logging
 import operator
-import ast
 import re
 import sys
 import time
@@ -449,6 +449,7 @@ def _log_closed_case(state: OpsState, status: str) -> None:
     Outcome is 'pending' until the predicted failure window resolves. Never raises."""
     try:
         from datetime import datetime, timezone
+
         from tools.recall_cases import append_case
         a = state.get("alert", {})
         append_case({

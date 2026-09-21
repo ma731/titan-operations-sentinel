@@ -67,7 +67,7 @@ def test_supplier_catalog_default_has_options():
 def test_supplier_catalog_edge_none_fit_window():
     r = supplier_catalog(["P-4421", "P-7803"], scenario="edge")
     leads = [o["lead_time_hours"] for k, o in r["combined_options"].items() if k != "note"]
-    assert all(l > 52 for l in leads)  # nothing fits the 52h RUL minimum
+    assert all(lead > 52 for lead in leads)  # nothing fits the 52h RUL minimum
 
 
 def test_expedite_cost_prefers_fitting_low_risk_option():
@@ -170,6 +170,7 @@ def test_recall_returns_best_precedent():
 
 def test_append_case_grows_library(tmp_path, monkeypatch):
     import json
+
     import tools.recall_cases as rc
     tmp = tmp_path / "case_library.json"             # temp copy so the seed file isn't polluted
     tmp.write_text(json.dumps({"cases": []}), encoding="utf-8")
@@ -190,6 +191,7 @@ def test_cost_ceiling_gates_over_500_runs_autonomous_under():
 
 def test_reconcile_closes_the_loop(tmp_path, monkeypatch):
     import json
+
     import tools.recall_cases as rc
     tmp = tmp_path / "case_library.json"
     tmp.write_text(json.dumps({"cases": []}), encoding="utf-8")
@@ -214,6 +216,7 @@ def test_gate_requires_window_fit():
 
 def test_reconcile_due_resolves_known_outcomes(tmp_path, monkeypatch):
     import json
+
     import tools.recall_cases as rc
     tmp = tmp_path / "case_library.json"
     tmp.write_text(json.dumps({"cases": [{"id": "RUN-D", "predicted_rul_h": [50, 74], "actual_failure_h": None, "in_window": None}]}), encoding="utf-8")

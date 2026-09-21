@@ -21,8 +21,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from stream.simulator import AlertSimulator                 # noqa: E402
-from stream.triage import TriageGate, TriageVerdict         # noqa: E402
+from stream.simulator import AlertSimulator  # noqa: E402
+from stream.triage import TriageGate, TriageVerdict  # noqa: E402
 
 STREAM_LOG = Path(__file__).resolve().parents[1] / "logs" / "stream.jsonl"
 
@@ -49,9 +49,9 @@ def trigger_run(verdict: TriageVerdict, live: bool, auto_decision: str = "approv
         return {"triggered": False, "dry_run": True, "machine_id": verdict.machine_id,
                 "mode": mode, "alert_id": alert.get("alert_id")}
 
-    import observability
     from langgraph.types import Command
 
+    import observability
     from graph import build_graph, make_initial_state
 
     graph = build_graph()

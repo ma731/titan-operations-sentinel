@@ -16,12 +16,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from rag import embeddings as emb                           # noqa: E402
-from rag.index import corpus_stats                          # noqa: E402
-from rag.retrieve import rank                               # noqa: E402
+from rag import embeddings as emb  # noqa: E402
+from rag.index import corpus_stats  # noqa: E402
+from rag.retrieve import rank  # noqa: E402
 
-from .metrics import mean, precision_at_k, recall_at_k, reciprocal_rank   # noqa: E402
-from .scenarios import RagQuery, load_rag_queries           # noqa: E402
+from .metrics import mean, precision_at_k, recall_at_k, reciprocal_rank  # noqa: E402
+from .scenarios import RagQuery, load_rag_queries  # noqa: E402
 
 K_VALUES = (1, 3, 4, 8)
 REPORT_K = 4          # the tool's default k, so this is the row that matters operationally

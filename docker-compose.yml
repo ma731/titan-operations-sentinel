@@ -1,0 +1,48 @@
+# One-command setup:
+#
+#     docker compose up --build
+#
+# Then open http://localhost:5173 for the console and http://localhost:8000/api/health
+# for what the backend has wired up.
+#
+# No API key is needed to start. The console opens in Replay mode, which plays a recorded
+# run in the browser and costs nothing. Drop a provider key in .env (or use the picker in
+# the console) to switch to Live.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: titan-operations-sentinel-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Everything here is optional and unset by default. Listed so it is obvious what
+      # the system can be told without reading the source.
+      TOS_MODEL: ${TOS_MODEL:-}
+      TOS_EMBEDDINGS: ${TOS_EMBEDDINGS:-}
+      TOS_APPROVAL_CHANNEL: ${TOS_APPROVAL_CHANNEL:-console}
+      TOS_PUBLIC_URL: ${TOS_PUBLIC_URL:-http://localhost:8000}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-}
+    volumes:
+      # The audit trail is the point of the audit trail, so it survives the container.
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+  console:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: titan-operations-sentinel-console
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

@@ -1,0 +1,9 @@
+# Development and CI only. The runtime dependencies are in requirements.txt.
+-r webapp/backend/requirements.txt
+
+pytest>=8.0.0
+ruff>=0.6.0
+
+# Optional. Tracing is off unless LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are set,
+# so this is installed for CI and local development rather than required to run anything.
+langfuse>=2.50.0

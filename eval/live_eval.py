@@ -25,9 +25,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import observability                                  # noqa: E402
-from .metrics import SetScore, Tally                  # noqa: E402
-from .scenarios import Scenario, load_scenarios       # noqa: E402
+import observability  # noqa: E402
+
+from .metrics import SetScore, Tally  # noqa: E402
+from .scenarios import Scenario, load_scenarios  # noqa: E402
 
 CITATION_RE = re.compile(r"\b([a-z0-9][a-z0-9-]{4,})#(S\d+)\b")
 GROUNDED_AGENTS = ("reliability", "compliance_safety")

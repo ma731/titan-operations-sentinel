@@ -18,8 +18,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from . import policy_eval, rag_eval, scorecard          # noqa: E402
-from .scenarios import dataset_meta                     # noqa: E402
+from . import policy_eval, rag_eval, scorecard  # noqa: E402
+from .scenarios import dataset_meta  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,0 +1,17 @@
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+logs
+docs
+webapp/frontend/node_modules
+webapp/frontend/dist
+.env
+.env.local
+*.md
+!rag/corpus/*.md
+!prompts/*.md

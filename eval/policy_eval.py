@@ -2,7 +2,7 @@
 Offline evaluation of the tool layer plus the code-enforced policy.
 
 No model, no API key, no network, no randomness. It runs the same tool functions and the
-same policy functions the graph runs, over the 26 labelled scenarios, and scores:
+same policy functions the graph runs, over the labelled scenarios, and scores:
 
   risk_classification     abstain / high / low, from real rul_predictor output
   approval_gate           does the 500 EUR + fit-to-window rule land where it should
@@ -26,13 +26,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import policy                                        # noqa: E402
-from tools.expedite_cost import expedite_cost        # noqa: E402
-from tools.rul_predictor import rul_predictor        # noqa: E402
-from tools.safety_gate import safety_gate            # noqa: E402
+import policy  # noqa: E402
+from tools.expedite_cost import expedite_cost  # noqa: E402
+from tools.rul_predictor import rul_predictor  # noqa: E402
+from tools.safety_gate import safety_gate  # noqa: E402
 
-from .metrics import BinaryConfusion, Tally          # noqa: E402
-from .scenarios import Scenario, load_scenarios      # noqa: E402
+from .metrics import BinaryConfusion, Tally  # noqa: E402
+from .scenarios import Scenario, load_scenarios  # noqa: E402
 
 AGENT_NAMES = ["reliability", "supply_chain", "production", "quality", "compliance_safety"]
 VERDICT_SEVERITY = {"HALT": 0, "ESCALATE": 1, "OK": 2}
@@ -171,7 +171,8 @@ def run(scenarios: list[Scenario] | None = None) -> dict:
             halt_c.add(bool(exp.get("halt")), halt, s.id,
                        note=f"actions: {'; '.join(s.proposed_actions)[:160]}")
 
-        for action, expected_tier in zip(s.proposed_actions, exp.get("action_tiers", [])):
+        for action, expected_tier in zip(s.proposed_actions, exp.get("action_tiers", []),
+                                        strict=False):
             actual_tier = policy.action_tier(action)
             tier_t.add(actual_tier == expected_tier, f"{s.id}:{action[:48]}",
                        expected_tier, actual_tier)

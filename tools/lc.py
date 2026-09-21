@@ -12,8 +12,8 @@ from langchain_core.tools import tool
 
 from .alert_triage import alert_triage as _alert_triage
 from .asset_profile import asset_profile as _asset_profile
-from .doc_search import search_technical_docs as _search_technical_docs
 from .audit_assemble import audit_assemble as _audit_assemble
+from .doc_search import search_technical_docs as _search_technical_docs
 from .expedite_cost import expedite_cost as _expedite_cost
 from .job_reroute import job_reroute as _job_reroute
 from .maintenance_schedule import maintenance_schedule as _maintenance_schedule

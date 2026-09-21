@@ -261,8 +261,9 @@ def configure(c: Config):
 @app.get("/api/run")
 def run(scenario: str = "happy"):
     def gen():
-        from graph import build_graph, make_initial_state
         from langgraph.types import Command
+
+        from graph import build_graph, make_initial_state
 
         graph = build_graph()
         state = make_initial_state(scenario)
