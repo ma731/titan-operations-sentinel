@@ -1,4 +1,5 @@
-# Titan Operations Sentinel — LangGraph multi-agent stack (free-tier LLMs, no paid keys)
+# -*- coding: utf-8 -*-
+# Titan Operations Sentinel - LangGraph multi-agent stack
 langgraph>=0.2.0
 langchain>=0.3.0
 langchain-core>=0.3.0

@@ -100,6 +100,8 @@ def _rag_section(r: dict) -> list[str]:
         f"{c['documents']} documents, {c['chunks']} section-level chunks, "
         f"{c['vocabulary']} terms. Scored at k={r['report_k']}, the default the "
         "`search_technical_docs` tool uses.",
+        "The legacy metric name `recall@k` denotes an any-relevant-passage hit rate. "
+        "It does not measure retrieval of every relevant section.",
         "",
         "| Retriever | recall@1 | recall@4 | MRR | precision@4 | Status |",
         "|---|---:|---:|---:|---:|---|",
@@ -140,6 +142,8 @@ def _rag_section(r: dict) -> list[str]:
 
 
 def _live_section(r: dict | None) -> list[str]:
+    if r and r.get("error"):
+        return ["## 3. Live agent suite", "", f"**Failed to run:** {r['error']}", ""]
     if not r:
         return [
             "## 3. Live agent suite (needs a model key)",
@@ -174,12 +178,15 @@ def _live_section(r: dict | None) -> list[str]:
         f"{g.get('numbers_checked', 0) - g.get('ungrounded_numbers', 0)}"
         f"/{g.get('numbers_checked', 0)} |",
         "",
-        "Citations are checked against the real corpus index, so an invented "
+        "Citations count only when present in the corpus and retrieved by that agent. "
+        "This checks provenance, not whether the passage entails the claim. An invented "
         f"citation counts against the score rather than for it "
         f"({len(g['invented_citations'])} invented). Numeric groundedness traces every "
         "figure in a report back to a tool result, or to arithmetic on tool results: a "
         "cost or an ROI that no tool produced is the failure that actually reaches a "
         "plant manager.",
+        "Plan-tier consistency is a keyword-policy check on tagged action lines, "
+        "not a judgement of whether the plan is operationally correct.",
         "",
         "### Cost and latency per run",
         "",

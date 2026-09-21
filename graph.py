@@ -110,6 +110,7 @@ class OpsState(TypedDict, total=False):
     next_agent: str
     risk: str                                    # HIGH | LOW | ESCALATE
     predicted_rul: list                          # [min_h, max_h] from rul_predictor, for case memory
+    proposed_actions: list[str]
     escalate: bool
     halt: bool
     needs_approval: bool
@@ -205,6 +206,7 @@ def _instruction(name: str, state: OpsState) -> str:
                 f"Use sensor window '{window}'. Alert: {json.dumps(alert)}")
     if name == "supply_chain":
         downtime_hr = round(downtime_day / 24)
+        window_hours = (state.get("predicted_rul") or [52])[0]
         edge = ("\nNOTE: primary supply is DISRUPTED today — call supplier_catalog with "
                 "scenario='edge'. If nothing fits the RUL window, find a cross-plant transfer "
                 "via parts_inventory at sister plants AMS and MUC."
@@ -212,7 +214,7 @@ def _instruction(name: str, state: OpsState) -> str:
         return (f"Confirm parts availability for {mid} at {pid} (the parts are in the reliability "
                 f"report above), check the chosen supplier's Tier-2 risk, and recommend a sourcing "
                 f"option ranked by ROI. When you call expedite_cost use downtime_cost_per_hour="
-                f"{downtime_hr} and failure_window_hours=52.{edge}")
+                f"{downtime_hr} and failure_window_hours={window_hours}.{edge}")
     if name == "production":
         return (f"{mid} needs an emergency window, so reroute its jobs {JOBS} to equivalent "
                 f"machines and ensure no human-robot or shift conflict at plant {pid}; adapt if "
@@ -224,6 +226,8 @@ def _instruction(name: str, state: OpsState) -> str:
         actions = ("reduce spindle speed to OEM safe limit; reroute production jobs to equivalent "
                    "machines; open the machine for emergency maintenance / bearing replacement in a "
                    "Saturday window; authorize an emergency parts purchase")
+        if state.get("proposed_actions"):
+            actions = "; ".join(state["proposed_actions"])
         return (f"Gate EACH of these proposed actions against safety/OSHA, then assemble the audit "
                 f"trail for run {state['run_id']}.\nProposed actions: {actions}")
     return "Proceed."
@@ -244,7 +248,8 @@ def perceive(state: OpsState) -> dict:
     alert = state["alert"]
     try:                                  # self-closing learning loop: resolve any cases
         from tools.recall_cases import reconcile_due  # whose outcome is now known
-        done = reconcile_due()
+        from tools.runtime_inputs import current
+        done = 0 if current() else reconcile_due()
         if done:
             log.info("LEARN         | reconciled %d prior case(s) against known outcomes", done)
     except Exception:  # noqa: BLE001
@@ -266,8 +271,8 @@ def _make_worker(name: str):
         log.info("RUN   %-17s| working… (reads %d prior reports)",
                  name, len(state.get("transcript", [])))
         t0 = time.perf_counter()
-        agents = build_agents()
         try:
+            agents = build_agents()
             # Tokens, latency and (when configured) the Langfuse trace are attributed to
             # this agent for the duration of its ReAct loop. Uninstrumented runs get an
             # empty callback list, so this is free on the default path.
@@ -288,9 +293,11 @@ def _make_worker(name: str):
                       "pending_followup": "", "status": f"{name}_error",
                       "trace": [ev, _ev(rid, "agent_report", name, report=report)]}
             if name == "reliability":
-                update["risk"] = "HIGH"   # fail toward caution
+                update.update(risk="ESCALATE", escalate=True)
             if name == "supply_chain":
                 update["needs_approval"] = True
+            if name == "compliance_safety":
+                update["halt"] = True
             return update
 
         events, blob, results = _tool_events(msgs, name, rid)
@@ -318,7 +325,8 @@ def _make_worker(name: str):
             rh = rp.get("rul_hours") or {}
             if rh.get("min") is not None:
                 update["predicted_rul"] = [rh["min"], rh.get("max", rh["min"])]
-            risk = policy.classify_risk(rp, blob)
+            risk = (policy.classify_risk(rp, blob)
+                    if rp.get("failure_mode") and not rp.get("error") else "ESCALATE")
             update["risk"] = risk
             if risk == "ESCALATE":
                 update["escalate"] = True
@@ -330,7 +338,14 @@ def _make_worker(name: str):
                      "needs approval" if update["needs_approval"] else "autonomous",
                      policy.approval_reason(top, COST_CEILING_EUR))
         if name == "compliance_safety":
-            update["halt"] = policy.halt_from_safety(results.get("safety_gate", {}), report, blob)
+            safety = [e["result"] for e in events if e.get("tool") == "safety_gate"]
+            # A later PROCEED must never erase an earlier HALT; no valid gate is not clearance.
+            valid = {"OK", "PROCEED", "ESCALATE", "SIGN-OFF", "HALT"}
+            update["halt"] = bool(state.get("halt")) or not safety or any(
+                not isinstance(s, dict) or str(s.get("verdict", "")).upper() not in valid
+                or "unavailable" in str(s.get("reason", "")).lower()
+                or policy.halt_from_safety(s) for s in safety
+            )
             log.info("  ↳ compliance verdict: %s", "HALT" if update["halt"] else "cleared")
         return update
     return node
@@ -381,6 +396,8 @@ def route_from_supervisor(state: OpsState) -> str:
 
 def approval_gate(state: OpsState) -> dict:
     rid = state["run_id"]
+    if state.get("escalate"):
+        return {}
     if state.get("halt"):
         log.info("GATE          | HALT — compliance stopped the plan; skipping approval")
         return {"trace": [_ev(rid, "decision", "orchestrator",
@@ -400,7 +417,8 @@ def approval_gate(state: OpsState) -> dict:
     # place a run can be approved and one place it gets recorded.
     try:
         from integrations.approval import send_approval_request
-        delivery = send_approval_request(
+        from tools.runtime_inputs import current
+        delivery = {"channel": "simulation", "sent": False} if current() else send_approval_request(
             rid, state["alert"],
             reason=f"The recommended option exceeds the EUR {COST_CEILING_EUR} "
                    f"autonomous ceiling or does not fit the failure window.",
@@ -448,6 +466,9 @@ def _log_closed_case(state: OpsState, status: str) -> None:
     """Append the finished run to case memory so recall/outcome-validation grow over time.
     Outcome is 'pending' until the predicted failure window resolves. Never raises."""
     try:
+        from tools.runtime_inputs import current
+        if current():
+            return  # Synthetic/evaluation inputs must never train the live case memory.
         from datetime import datetime, timezone
 
         from tools.recall_cases import append_case
@@ -478,6 +499,20 @@ def synthesize(state: OpsState) -> dict:
         _log_closed_case(state, "escalated")
         log.info("END           | status=escalated")
         return {"final_plan": plan, "status": "escalated", "trace": [ev]}
+    decision = state.get("approval") or {}
+    blocked = state.get("halt") or (
+        state.get("needs_approval") and decision.get("decision") != "approve"
+    )
+    if blocked:
+        status = "halted" if state.get("halt") else "rejected"
+        reason = ("Safety clearance failed or is unavailable." if state.get("halt") else
+                  "The required procurement approval was not granted.")
+        plan = (f"PLAN WITHHELD — {reason}\n\n"
+                "[ESCALATE] A responsible human must review the findings before any commitment.\n"
+                "[MONITOR] Keep the incident open. No proposed action is authorized by this run.")
+        _log_closed_case(state, status)
+        return {"final_plan": plan, "status": status,
+                "trace": [_ev(rid, "plan", "orchestrator", plan=plan)]}
     log.info("PLAN          | composing final action plan…")
     plan = llm.complete(
         _prompt("orchestrator_system.md"),

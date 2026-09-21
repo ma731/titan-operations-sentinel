@@ -16,6 +16,7 @@ in `eval/policy_eval.py` will tell you what it moved.
 """
 from __future__ import annotations
 
+import math
 from collections import Counter
 
 COST_CEILING_EUR = 500
@@ -40,7 +41,9 @@ def classify_risk(rul_result: dict | None, evidence: str = "") -> str:
 
     if rp.get("low_confidence_flag") or "interrupted" in blob or "data_unavailable" in blob:
         return "ESCALATE"
-    if "bearing_failure" in failure_mode or "spindle_bearing_failure" in blob:
+    # Historical matches in the tool output can describe a failed bearing even when
+    # the current assessment is normal. Structured current evidence wins.
+    if "bearing_failure" in failure_mode or (not failure_mode and "spindle_bearing_failure" in blob):
         return "HIGH"
     return "LOW"
 
@@ -61,7 +64,7 @@ def needs_human_approval(top_option: dict | None, ceiling_eur: int = COST_CEILIN
     opt = top_option or {}
     cost = opt.get("cost_eur")
     fits_window = opt.get("fits_failure_window", True)
-    if cost is None:
+    if isinstance(cost, bool) or not isinstance(cost, (int, float)) or not math.isfinite(cost) or cost < 0:
         return True
     if not fits_window:
         return True
@@ -72,7 +75,7 @@ def approval_reason(top_option: dict | None, ceiling_eur: int = COST_CEILING_EUR
     """Why the gate decided what it decided, for the audit log and the approval request."""
     opt = top_option or {}
     cost = opt.get("cost_eur")
-    if cost is None:
+    if isinstance(cost, bool) or not isinstance(cost, (int, float)) or not math.isfinite(cost) or cost < 0:
         return "no costed option available from expedite_cost"
     if not opt.get("fits_failure_window", True):
         return f"recommended option (EUR {cost}) does not fit the failure window"

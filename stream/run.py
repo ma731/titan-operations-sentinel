@@ -41,7 +41,7 @@ def _log(event: dict) -> None:
         pass
 
 
-def trigger_run(verdict: TriageVerdict, live: bool, auto_decision: str = "approve") -> dict:
+def trigger_run(verdict: TriageVerdict, live: bool, auto_decision: str = "reject") -> dict:
     """Start a graph run for a triaged alert, or describe what would have been started."""
     alert = verdict.alert or {}
     mode = alert.get("suggested_mode", "happy")
@@ -59,19 +59,22 @@ def trigger_run(verdict: TriageVerdict, live: bool, auto_decision: str = "approv
     cfg = {"configurable": {"thread_id": state["run_id"]}, "recursion_limit": 50}
 
     interrupted = False
-    with observability.instrument_run() as usage:
+    from tools.runtime_inputs import runtime_inputs
+
+    readings = {"vibration": alert.get("value", 0)}
+    if "bearing_temp_c" in alert:
+        readings["bearing_temp"] = alert["bearing_temp_c"]
+    with runtime_inputs(alert["machine_id"], readings,
+                        "INTERRUPTED" if mode == "escalation" else "OK"), observability.instrument_run() as usage:
         for chunk in graph.stream(state, cfg):
             if "__interrupt__" in chunk:
                 interrupted = True
         if interrupted:
-            # In a deployment this is where the Slack or email approval request goes out
-            # and the loop waits for a human (see integrations/approval.py). Unattended,
-            # the configured default decision is applied so the loop does not block
-            # forever, and the decision is recorded in the audit log either way.
-            from integrations.approval import request_approval
-            decision = request_approval(state["run_id"], alert, default=auto_decision)
+            # This CLI is a simulator, not the web server's human approval queue.
+            # Default to rejecting; an explicit demo override is recorded as automated.
+            decision = auto_decision
             for _chunk in graph.stream(Command(resume={"decision": decision,
-                                                       "approver": "stream loop"}), cfg):
+                                                       "approver": "simulation default (not a human)"}), cfg):
                 pass
         final = graph.get_state(cfg).values
 
@@ -98,10 +101,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--max-runs", type=int, default=2,
                     help="stop triggering after this many runs (token budget guard)")
-    ap.add_argument("--decision", default="approve", choices=["approve", "reject"],
-                    help="default decision applied at the approval gate when unattended")
+    ap.add_argument("--decision", default="reject", choices=["approve", "reject"],
+                    help="simulation decision; defaults to reject, approve is demo-only")
     args = ap.parse_args(argv)
 
+    if args.live and args.dry_run:
+        ap.error("--live and --dry-run are mutually exclusive")
+    if args.ticks < 1 or args.interval < 0 or args.max_runs < 0:
+        ap.error("ticks must be positive; interval and max-runs must be non-negative")
     live = bool(args.live)
     sim = AlertSimulator.from_fleet(degrading=args.degrading, seed=args.seed,
                                     dropout=args.dropout, dropout_tick=args.dropout_tick)
@@ -156,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
     print("\n" + "=" * 62)
     print(f"readings seen            {s['readings_seen']}")
     print(f"agent runs triggered     {s['runs_triggered']}")
+    print(f"{'agent runs started' if live else 'dry-run starts':24s} {runs}")
     print(f"suppressed by cooldown   {s['suppressed_by_cooldown']}")
     print(f"wake rate                {(s['wake_rate'] or 0) * 100:.2f}% of readings")
     print("=" * 62)

@@ -20,6 +20,7 @@ import os
 import threading
 import time
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 
 try:
@@ -198,13 +199,13 @@ def langfuse_handler():
             return None
 
 
-# One tracker per process run, set by instrument_run(). The graph reads it through
+# One tracker per execution context, set by instrument_run(). The graph reads it through
 # callbacks() so nodes do not have to thread a tracker object through the graph state.
-_ACTIVE: UsageTracker | None = None
+_ACTIVE: ContextVar[UsageTracker | None] = ContextVar("tos_usage", default=None)
 
 
 def active_tracker() -> UsageTracker | None:
-    return _ACTIVE
+    return _ACTIVE.get()
 
 
 @contextmanager
@@ -216,7 +217,6 @@ def instrument_run(provider: str | None = None):
             graph.stream(...)
         print(usage.to_dict())
     """
-    global _ACTIVE
     if provider is None:
         try:
             import llm
@@ -224,23 +224,24 @@ def instrument_run(provider: str | None = None):
         except Exception:  # noqa: BLE001
             provider = "unknown"
     tracker = UsageTracker(provider=provider)
-    previous, _ACTIVE = _ACTIVE, tracker
+    token = _ACTIVE.set(tracker)
     started = time.perf_counter()
     try:
         yield tracker.usage
     finally:
         tracker.usage.wall_seconds = time.perf_counter() - started
-        _ACTIVE = previous
+        _ACTIVE.reset(token)
 
 
 @contextmanager
 def instrumented_agent(name: str):
     """Attribute tokens and wall time inside the block to `name`. A no-op when the run is
     not instrumented, so graph nodes can wrap themselves unconditionally."""
-    if _ACTIVE is None:
+    active = active_tracker()
+    if active is None:
         yield None
         return
-    with _ACTIVE.agent(name) as tracker:
+    with active.agent(name) as tracker:
         yield tracker
 
 
@@ -250,10 +251,11 @@ def callbacks(agent: str | None = None) -> list:
     Returns [] when the run is not instrumented and Langfuse is not configured, so the
     default path adds no overhead at all."""
     handlers: list = []
-    if _ACTIVE is not None:
+    active = active_tracker()
+    if active is not None:
         if agent:
-            _ACTIVE.set_agent(agent)
-        handlers.append(_ACTIVE)
+            active.set_agent(agent)
+        handlers.append(active)
     lf = _langfuse_singleton()
     if lf is not None:
         handlers.append(lf)
@@ -272,7 +274,7 @@ def _langfuse_singleton():
 def status() -> dict:
     """What instrumentation is active right now, for a health endpoint or the README."""
     return {
-        "usage_tracking": _ACTIVE is not None,
+        "usage_tracking": active_tracker() is not None,
         "langfuse": _langfuse_singleton() is not None,
         "langfuse_host": os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
     }

@@ -7,7 +7,7 @@ Four modes:
            but NOT the default: measured, it trades top-1 accuracy for deeper recall and
            the net effect is one query out of 52. See F-05 in eval/FINDINGS.md.
   dense    Embedding cosine similarity. Requires TOS_EMBEDDINGS (see rag/embeddings.py).
-  hybrid   Reciprocal rank fusion of PRF and dense. Falls back to PRF when dense is off.
+  hybrid   Reciprocal rank fusion of PRF and dense. Falls back to lexical when dense is off.
 
 Hybrid uses reciprocal rank fusion rather than a weighted score blend because BM25 scores
 and cosine similarities are not on comparable scales, and RRF needs no tuning constant per
@@ -52,10 +52,13 @@ def _dense_ranking(query: str, chunks: list[Chunk]) -> list[tuple[int, float]] |
     doc_vectors = emb.embed([f"{c.doc_title}\n{c.section_title}\n{c.text}" for c in chunks])
     if doc_vectors is None:
         return None
-    q = emb.embed([query])
+    q = emb.embed([query], query=True)
     if q is None:
         return None
-    sims = [(i, emb.cosine(q[0], v)) for i, v in enumerate(doc_vectors)]
+    try:
+        sims = [(i, emb.cosine(q[0], v)) for i, v in enumerate(doc_vectors)]
+    except (ValueError, TypeError):
+        return None
     sims.sort(key=lambda x: -x[1])
     return sims
 
@@ -77,6 +80,10 @@ def rank(query: str, k: int = DEFAULT_K, mode: Mode | None = None) -> list[tuple
     if not chunks:
         return []
     mode = mode or default_mode()
+    if mode not in {"lexical", "prf", "dense", "hybrid"}:
+        raise ValueError(f"unknown retrieval mode: {mode}")
+    if not query.strip() or k <= 0:
+        return []
 
     if mode == "lexical":
         hits = index.search(query, k=k)

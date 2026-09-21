@@ -42,9 +42,7 @@ jobs:
         run: python -m pytest tests/ -q
 
       - name: Run the evaluation suites and enforce the floor
-        # --fail-under is what makes this a gate rather than a report. The floor accounts
-        # for the two open findings documented in eval/FINDINGS.md.
-        run: python -m eval.run_eval --fail-under 0.97
+        run: python -m eval.run_eval --fail-under 1.0 --retrieval-fail-under 0.85
 
       - name: Upload the scorecard
         if: always()
@@ -80,6 +78,8 @@ jobs:
       - run: npm ci
         working-directory: webapp/frontend
       - run: npm run build
+        working-directory: webapp/frontend
+      - run: npm audit --audit-level=high
         working-directory: webapp/frontend
 
   docker:
@@ -138,6 +138,24 @@ jobs:
           print("retrieval corpus present in the image:", h["retrieval"])
           PY
 
+      - name: Smoke test the one-command Compose setup
+        run: |
+          docker rm -f tos-api
+          docker tag titan-operations-sentinel-backend:ci titan-operations-sentinel-backend
+          docker tag titan-operations-sentinel-console:ci titan-operations-sentinel-console
+          docker compose up --no-build --wait --wait-timeout 90
+          curl --retry 10 --retry-connrefused --retry-delay 1 -fsS http://localhost:5173/ > /tmp/console.html
+          curl -fsS http://localhost:5173/api/health > /tmp/proxied-health.json
+          python - <<'PY'
+          import json
+          assert '<html' in open('/tmp/console.html').read().lower()
+          assert json.load(open('/tmp/proxied-health.json'))['ok'] is True
+          PY
+          docker compose exec -T backend python -c "from pathlib import Path; p=Path('/app/logs/ci-smoke'); p.write_text('ok'); assert p.read_text() == 'ok'; p.unlink(); assert Path('/app/data/memory/case_library.json').is_file()"
+
       - name: Stop the container
         if: always()
-        run: docker rm -f tos-api || true
+        run: |
+          docker compose logs --tail 30
+          docker compose down -v
+          docker rm -f tos-api || true

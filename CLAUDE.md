@@ -88,7 +88,7 @@ rag/
   embeddings.py          # optional dense vectors, on-disk cache, opt-in via TOS_EMBEDDINGS
   retrieve.py            # search(query, k, mode) -> cited passages  (lexical|dense|hybrid)
 eval/
-  cases/                 # 27 labelled scenarios + 52 labelled retrieval queries
+  cases/                 # 34 labelled scenarios + 52 labelled retrieval queries
   policy_eval.py         # offline suite: tools + policy, incl. EXHAUSTIVE routing check
   rag_eval.py            # recall@k / MRR / precision@k per retriever and difficulty split
   live_eval.py           # full-graph runs: tool-call correctness, citation rate, tokens
@@ -191,7 +191,7 @@ python scripts/run_demo.py             # happy path (auto-approves)
 python scripts/run_demo.py edge        # cross-plant adaptation path
 python scripts/run_demo.py escalation  # telemetry dropout → stops after reliability
 python scripts/view_run.py             # replay last recorded run (no tokens) — also --list, RUN-id
-python -m pytest tests/                # 131 offline tests (flow tests skip without a key)
+python -m pytest tests/                # offline regression tests (flow tests skip without a key)
 python -m eval.run_eval                # regenerate eval/results/scorecard.md (free, no key)
 python -m eval.run_eval --live         # adds the live agent suite (costs tokens)
 python -m stream.run                   # continuous alert stream, triage only, no model calls
@@ -242,8 +242,8 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 | Shared blackboard, guided routing, safety HALT, interrupt approval | Done |
 | Audit log + `audit_assemble` reconstruction | Done |
 | Web console (React/Vite + FastAPI SSE; live multi-agent trace + approval) | Done |
-| Offline tests (131) | Done |
-| Evaluation harness (27 scenarios, 52 retrieval queries, generated scorecard) | Done |
+| Offline regression tests | Done |
+| Evaluation harness (34 scenarios, 52 retrieval queries, generated scorecard) | Done |
 | Document retrieval with citations (12-doc corpus, BM25 + optional embeddings) | Done |
 | Observability (per-agent tokens/cost/latency, optional Langfuse) | Done |
 | Continuous alert stream with a triage wake gate | Done |

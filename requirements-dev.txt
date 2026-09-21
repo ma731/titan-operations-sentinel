@@ -1,4 +1,5 @@
 # Development and CI only. The runtime dependencies are in requirements.txt.
+-r requirements.txt
 -r webapp/backend/requirements.txt
 
 pytest>=8.0.0

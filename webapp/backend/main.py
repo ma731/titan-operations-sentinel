@@ -14,6 +14,7 @@ import json
 import os
 import sys
 import threading
+from contextvars import copy_context
 from pathlib import Path
 
 # Windows guard: uvicorn's stdout is often ASCII/cp1252, so prints/logs containing
@@ -88,13 +89,17 @@ def _resolve(run_id: str | None, choice: str) -> dict:
     audit trail has to record the decision that was actually acted on.
     """
     with _decision_lock:
+        if choice not in {"approve", "reject"}:
+            return {"ok": False, "error": "decision must be approve or reject"}
+        if not run_id and len(_decision_ready) > 1:
+            return {"ok": False, "error": "run_id required when multiple approvals are pending"}
         rid = run_id or (next(iter(_decision_ready)) if _decision_ready else None)
         if not rid or rid not in _decision_ready:
             return {"ok": False, "error": "no pending approval", "run_id": run_id}
         if rid in _decision_value:
             return {"ok": False, "error": "already decided", "run_id": rid,
                     "decision": _decision_value[rid]}
-        _decision_value[rid] = "approve" if choice.lower().startswith("a") else "reject"
+        _decision_value[rid] = choice
         _decision_ready[rid].set()
         return {"ok": True, "run_id": rid, "decision": _decision_value[rid]}
 
@@ -295,7 +300,6 @@ def run(scenario: str = "happy"):
         rid = state["run_id"]
         cfg = {"configurable": {"thread_id": rid}, "recursion_limit": 50}
         ready = threading.Event()
-        _decision_ready[rid] = ready
 
         def drain(stream):
             """Yield ('event', e) for each trace event; end with ('interrupt', value|None)."""
@@ -319,8 +323,11 @@ def run(scenario: str = "happy"):
                     interrupted = payload
 
             if interrupted is not None:
+                with _decision_lock:
+                    _decision_ready[rid] = ready
                 req = dict(interrupted)
                 req["type"] = "approval_request"
+                req["run_id"] = rid
                 yield _sse(req)
                 ready.wait(timeout=300)
                 choice = _decision_value.get(rid, "reject")
@@ -338,4 +345,26 @@ def run(scenario: str = "happy"):
             _decision_ready.pop(rid, None)
             _decision_value.pop(rid, None)
 
-    return StreamingResponse(gen(), media_type="text/event-stream")
+    def tracked():
+        import observability
+        with observability.instrument_run() as usage:
+            yield from gen()
+        yield _sse({"type": "usage", **usage.to_dict()})
+
+    # Starlette may advance a synchronous iterator on different worker threads.
+    # Re-enter the same context for each next/close so usage remains run-scoped.
+    ctx = copy_context()
+    iterator = tracked()
+
+    def contextual():
+        try:
+            while True:
+                try:
+                    event = ctx.run(next, iterator)
+                except StopIteration:
+                    return
+                yield event
+        finally:
+            ctx.run(iterator.close)
+
+    return StreamingResponse(contextual(), media_type="text/event-stream")

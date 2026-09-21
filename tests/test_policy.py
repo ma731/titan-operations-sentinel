@@ -42,6 +42,17 @@ def test_degradation_is_not_an_emergency():
     assert policy.classify_risk({"failure_mode": "spindle_bearing_degradation"}) == "LOW"
 
 
+def test_historical_bearing_failure_does_not_override_current_normal_assessment():
+    assert policy.classify_risk({"failure_mode": "normal_wear"},
+                                "matched_historical_event: spindle_bearing_failure") == "LOW"
+
+
+@pytest.mark.parametrize("cost", [float("nan"), float("inf"), -1, "400", True])
+def test_invalid_cost_requires_human_review(cost):
+    assert policy.needs_human_approval({"cost_eur": cost})
+    assert "no costed option" in policy.approval_reason({"cost_eur": cost})
+
+
 # --- the spend ceiling ----------------------------------------------------- #
 def test_under_ceiling_and_fits_window_is_autonomous():
     assert policy.needs_human_approval({"cost_eur": 420, "fits_failure_window": True}) is False

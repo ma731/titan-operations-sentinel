@@ -183,3 +183,12 @@ def test_the_wake_rate_stays_low():
     assert stats["readings_seen"] > 200
     assert stats["runs_triggered"] <= 2
     assert stats["wake_rate"] < 0.02
+
+
+def test_explicit_dry_run_cannot_be_overridden_by_live():
+    import pytest
+
+    from stream.run import main
+    with pytest.raises(SystemExit) as exc:
+        main(["--live", "--dry-run"])
+    assert exc.value.code == 2

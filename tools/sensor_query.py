@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from .runtime_inputs import current
+
 DATA_DIR = Path(__file__).parent.parent / "data" / "sensors"
 
 
@@ -16,6 +18,16 @@ def sensor_query(machine_id: str, window: str, sensors: list[str]) -> dict:
       Fallback: if file missing, returns {"error": "data_unavailable", "machine_id": machine_id}
       Risk tier: READ (autonomous)
     """
+    inputs = current()
+    if inputs and inputs["machine_id"] == machine_id:
+        if inputs["telemetry_status"] == "DATA_UNAVAILABLE":
+            return {"error": "data_unavailable", "machine_id": machine_id, "window": window}
+        readings = {s: [v] for s, v in inputs["readings"].items() if s in sensors}
+        return {"machine_id": machine_id, "window": window, "readings": readings,
+                "summary": {s: {"latest": vs[-1]} for s, vs in readings.items()},
+                "sensor_status": inputs["telemetry_status"],
+                "sensor_status_detail": "run-scoped simulated snapshot",
+                "source": "simulation"}
     filename = DATA_DIR / f"{machine_id}_{window}.json"
     if not filename.exists():
         return {"error": "data_unavailable", "machine_id": machine_id, "window": window}

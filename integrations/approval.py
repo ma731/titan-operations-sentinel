@@ -208,7 +208,7 @@ def send_approval_request(run_id: str, alert: dict, cost_eur: float | None = Non
     return {"channel": "console", "sent": True}
 
 
-def request_approval(run_id: str, alert: dict, default: str = "approve",
+def request_approval(run_id: str, alert: dict, default: str = "reject",
                      cost_eur: float | None = None, reason: str = "") -> str:
     """Send the request and return a decision.
 

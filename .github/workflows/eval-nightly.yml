@@ -27,6 +27,7 @@ permissions:
 jobs:
   evaluate:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -47,10 +48,13 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          REQUESTED: ${{ github.event_name == 'schedule' && 'true' || inputs.live }}
+          LIVE_LIMIT: ${{ inputs.limit || '8' }}
         run: |
-          requested="${{ github.event_name == 'schedule' && 'true' || inputs.live }}"
+          requested="$REQUESTED"
+          [[ "$LIVE_LIMIT" =~ ^[1-9][0-9]*$ ]] || { echo "limit must be a positive integer"; exit 1; }
           if [ "$requested" = "true" ] && { [ -n "$GOOGLE_API_KEY" ] || [ -n "$GROQ_API_KEY" ] || [ -n "$OPENROUTER_API_KEY" ]; }; then
-            echo "flags=--live --limit ${{ inputs.limit || '8' }}" >> "$GITHUB_OUTPUT"
+            echo "flags=--live --limit $LIVE_LIMIT" >> "$GITHUB_OUTPUT"
             echo "Live suite enabled."
           else
             echo "flags=" >> "$GITHUB_OUTPUT"
@@ -68,7 +72,8 @@ jobs:
           LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
           LANGFUSE_HOST: ${{ secrets.LANGFUSE_HOST }}
-        run: python -m eval.run_eval ${{ steps.mode.outputs.flags }} --fail-under 0.97
+          EVAL_FLAGS: ${{ steps.mode.outputs.flags }}
+        run: python -m eval.run_eval $EVAL_FLAGS --fail-under 1.0 --retrieval-fail-under 0.85
 
       - name: Upload the scorecard
         if: always()

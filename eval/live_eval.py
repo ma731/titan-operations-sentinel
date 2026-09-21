@@ -28,6 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import observability  # noqa: E402
+import policy  # noqa: E402
 
 from . import groundedness  # noqa: E402
 from .metrics import SetScore, Tally  # noqa: E402
@@ -36,6 +37,11 @@ from .scenarios import Scenario, load_scenarios  # noqa: E402
 CITATION_RE = re.compile(r"\b([a-z0-9][a-z0-9-]{4,})#(S\d+)\b")
 GROUNDED_AGENTS = ("reliability", "compliance_safety")
 RESUME_DECISION = {"decision": "approve", "approver": "evaluation harness (automated)"}
+
+
+def plan_tiers(plan: str) -> list[tuple[str, str]]:
+    """Extract tagged action lines for a policy-consistency check, not semantic grading."""
+    return re.findall(r"\[(AUTO|APPROVE|ESCALATE)\]\s*([^\n]+)", plan or "")
 
 
 def _valid_citations(text: str, known: set[str]) -> list[str]:
@@ -61,6 +67,7 @@ def run_one(scenario: Scenario, timeout_note: str = "") -> dict:
 
     graph = build_graph()
     state = make_initial_state(scenario.mode, alert=scenario.alert)
+    state["proposed_actions"] = scenario.proposed_actions
     cfg = {"configurable": {"thread_id": state["run_id"]}, "recursion_limit": 50}
 
     events: list[dict] = []
@@ -68,7 +75,10 @@ def run_one(scenario: Scenario, timeout_note: str = "") -> dict:
     error = None
     started = time.perf_counter()
 
-    with observability.instrument_run() as usage:
+    from tools.runtime_inputs import runtime_inputs
+
+    with runtime_inputs(scenario.alert["machine_id"], scenario.readings,
+                        scenario.telemetry_status, scenario.sourcing), observability.instrument_run() as usage:
         def drain(stream):
             nonlocal interrupted
             for chunk in stream:
@@ -100,8 +110,7 @@ def run_one(scenario: Scenario, timeout_note: str = "") -> dict:
         elif e.get("type") == "agent_report":
             agent = e.get("agent", "?")
             reports[agent] = e.get("report", "")
-            if agent not in visited:
-                visited.append(agent)
+            visited.append(agent)
 
     return {
         "id": scenario.id,
@@ -112,6 +121,12 @@ def run_one(scenario: Scenario, timeout_note: str = "") -> dict:
         "visited": visited,
         "tools_by_agent": {a: sorted(t) for a, t in tools_by_agent.items()},
         "reports": reports,
+        "retrieved_citations": {
+            agent: sorted({p["citation"] for result in results if isinstance(result, dict)
+                           for p in result.get("passages", []) if "citation" in p})
+            for agent, results in results_by_agent.items()
+        },
+        "agent_errors": [e for e in events if e.get("type") == "agent_error"],
         "groundedness": groundedness.score_run(reports, results_by_agent),
         "reached_approval_gate": interrupted,
         "status": final.get("status"),
@@ -138,6 +153,9 @@ def run(scenarios: list[Scenario] | None = None, limit: int | None = None) -> di
     gate_t = Tally("gate_decision")
     status_t = Tally("terminal_status")
     halt_t = Tally("halt_decision")
+    risk_t = Tally("risk_classification")
+    order_t = Tally("routing_order")
+    tier_t = Tally("plan_tier_consistency")
     tool_score = SetScore("tool_call_correctness")
 
     runs, cited, grounded_reports, hallucinated = [], 0, 0, []
@@ -149,20 +167,30 @@ def run(scenarios: list[Scenario] | None = None, limit: int | None = None) -> di
     for s in scenarios:
         obs = run_one(s)
         runs.append(obs)
-        if obs["error"]:
+        if obs["error"] or obs.get("agent_errors"):
             errors += 1
         exp = s.expected
 
         required = set(exp["agents_required"])
         routing_t.add(required.issubset(set(obs["visited"])), s.id,
                       sorted(required), obs["visited"])
+        order_t.add(bool(obs["visited"]) and obs["visited"][0] == "reliability"
+                    and (exp["escalates"] or obs["visited"][-1] == "compliance_safety"),
+                    s.id, "reliability first; safety last unless escalating", obs["visited"])
+        risk_t.add(obs["risk"] == exp["risk"], s.id, exp["risk"], obs["risk"])
 
-        gate_t.add(obs["reached_approval_gate"] == exp["needs_approval"], s.id,
-                   exp["needs_approval"], obs["reached_approval_gate"])
+        expected_gate = exp["needs_approval"] and not exp.get("halt") and not exp["escalates"]
+        gate_t.add(obs["reached_approval_gate"] == expected_gate, s.id,
+                   expected_gate, obs["reached_approval_gate"])
         status_t.add(obs["status"] == exp["terminal_status"], s.id,
                      exp["terminal_status"], obs["status"])
         halt_t.add(obs["halt"] == bool(exp.get("halt")), s.id,
                    bool(exp.get("halt")), obs["halt"])
+        if exp["terminal_status"] == "complete":
+            tagged = plan_tiers(obs.get("final_plan", ""))
+            tier_t.add(bool(tagged) and all(tier == policy.action_tier(action)
+                                            for tier, action in tagged),
+                       s.id, "tagged actions consistent with reference policy", tagged)
 
         for agent, expected_tools in (exp.get("tool_calls") or {}).items():
             tool_score.add(set(expected_tools), set(obs["tools_by_agent"].get(agent, [])),
@@ -173,7 +201,8 @@ def run(scenarios: list[Scenario] | None = None, limit: int | None = None) -> di
             if report is None:
                 continue
             grounded_reports += 1
-            good = _valid_citations(report, known_citations)
+            retrieved = set(obs.get("retrieved_citations", {}).get(agent, []))
+            good = _valid_citations(report, known_citations & retrieved)
             bad = _hallucinated_citations(report, known_citations)
             if good:
                 cited += 1
@@ -193,7 +222,7 @@ def run(scenarios: list[Scenario] | None = None, limit: int | None = None) -> di
         total_seconds += obs["seconds"]
 
     n = len(runs) or 1
-    tallies = [routing_t, gate_t, status_t, halt_t]
+    tallies = [routing_t, order_t, risk_t, gate_t, status_t, halt_t, tier_t]
     return {
         "suite": "live_agents",
         "runs": len(runs),
