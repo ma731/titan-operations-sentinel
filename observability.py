@@ -199,7 +199,7 @@ def langfuse_handler():
             return None
 
 
-# One tracker per process run, set by instrument_run(). The graph reads it through
+# One tracker per execution context, set by instrument_run(). The graph reads it through
 # callbacks() so nodes do not have to thread a tracker object through the graph state.
 _ACTIVE: ContextVar[UsageTracker | None] = ContextVar("tos_usage", default=None)
 

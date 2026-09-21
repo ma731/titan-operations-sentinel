@@ -291,8 +291,8 @@ Two things worth knowing about how it is built:
   accepting the failure, which belongs to a person.
 - **A Compliance HALT overrides everything**, including an approved spend and an urgent ROI.
 - **It abstains on thin data.** If the telemetry drops out, Reliability refuses to invent a
-  life estimate and the run escalates for manual inspection. That path is deterministic
-  and spends zero tokens.
+  life estimate and the run escalates for manual inspection. The final handoff is
+  deterministic and spends no additional synthesis tokens.
 - **It fails toward caution.** Failed or missing reliability evidence escalates. Failed,
   missing or malformed safety clearance halts. A HALT cannot be erased by a later OK.
   Rejection withholds the action plan in code, without asking a model to honour it.

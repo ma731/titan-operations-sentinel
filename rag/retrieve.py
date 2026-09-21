@@ -7,7 +7,7 @@ Four modes:
            but NOT the default: measured, it trades top-1 accuracy for deeper recall and
            the net effect is one query out of 52. See F-05 in eval/FINDINGS.md.
   dense    Embedding cosine similarity. Requires TOS_EMBEDDINGS (see rag/embeddings.py).
-  hybrid   Reciprocal rank fusion of PRF and dense. Falls back to PRF when dense is off.
+  hybrid   Reciprocal rank fusion of PRF and dense. Falls back to lexical when dense is off.
 
 Hybrid uses reciprocal rank fusion rather than a weighted score blend because BM25 scores
 and cosine similarities are not on comparable scales, and RRF needs no tuning constant per

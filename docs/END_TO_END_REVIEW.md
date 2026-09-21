@@ -50,6 +50,10 @@ npm audit --audit-level=high
 ```
 
 - Policy: 208/208 checks, including HALT precision/recall 1.0.
+- Regression suite: 264 passed, four provider-dependent tests skipped; Ruff passed.
+  [GitHub Actions](https://github.com/ma731/titan-operations-sentinel/actions/runs/35626502538)
+  also passed on Python 3.11 and 3.12, built both Docker images, started the Compose
+  stack, verified the console/API proxy and confirmed persistent storage was writable.
 - Retrieval: lexical hit rate at 4 of 86.54%, MRR 0.820; direct 100%, paraphrase 41.67%.
   The legacy JSON key `recall@k` means any relevant passage found (hit rate), not
   fraction of every relevant passage retrieved. The labelled alternatives are acceptable
@@ -65,8 +69,8 @@ npm audit --audit-level=high
 1. No model or embedding key was supplied in this workspace. Paid/live-provider quality,
    dense/hybrid retrieval relevance, provider token billing and remote Langfuse delivery
    remain unmeasured. The four provider-dependent tests stay skipped, not reported as passes.
-2. Docker is unavailable on the local Windows host. Image/Compose validation must run
-   in GitHub Actions or on a machine with Docker. Do not interpret a YAML parse as a boot test.
+2. Docker was validated in Linux GitHub Actions, not on the local Windows host where it
+   is unavailable. Windows Docker Desktop startup remains untested.
 3. The live backend is a localhost demonstration: no user authentication, durable
    approval queue or distributed checkpoint store. Email links can be visited by mail
    scanners and must not be exposed as production approval authorization. Slack HMAC is
