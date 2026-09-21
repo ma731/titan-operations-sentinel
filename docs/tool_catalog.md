@@ -1,21 +1,21 @@
 # Tool Catalog — Titan Operations Sentinel
 
-Pre-submission deliverable (assignment brief §8). 18 tools across 5 specialist agents
+Pre-submission deliverable (assignment brief §8). 20 tools across 5 specialist agents
 (one agent per TMC challenge). Each tool is a pure Python function in `tools/`, exposed to
-the agents as a LangChain `@tool` in `tools_lc.py`. The **agents decide** which tool to call
+the agents as a LangChain `@tool` in `tools/lc.py`. The **agents decide** which tool to call
 (autonomous ReAct); the **tools act** (fetch data / compute / draft). Tools never make
 decisions and never commit irreversible actions — drafts only.
 
-Per-agent tool map (`tools_lc.py` groups):
+Per-agent tool map (`tools/lc.py` groups):
 
 | Agent | Challenge | Tools |
 |---|---|---|
-| Reliability | 1 Predictive maintenance | alert_triage, sensor_query, rul_predictor, recall_similar_cases, asset_profile |
-| Supply Chain | 2 Supply volatility | parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk |
+| Reliability | 1 Predictive maintenance | alert_triage, sensor_query, rul_predictor, recall_similar_cases, asset_profile, maintenance_schedule, search_technical_docs |
+| Supply Chain | 2 Supply volatility | parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk, work_order_draft, notify |
 | Production & Human-Robot | 3 Coordination | job_reroute, robot_cell_status, shift_conflict_check |
 | Quality & Traceability | 4 Quality | quality_history, telemetry_correlate |
-| Compliance & Safety | 5 Safety/audit | safety_gate, audit_assemble |
-| (shared / scheduling) | — | maintenance_schedule, work_order_draft, notify |
+| Compliance & Safety | 5 Safety/audit | safety_gate, audit_assemble, search_technical_docs |
+| (shared) | — | `search_technical_docs` is bound to Reliability and Compliance; `maintenance_schedule`, `work_order_draft` and `notify` are bound to the agents listed above |
 
 ---
 
@@ -148,11 +148,39 @@ Per-agent tool map (`tools_lc.py` groups):
 
 ---
 
+## Shared: retrieval over the technical corpus
+
+### `search_technical_docs`
+- **What it does:** Retrieves the most relevant passages from the technical reference corpus
+  in `rag/corpus` (fleet maintenance standards, plus plain-language paraphrases of OSHA
+  1910.147 and 1910.212, ISO 10218 / TS 15066, ISO 10816-3 and IATF 16949), each returned
+  with a `doc_id#section` citation and a provenance label.
+- **Inputs:** `query: str` (a full natural-language question), `k: int` (1-8, default 4)
+  · **Outputs:** ranked passages with `citation`, `document`, `section`, `provenance`,
+  `text`, `score`, plus the retrieval mode that actually ran
+- **Bound to:** Reliability and Compliance & Safety. Both are instructed to put the
+  returned citation inline next to the claim it supports.
+- **Use when:** before asserting a severity band, a life-estimate rule, an authority limit
+  or a procedural requirement. **Do NOT use:** for live machine data (`sensor_query`) or
+  past incidents (`recall_similar_cases`) — this corpus is documents, not telemetry.
+- **Fallback:** returns an empty passage list with an `error` field if the corpus or index
+  is unavailable; retrieval never raises into a run. **Auth:** READ.
+- **Measured:** recall@k, MRR and precision@k over 52 labelled queries in
+  `eval/rag_eval.py`; the scorecard reports lexical, dense and hybrid separately.
+
+> **This is not the same thing as `recall_similar_cases`.** That tool matches past
+> incidents in a structured JSON library, which is case-based memory. This one is
+> retrieval over documents. Both are useful and they are different; the distinction is
+> kept explicit here because conflating them is an easy and expensive mistake to make in
+> a write-up.
+
+---
+
 ## Risk tier summary
 
 | Tier | Tools | Who releases |
 |---|---|---|
-| READ (autonomous) | alert_triage, sensor_query, rul_predictor, asset_profile, maintenance_schedule, parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk, robot_cell_status, shift_conflict_check, quality_history, telemetry_correlate, audit_assemble | none |
+| READ (autonomous) | alert_triage, sensor_query, rul_predictor, recall_similar_cases, asset_profile, maintenance_schedule, search_technical_docs, parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk, robot_cell_status, shift_conflict_check, quality_history, telemetry_correlate, audit_assemble | none |
 | AUTO (autonomous action) | job_reroute (within equivalent machines) | none |
 | APPROVE (human in loop) | work_order_draft, notify, + any procurement > €500 | plant manager (via `interrupt()` gate) |
 | SAFETY OVERRIDE | safety_gate (HALT stops the plan) | safety officer |

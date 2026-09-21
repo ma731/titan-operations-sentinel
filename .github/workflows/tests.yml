@@ -81,3 +81,63 @@ jobs:
         working-directory: webapp/frontend
       - run: npm run build
         working-directory: webapp/frontend
+
+  docker:
+    name: docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # The README tells a reviewer to run `docker compose up --build`. Nobody on the
+      # team has Docker installed locally, so without this job that instruction is an
+      # assumption. Building both images on every push turns it into a checked claim.
+      - name: Build the backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: titan-operations-sentinel-backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build the console image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: false
+          load: true
+          tags: titan-operations-sentinel-console:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start the backend and check it reports healthy
+        run: |
+          docker run -d --name tos-api -p 8000:8000 titan-operations-sentinel-backend:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/api/health > /tmp/health.json; then
+              echo "healthy after ${i}s"; cat /tmp/health.json; exit 0
+            fi
+            sleep 1
+          done
+          echo "backend never became healthy"; docker logs tos-api; exit 1
+
+      - name: Check the image reports the retrieval corpus it shipped with
+        run: |
+          python - <<'PY'
+          import json
+          h = json.load(open("/tmp/health.json"))
+          assert h["ok"] is True, h
+          # A backend image that cannot see rag/corpus would still start and still say
+          # ok:true, so assert on the thing that would actually be missing.
+          assert h.get("retrieval", {}).get("documents", 0) >= 10, h
+          print("retrieval corpus present in the image:", h["retrieval"])
+          PY
+
+      - name: Stop the container
+        if: always()
+        run: docker rm -f tos-api || true

@@ -87,7 +87,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add eval/results/scorecard.md eval/results/scorecard.json rag/index/
+          git add eval/results/scorecard.md eval/results/scorecard.json eval/results/badge.json rag/index/
           if git diff --cached --quiet; then
             echo "No change in the scorecard."
           else

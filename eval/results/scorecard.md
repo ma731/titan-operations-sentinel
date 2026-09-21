@@ -1,6 +1,6 @@
 # Evaluation scorecard
 
-Generated 2026-09-21 13:25 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
+Generated 2026-09-21 14:37 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
 
 Datasets: **27** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
 

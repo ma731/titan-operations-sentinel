@@ -8,6 +8,7 @@ from pathlib import Path
 RESULTS_DIR = Path(__file__).parent / "results"
 SCORECARD_MD = RESULTS_DIR / "scorecard.md"
 SCORECARD_JSON = RESULTS_DIR / "scorecard.json"
+BADGE_JSON = RESULTS_DIR / "badge.json"
 
 
 def _pct(v) -> str:
@@ -231,6 +232,25 @@ def render(policy_result: dict, rag_result: dict, live_result: dict | None,
     )
 
 
+def _write_badge(policy_result: dict) -> None:
+    """A shields.io endpoint payload so the README badge reads the real score.
+
+    The badge used to be a hardcoded string. A hardcoded number in a README about
+    measurement is exactly the thing this project is arguing against, and it would have
+    gone stale the first time a metric moved."""
+    accuracy = policy_result.get("overall_accuracy") or 0.0
+    checks = policy_result.get("checks") or 0
+    colour = ("brightgreen" if accuracy >= 0.98 else
+              "green" if accuracy >= 0.95 else
+              "yellow" if accuracy >= 0.90 else "orange")
+    BADGE_JSON.write_text(json.dumps({
+        "schemaVersion": 1,
+        "label": "eval",
+        "message": f"{accuracy * 100:.1f}% of {checks} checks",
+        "color": colour,
+    }), encoding="utf-8")
+
+
 def write(policy_result: dict, rag_result: dict, live_result: dict | None,
           meta: dict) -> tuple[Path, Path]:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -242,4 +262,5 @@ def write(policy_result: dict, rag_result: dict, live_result: dict | None,
                     "live": live_result}, indent=2, default=str),
         encoding="utf-8",
     )
+    _write_badge(policy_result)
     return SCORECARD_MD, SCORECARD_JSON

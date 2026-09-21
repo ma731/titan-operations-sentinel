@@ -81,6 +81,24 @@ VITE_API_PORT=8009
   trace event (`route`, `tool_call`, `agent_report`, `approval_request`, `plan`, ...) as SSE. The
   human approval `interrupt()` is resolved via `POST /api/decision`. `GET /api/providers` and
   `POST /api/config` drive the live provider picker.
+
+### Every endpoint
+
+| Endpoint | What it does |
+|---|---|
+| `GET /api/run?scenario=` | streams the live trace as Server-Sent Events |
+| `POST /api/decision` | resolves a paused approval gate (the console's Approve / Reject) |
+| `GET /api/decision/link` | resolves the same gate from a link in an approval email |
+| `POST /api/slack/interactions` | resolves the same gate from the Slack buttons, signature verified with a five minute replay window |
+| `GET /api/providers` | provider catalog and which keys are present |
+| `POST /api/config` | switch provider, model or key at runtime, optionally persisting to `.env` |
+| `GET /api/health` | liveness plus what is actually wired up: active provider, approval channel, retrieval corpus size and mode, and the policy constants |
+
+All three approval routes funnel into one internal `_resolve()`, so a run has exactly one
+resume path and one audit record however the decision arrived.
+
+`GET /api/health` is worth pointing a reviewer at during a demo: it reports the live
+configuration rather than a description of it.
 - **Frontend** (`frontend/src/`): one event reducer (`App.jsx`) drives the whole UI from that event
   shape, identical for replay (`cascade.js`) and live, so what you rehearse is what you demo.
 - **Design**: light editorial showcase + light console; Schibsted Grotesk / Fira Sans / JetBrains

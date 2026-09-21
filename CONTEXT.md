@@ -1,10 +1,18 @@
 # CONTEXT — handoff for the team
 
-Quick orientation for anyone picking up the repo. Read this first, then `README.md` for the
-full project explanation and `CLAUDE.md` for conventions.
+> **Historical snapshot, June 2026. Do not read this first.**
+>
+> This was the handoff note when the project moved to LangGraph, and it is kept because it
+> records why that decision was taken. It has since gone out of date: the branch it names
+> is merged, the repository has been renamed to `titan-operations-sentinel`, and the tool
+> and test counts below are lower than the current ones.
+>
+> For the current state start with [`README.md`](README.md), then
+> [`CLAUDE.md`](CLAUDE.md) for conventions and
+> [`eval/results/scorecard.md`](eval/results/scorecard.md) for what the system measurably
+> does.
 
-**Branch:** `feat/multi-agent-langgraph` (pushed). PR:
-https://github.com/ma731/Agentic-AI-for-IT/pull/new/feat/multi-agent-langgraph
+**Branch at the time:** `feat/multi-agent-langgraph` (since merged).
 
 ---
 
