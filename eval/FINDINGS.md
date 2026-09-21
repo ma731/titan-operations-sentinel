@@ -131,6 +131,48 @@ correct reading of an unknown cost. `S09` pins the behaviour.
 
 ---
 
+## F-05 (2026-09) Query expansion was built, measured, and not adopted
+
+**Status:** implemented, evaluated, deliberately not made the default.
+
+The retrieval evaluation identified a specific weakness: BM25 finds the answer for 100%
+of queries that use the corpus's own vocabulary and 41.7% of queries that deliberately
+avoid it. That is classic lexical vocabulary mismatch.
+
+The textbook fix is embeddings, which need an API key that CI does not have. So the
+keyless alternative was built instead: RM3-style pseudo-relevance feedback in
+`rag/expansion.py`, using literature default parameters, with expansion terms harvested
+from the corpus and never from the query set.
+
+**What it actually did:**
+
+| Mode | recall@1 | recall@4 | recall@8 | MRR |
+|---|---:|---:|---:|---:|
+| lexical | **0.788** | 0.865 | 0.885 | **0.820** |
+| prf | 0.712 | **0.885** | **0.904** | 0.777 |
+
+On the paraphrase split it lifted recall@4 from 41.7% to 50.0%, which is the headline
+number somebody would want to put in a README. Underneath, it fixed two queries (Q46,
+Q49), broke one (Q45), and cost seven and a half points of recall@1.
+
+**The decision.** Net, that is one query out of 52. On a set that size it is noise, and
+the top-1 regression is real. Making it the default on the strength of "41.7% to 50.0%"
+would be exactly the selective reporting this harness exists to prevent, so the default
+stays plain lexical. PRF ships as an available mode (`TOS_RAG_MODE=prf`), is scored on
+every run so the decision can be revisited when the corpus grows, and hybrid fusion uses
+it when embeddings are configured.
+
+**What this finding is really for.** The harness paid for itself here by preventing a
+change, not by catching a bug. A convincing-looking improvement was proposed, measured
+properly, and rejected on the evidence. That is the loop working.
+
+**Still open:** the paraphrase gap itself. Embeddings remain the right answer, the dense
+and hybrid rows are wired and waiting, and the moment a key exists as a repository secret
+the nightly run fills them in. Until then the scorecard says "not configured" rather than
+quietly reporting a lexical number under a hybrid label.
+
+---
+
 ## Known limits of the suite itself
 
 Worth stating plainly, because a scorecard that does not describe its own blind spots is

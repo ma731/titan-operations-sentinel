@@ -39,9 +39,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 app = FastAPI(title="Titan Operations Sentinel API")
 
-# Single-user demo: one pending approval at a time, keyed by run_id.
+# Pending approvals, keyed by run_id. A run stays here from the moment the graph pauses
+# until it has been resumed and finishes.
 _decision_value: dict[str, str] = {}
 _decision_ready: dict[str, threading.Event] = {}
+
+# Guards the check-then-set in _resolve. Decisions arrive from three places (the console,
+# a Slack button, an email link) on different threads, and a spend approval is not
+# something to resolve under a race.
+_decision_lock = threading.Lock()
 
 
 def _sse(payload: dict) -> str:
@@ -73,13 +79,24 @@ def health():
 
 def _resolve(run_id: str | None, choice: str) -> dict:
     """The single place a paused run is resumed. The console, a Slack button and an email
-    link all land here, so a decision is recorded identically however it arrived."""
-    rid = run_id or (next(iter(_decision_ready)) if _decision_ready else None)
-    if rid and rid in _decision_ready:
+    link all land here, so a decision is recorded identically however it arrived.
+
+    The first decision wins and later ones are refused. Without that, a run stayed
+    writable from the moment it paused until it finished, so a second click could flip an
+    approval into a rejection after the fact: approve in the email, then reject, and the
+    recorded decision changes. An approval gate over money has to be write-once, and the
+    audit trail has to record the decision that was actually acted on.
+    """
+    with _decision_lock:
+        rid = run_id or (next(iter(_decision_ready)) if _decision_ready else None)
+        if not rid or rid not in _decision_ready:
+            return {"ok": False, "error": "no pending approval", "run_id": run_id}
+        if rid in _decision_value:
+            return {"ok": False, "error": "already decided", "run_id": rid,
+                    "decision": _decision_value[rid]}
         _decision_value[rid] = "approve" if choice.lower().startswith("a") else "reject"
         _decision_ready[rid].set()
         return {"ok": True, "run_id": rid, "decision": _decision_value[rid]}
-    return {"ok": False, "error": "no pending approval", "run_id": run_id}
 
 
 class Decision(BaseModel):
@@ -108,6 +125,10 @@ def decision_link(run_id: str, decision: str):
         body = (f"<h2>Recorded: {result['decision']}</h2>"
                 f"<p>Run <code>{result['run_id']}</code> has been resumed and your "
                 f"decision is in the audit log.</p>")
+    elif result.get("error") == "already decided":
+        body = (f"<h2>Nothing to decide</h2><p>Run <code>{result['run_id']}</code> was "
+                f"already <strong>{result['decision']}d</strong>. The first decision "
+                f"stands; it cannot be changed from this link.</p>")
     else:
         body = ("<h2>Nothing to decide</h2><p>This run is not waiting for an approval. "
                 "It may already have been decided, or it may have timed out.</p>")
@@ -164,6 +185,10 @@ async def slack_interactions(request: Request):
 
     result = _resolve(run_id or None, choice or "reject")
     if not result["ok"]:
+        if result.get("error") == "already decided":
+            return {"replace_original": False,
+                    "text": (f"Run `{result['run_id']}` was already "
+                             f"*{result['decision'].upper()}D*. The first decision stands.")}
         return {"replace_original": False,
                 "text": "That run is no longer waiting for a decision."}
     return {

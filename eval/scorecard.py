@@ -170,10 +170,16 @@ def _live_section(r: dict | None) -> list[str]:
     lines += [
         f"| `citation_rate` | {_pct(g['citation_rate'])} | "
         f"{g['reports_with_a_valid_citation']}/{g['grounded_reports']} |",
+        f"| `numeric_groundedness` | {_pct(g.get('numeric_groundedness'))} | "
+        f"{g.get('numbers_checked', 0) - g.get('ungrounded_numbers', 0)}"
+        f"/{g.get('numbers_checked', 0)} |",
         "",
         "Citations are checked against the real corpus index, so an invented "
         f"citation counts against the score rather than for it "
-        f"({len(g['invented_citations'])} invented).",
+        f"({len(g['invented_citations'])} invented). Numeric groundedness traces every "
+        "figure in a report back to a tool result, or to arithmetic on tool results: a "
+        "cost or an ROI that no tool produced is the failure that actually reaches a "
+        "plant manager.",
         "",
         "### Cost and latency per run",
         "",

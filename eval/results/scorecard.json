@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-21T14:52:19.057294+00:00",
+  "generated_utc": "2026-09-21T14:59:45.319338+00:00",
   "datasets": {
     "scenarios": 34,
     "live_subset": 8,
@@ -2055,6 +2055,979 @@
           }
         ]
       },
+      "prf": {
+        "mode": "prf",
+        "available": true,
+        "queries": 52,
+        "recall_at_k": {
+          "recall@1": 0.7115,
+          "recall@3": 0.8269,
+          "recall@4": 0.8846,
+          "recall@8": 0.9038
+        },
+        "precision_at_4": 0.226,
+        "mrr": 0.7768,
+        "by_difficulty": {
+          "direct": {
+            "queries": 40,
+            "recall@4": 1.0,
+            "mrr": 0.9104,
+            "misses": []
+          },
+          "paraphrase": {
+            "queries": 12,
+            "recall@4": 0.5,
+            "mrr": 0.3313,
+            "misses": [
+              "Q42",
+              "Q43",
+              "Q45",
+              "Q47",
+              "Q48",
+              "Q50"
+            ]
+          }
+        },
+        "misses_at_4": [
+          {
+            "id": "Q42",
+            "query": "we are already late, can we skip isolating the machine just this once to save an hour",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-147-loto#S7"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S7",
+              "tms-101-spindle-bearing-maintenance#S4",
+              "tms-101-spindle-bearing-maintenance#S6",
+              "tms-101-spindle-bearing-maintenance#S5"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q43",
+            "query": "the cheaper kit turns up after the machine would already be dead, should we still take it",
+            "asked_by": "supply_chain",
+            "relevant": [
+              "tms-520-parts-sourcing-expedite-policy#S2"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S1",
+              "tms-705-telemetry-data-quality-and-abstention#S5",
+              "tms-310-lubrication-thermal-limits#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S7"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q45",
+            "query": "it is running hot but the shaking has not changed at all, what does that point to",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-310-lubrication-thermal-limits#S2",
+              "rolling-element-bearing-failure-modes#S3"
+            ],
+            "retrieved_top4": [
+              "osha-1910-212-machine-guarding#S1",
+              "osha-1910-212-machine-guarding#S3",
+              "osha-1910-212-machine-guarding#S2",
+              "osha-1910-212-machine-guarding#S5"
+            ],
+            "reciprocal_rank": 0.1429,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q47",
+            "query": "how far back do we have to go when deciding which finished parts might be bad",
+            "asked_by": "quality",
+            "relevant": [
+              "iatf-16949-traceability-records#S4"
+            ],
+            "retrieved_top4": [
+              "tms-450-emergency-maintenance-window#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S3",
+              "tms-450-emergency-maintenance-window#S5",
+              "tms-450-emergency-maintenance-window#S2"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q48",
+            "query": "the new one died at about the same age as the one we took out",
+            "asked_by": "reliability",
+            "relevant": [
+              "rolling-element-bearing-failure-modes#S8"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S2",
+              "tms-310-lubrication-thermal-limits#S5",
+              "iso-10218-ts15066-collaborative-robots#S6",
+              "iatf-16949-traceability-records#S4"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q50",
+            "query": "can one person just cover both jobs if the times clash a bit",
+            "asked_by": "production",
+            "relevant": [
+              "tms-610-production-reroute-and-shift-rules#S5"
+            ],
+            "retrieved_top4": [
+              "osha-1910-147-loto#S5",
+              "osha-1910-147-loto#S1",
+              "osha-1910-147-loto#S4",
+              "tms-450-emergency-maintenance-window#S2"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          }
+        ],
+        "per_query": [
+          {
+            "id": "Q01",
+            "query": "at what vibration level does a spindle enter the critical band and what must happen",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-101-spindle-bearing-maintenance#S3"
+            ],
+            "retrieved_top4": [
+              "tms-101-spindle-bearing-maintenance#S5",
+              "tms-101-spindle-bearing-maintenance#S3",
+              "tms-101-spindle-bearing-maintenance#S4",
+              "tms-101-spindle-bearing-maintenance#S1"
+            ],
+            "reciprocal_rank": 0.5,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q02",
+            "query": "how is remaining useful life estimated from the rate of change of vibration",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-101-spindle-bearing-maintenance#S4"
+            ],
+            "retrieved_top4": [
+              "tms-204-vibration-severity-limits#S4",
+              "rolling-element-bearing-failure-modes#S7",
+              "tms-101-spindle-bearing-maintenance#S4",
+              "tms-101-spindle-bearing-maintenance#S1"
+            ],
+            "reciprocal_rank": 0.3333,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q03",
+            "query": "how much extra life does reducing spindle speed buy and does it need a safety sign-off",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-101-spindle-bearing-maintenance#S5"
+            ],
+            "retrieved_top4": [
+              "tms-101-spindle-bearing-maintenance#S5",
+              "iso-10218-ts15066-collaborative-robots#S7",
+              "tms-101-spindle-bearing-maintenance#S3",
+              "tms-610-production-reroute-and-shift-rules#S1"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q04",
+            "query": "how many technicians and which certifications are needed for a spindle bearing replacement",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-101-spindle-bearing-maintenance#S6"
+            ],
+            "retrieved_top4": [
+              "tms-101-spindle-bearing-maintenance#S6",
+              "tms-101-spindle-bearing-maintenance#S7",
+              "tms-101-spindle-bearing-maintenance#S1",
+              "tms-101-spindle-bearing-maintenance#S5"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q05",
+            "query": "what are the ISO evaluation zones for machine vibration severity",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-204-vibration-severity-limits#S3"
+            ],
+            "retrieved_top4": [
+              "tms-204-vibration-severity-limits#S2",
+              "tms-204-vibration-severity-limits#S3",
+              "tms-204-vibration-severity-limits#S4",
+              "tms-204-vibration-severity-limits#S1"
+            ],
+            "reciprocal_rank": 0.5,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q06",
+            "query": "is a change from baseline more important than the absolute vibration reading",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-204-vibration-severity-limits#S4"
+            ],
+            "retrieved_top4": [
+              "tms-204-vibration-severity-limits#S4",
+              "tms-101-spindle-bearing-maintenance#S4",
+              "osha-1910-147-loto#S5",
+              "rolling-element-bearing-failure-modes#S7"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q07",
+            "query": "can a broadband vibration reading identify the root cause of a fault",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-204-vibration-severity-limits#S5"
+            ],
+            "retrieved_top4": [
+              "tms-204-vibration-severity-limits#S5",
+              "tms-204-vibration-severity-limits#S1",
+              "iatf-16949-traceability-records#S3",
+              "tms-204-vibration-severity-limits#S4"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q08",
+            "query": "what is the maximum permissible front bearing temperature before the spindle must be stopped",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-310-lubrication-thermal-limits#S1"
+            ],
+            "retrieved_top4": [
+              "tms-310-lubrication-thermal-limits#S1",
+              "tms-310-lubrication-thermal-limits#S5",
+              "tms-101-spindle-bearing-maintenance#S2",
+              "tms-310-lubrication-thermal-limits#S2"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q09",
+            "query": "does a normal bearing temperature rule out a bearing defect",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-310-lubrication-thermal-limits#S2"
+            ],
+            "retrieved_top4": [
+              "tms-310-lubrication-thermal-limits#S2",
+              "tms-310-lubrication-thermal-limits#S5",
+              "rolling-element-bearing-failure-modes#S2",
+              "tms-101-spindle-bearing-maintenance#S2"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q10",
+            "query": "should readings taken right after a cold start be used for a condition assessment",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-310-lubrication-thermal-limits#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S4"
+            ],
+            "retrieved_top4": [
+              "tms-310-lubrication-thermal-limits#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S4",
+              "tms-204-vibration-severity-limits#S1",
+              "tms-310-lubrication-thermal-limits#S1"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q11",
+            "query": "may an automated system authorise removing a lockout tagout lock",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-147-loto#S4"
+            ],
+            "retrieved_top4": [
+              "osha-1910-147-loto#S4",
+              "osha-1910-147-loto#S5",
+              "osha-1910-147-loto#S3",
+              "osha-1910-147-loto#S6"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q12",
+            "query": "what is the required sequence of steps to isolate a machine before servicing",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-147-loto#S3"
+            ],
+            "retrieved_top4": [
+              "osha-1910-147-loto#S3",
+              "rolling-element-bearing-failure-modes#S7",
+              "osha-1910-147-loto#S5",
+              "osha-1910-147-loto#S4"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q13",
+            "query": "does an emergency remove the requirement to apply lockout tagout",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-147-loto#S7"
+            ],
+            "retrieved_top4": [
+              "osha-1910-147-loto#S7",
+              "osha-1910-147-loto#S4",
+              "osha-1910-147-loto#S1",
+              "osha-1910-147-loto#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q14",
+            "query": "what happens to locks when maintenance continues across a shift change",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-147-loto#S5"
+            ],
+            "retrieved_top4": [
+              "osha-1910-147-loto#S5",
+              "tms-610-production-reroute-and-shift-rules#S5",
+              "tms-450-emergency-maintenance-window#S4",
+              "tms-101-spindle-bearing-maintenance#S4"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q15",
+            "query": "is it permitted to bypass or jumper an interlocked guard for diagnostics",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-212-machine-guarding#S4"
+            ],
+            "retrieved_top4": [
+              "osha-1910-212-machine-guarding#S4",
+              "osha-1910-147-loto#S4",
+              "osha-1910-212-machine-guarding#S6",
+              "osha-1910-212-machine-guarding#S2"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q16",
+            "query": "what should happen to a machine found with a damaged or defeated guard",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-212-machine-guarding#S6"
+            ],
+            "retrieved_top4": [
+              "osha-1910-212-machine-guarding#S6",
+              "osha-1910-212-machine-guarding#S4",
+              "tms-204-vibration-severity-limits#S2",
+              "osha-1910-212-machine-guarding#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q17",
+            "query": "what are the four collaborative operation modes for an industrial robot",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "iso-10218-ts15066-collaborative-robots#S2"
+            ],
+            "retrieved_top4": [
+              "iso-10218-ts15066-collaborative-robots#S5",
+              "iso-10218-ts15066-collaborative-robots#S1",
+              "iso-10218-ts15066-collaborative-robots#S2",
+              "iso-10218-ts15066-collaborative-robots#S3"
+            ],
+            "reciprocal_rank": 0.3333,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q18",
+            "query": "is one operator assigned to two collaborative cells in the same shift a safety problem",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "iso-10218-ts15066-collaborative-robots#S6"
+            ],
+            "retrieved_top4": [
+              "iso-10218-ts15066-collaborative-robots#S6",
+              "tms-610-production-reroute-and-shift-rules#S4",
+              "iso-10218-ts15066-collaborative-robots#S1",
+              "iso-10218-ts15066-collaborative-robots#S7"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q19",
+            "query": "can we raise a robot speed limit to reduce how often the cell stops",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "iso-10218-ts15066-collaborative-robots#S7"
+            ],
+            "retrieved_top4": [
+              "iso-10218-ts15066-collaborative-robots#S6",
+              "iso-10218-ts15066-collaborative-robots#S2",
+              "iso-10218-ts15066-collaborative-robots#S3",
+              "iso-10218-ts15066-collaborative-robots#S7"
+            ],
+            "reciprocal_rank": 0.25,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q20",
+            "query": "how is the suspect population defined when a machine fault is confirmed",
+            "asked_by": "quality",
+            "relevant": [
+              "iatf-16949-traceability-records#S4"
+            ],
+            "retrieved_top4": [
+              "iatf-16949-traceability-records#S4",
+              "iatf-16949-traceability-records#S1",
+              "iatf-16949-traceability-records#S7",
+              "tms-705-telemetry-data-quality-and-abstention#S6"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q21",
+            "query": "why must quality records reference the machine condition time window",
+            "asked_by": "quality",
+            "relevant": [
+              "iatf-16949-traceability-records#S3"
+            ],
+            "retrieved_top4": [
+              "iatf-16949-traceability-records#S3",
+              "tms-101-spindle-bearing-maintenance#S7",
+              "tms-450-emergency-maintenance-window#S2",
+              "iatf-16949-traceability-records#S7"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q22",
+            "query": "what is the difference between rework and repair and what does repair require",
+            "asked_by": "quality",
+            "relevant": [
+              "iatf-16949-traceability-records#S5"
+            ],
+            "retrieved_top4": [
+              "iatf-16949-traceability-records#S5",
+              "tms-450-emergency-maintenance-window#S4",
+              "tms-520-parts-sourcing-expedite-policy#S6",
+              "tms-520-parts-sourcing-expedite-policy#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q23",
+            "query": "what must be in place before an emergency maintenance window is opened",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "tms-450-emergency-maintenance-window#S2"
+            ],
+            "retrieved_top4": [
+              "tms-450-emergency-maintenance-window#S2",
+              "tms-450-emergency-maintenance-window#S1",
+              "iatf-16949-traceability-records#S7",
+              "tms-450-emergency-maintenance-window#S6"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q24",
+            "query": "who decides whether to open an emergency window and who only recommends it",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "tms-450-emergency-maintenance-window#S1"
+            ],
+            "retrieved_top4": [
+              "tms-450-emergency-maintenance-window#S1",
+              "tms-450-emergency-maintenance-window#S4",
+              "tms-450-emergency-maintenance-window#S2",
+              "tms-450-emergency-maintenance-window#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q25",
+            "query": "what has to pass before a repaired machine is released back to production",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "tms-450-emergency-maintenance-window#S5"
+            ],
+            "retrieved_top4": [
+              "tms-450-emergency-maintenance-window#S5",
+              "iatf-16949-traceability-records#S5",
+              "tms-450-emergency-maintenance-window#S4",
+              "iatf-16949-traceability-records#S7"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q26",
+            "query": "in what order should parts sources be considered for a critical spare",
+            "asked_by": "supply_chain",
+            "relevant": [
+              "tms-520-parts-sourcing-expedite-policy#S1"
+            ],
+            "retrieved_top4": [
+              "tms-520-parts-sourcing-expedite-policy#S1",
+              "tms-520-parts-sourcing-expedite-policy#S7",
+              "tms-520-parts-sourcing-expedite-policy#S6",
+              "tms-520-parts-sourcing-expedite-policy#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q27",
+            "query": "should an option be tested against the lower or upper bound of the failure window",
+            "asked_by": "supply_chain",
+            "relevant": [
+              "tms-520-parts-sourcing-expedite-policy#S2"
+            ],
+            "retrieved_top4": [
+              "tms-520-parts-sourcing-expedite-policy#S2",
+              "tms-520-parts-sourcing-expedite-policy#S3",
+              "tms-450-emergency-maintenance-window#S3",
+              "tms-520-parts-sourcing-expedite-policy#S1"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q28",
+            "query": "can a purchase be split into smaller orders to stay under the approval ceiling",
+            "asked_by": "supply_chain",
+            "relevant": [
+              "tms-520-parts-sourcing-expedite-policy#S4"
+            ],
+            "retrieved_top4": [
+              "tms-520-parts-sourcing-expedite-policy#S4",
+              "tms-450-emergency-maintenance-window#S6",
+              "tms-705-telemetry-data-quality-and-abstention#S7",
+              "tms-520-parts-sourcing-expedite-policy#S7"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q29",
+            "query": "what happens if two supplier options depend on the same tier 2 supplier",
+            "asked_by": "supply_chain",
+            "relevant": [
+              "tms-520-parts-sourcing-expedite-policy#S5"
+            ],
+            "retrieved_top4": [
+              "tms-520-parts-sourcing-expedite-policy#S5",
+              "tms-520-parts-sourcing-expedite-policy#S1",
+              "tms-520-parts-sourcing-expedite-policy#S2",
+              "tms-520-parts-sourcing-expedite-policy#S7"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q30",
+            "query": "what must the sending plant confirm before a cross plant stock transfer",
+            "asked_by": "supply_chain",
+            "relevant": [
+              "tms-520-parts-sourcing-expedite-policy#S6"
+            ],
+            "retrieved_top4": [
+              "tms-520-parts-sourcing-expedite-policy#S6",
+              "tms-520-parts-sourcing-expedite-policy#S1",
+              "tms-520-parts-sourcing-expedite-policy#S7",
+              "tms-520-parts-sourcing-expedite-policy#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q31",
+            "query": "which signature indicates a lubrication failure rather than fatigue spalling",
+            "asked_by": "reliability",
+            "relevant": [
+              "rolling-element-bearing-failure-modes#S3"
+            ],
+            "retrieved_top4": [
+              "rolling-element-bearing-failure-modes#S3",
+              "rolling-element-bearing-failure-modes#S2",
+              "rolling-element-bearing-failure-modes#S7",
+              "rolling-element-bearing-failure-modes#S1"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q32",
+            "query": "what causes fluting on a bearing raceway and what is the actual fix",
+            "asked_by": "reliability",
+            "relevant": [
+              "rolling-element-bearing-failure-modes#S5"
+            ],
+            "retrieved_top4": [
+              "rolling-element-bearing-failure-modes#S5",
+              "rolling-element-bearing-failure-modes#S2",
+              "tms-310-lubrication-thermal-limits#S2",
+              "rolling-element-bearing-failure-modes#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q33",
+            "query": "what does it mean when a replaced bearing fails again at a similar interval",
+            "asked_by": "reliability",
+            "relevant": [
+              "rolling-element-bearing-failure-modes#S8"
+            ],
+            "retrieved_top4": [
+              "rolling-element-bearing-failure-modes#S8",
+              "rolling-element-bearing-failure-modes#S4",
+              "rolling-element-bearing-failure-modes#S5",
+              "tms-310-lubrication-thermal-limits#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q34",
+            "query": "when is a target machine eligible to receive rerouted jobs",
+            "asked_by": "production",
+            "relevant": [
+              "tms-610-production-reroute-and-shift-rules#S2"
+            ],
+            "retrieved_top4": [
+              "tms-610-production-reroute-and-shift-rules#S2",
+              "tms-610-production-reroute-and-shift-rules#S3",
+              "tms-610-production-reroute-and-shift-rules#S1",
+              "tms-610-production-reroute-and-shift-rules#S6"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q35",
+            "query": "in what order should an operator scheduling conflict be resolved",
+            "asked_by": "production",
+            "relevant": [
+              "tms-610-production-reroute-and-shift-rules#S5"
+            ],
+            "retrieved_top4": [
+              "tms-610-production-reroute-and-shift-rules#S5",
+              "tms-610-production-reroute-and-shift-rules#S4",
+              "iso-10218-ts15066-collaborative-robots#S6",
+              "tms-610-production-reroute-and-shift-rules#S6"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q36",
+            "query": "is splitting one operator across two conflicting positions acceptable",
+            "asked_by": "production",
+            "relevant": [
+              "tms-610-production-reroute-and-shift-rules#S5"
+            ],
+            "retrieved_top4": [
+              "tms-610-production-reroute-and-shift-rules#S5",
+              "tms-610-production-reroute-and-shift-rules#S4",
+              "iso-10218-ts15066-collaborative-robots#S6",
+              "osha-1910-212-machine-guarding#S2"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q37",
+            "query": "what conditions must telemetry meet before a life estimate is valid",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-705-telemetry-data-quality-and-abstention#S4"
+            ],
+            "retrieved_top4": [
+              "tms-310-lubrication-thermal-limits#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S5",
+              "tms-705-telemetry-data-quality-and-abstention#S7"
+            ],
+            "reciprocal_rank": 0.5,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q38",
+            "query": "what should the system output when the data quality requirements are not met",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-705-telemetry-data-quality-and-abstention#S5"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S5",
+              "tms-705-telemetry-data-quality-and-abstention#S1",
+              "tms-705-telemetry-data-quality-and-abstention#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S7"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q39",
+            "query": "is a signal that disappears entirely a machine fault or a sensor fault",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-705-telemetry-data-quality-and-abstention#S6"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S6",
+              "tms-705-telemetry-data-quality-and-abstention#S2",
+              "iatf-16949-traceability-records#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S4"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q40",
+            "query": "does abstaining from a prediction mean taking no protective action at all",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-705-telemetry-data-quality-and-abstention#S7"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S7",
+              "osha-1910-212-machine-guarding#S3",
+              "osha-1910-212-machine-guarding#S4",
+              "osha-1910-212-machine-guarding#S6"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q41",
+            "query": "the machine is shaking a lot more than it did last month, does that matter if it is still under the limit",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-204-vibration-severity-limits#S4"
+            ],
+            "retrieved_top4": [
+              "tms-204-vibration-severity-limits#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S7",
+              "osha-1910-147-loto#S5",
+              "tms-310-lubrication-thermal-limits#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q42",
+            "query": "we are already late, can we skip isolating the machine just this once to save an hour",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-147-loto#S7"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S7",
+              "tms-101-spindle-bearing-maintenance#S4",
+              "tms-101-spindle-bearing-maintenance#S6",
+              "tms-101-spindle-bearing-maintenance#S5"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q43",
+            "query": "the cheaper kit turns up after the machine would already be dead, should we still take it",
+            "asked_by": "supply_chain",
+            "relevant": [
+              "tms-520-parts-sourcing-expedite-policy#S2"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S1",
+              "tms-705-telemetry-data-quality-and-abstention#S5",
+              "tms-310-lubrication-thermal-limits#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S7"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q44",
+            "query": "one person covering two robot stations at the same time, is that fine",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "iso-10218-ts15066-collaborative-robots#S6"
+            ],
+            "retrieved_top4": [
+              "iso-10218-ts15066-collaborative-robots#S6",
+              "tms-610-production-reroute-and-shift-rules#S4",
+              "iso-10218-ts15066-collaborative-robots#S2",
+              "iso-10218-ts15066-collaborative-robots#S3"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q45",
+            "query": "it is running hot but the shaking has not changed at all, what does that point to",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-310-lubrication-thermal-limits#S2",
+              "rolling-element-bearing-failure-modes#S3"
+            ],
+            "retrieved_top4": [
+              "osha-1910-212-machine-guarding#S1",
+              "osha-1910-212-machine-guarding#S3",
+              "osha-1910-212-machine-guarding#S2",
+              "osha-1910-212-machine-guarding#S5"
+            ],
+            "reciprocal_rank": 0.1429,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q46",
+            "query": "we only have two hours of readings, can we still put a number on how long it has left",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-705-telemetry-data-quality-and-abstention#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S5",
+              "tms-101-spindle-bearing-maintenance#S4"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S1",
+              "tms-204-vibration-severity-limits#S3",
+              "rolling-element-bearing-failure-modes#S1",
+              "tms-705-telemetry-data-quality-and-abstention#S4"
+            ],
+            "reciprocal_rank": 0.25,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q47",
+            "query": "how far back do we have to go when deciding which finished parts might be bad",
+            "asked_by": "quality",
+            "relevant": [
+              "iatf-16949-traceability-records#S4"
+            ],
+            "retrieved_top4": [
+              "tms-450-emergency-maintenance-window#S4",
+              "tms-705-telemetry-data-quality-and-abstention#S3",
+              "tms-450-emergency-maintenance-window#S5",
+              "tms-450-emergency-maintenance-window#S2"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q48",
+            "query": "the new one died at about the same age as the one we took out",
+            "asked_by": "reliability",
+            "relevant": [
+              "rolling-element-bearing-failure-modes#S8"
+            ],
+            "retrieved_top4": [
+              "tms-705-telemetry-data-quality-and-abstention#S2",
+              "tms-310-lubrication-thermal-limits#S5",
+              "iso-10218-ts15066-collaborative-robots#S6",
+              "iatf-16949-traceability-records#S4"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q49",
+            "query": "is it acceptable to take the cover off while the tool is still turning",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "osha-1910-212-machine-guarding#S4",
+              "osha-1910-212-machine-guarding#S3"
+            ],
+            "retrieved_top4": [
+              "osha-1910-212-machine-guarding#S2",
+              "osha-1910-147-loto#S1",
+              "tms-204-vibration-severity-limits#S3",
+              "osha-1910-212-machine-guarding#S3"
+            ],
+            "reciprocal_rank": 0.25,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q50",
+            "query": "can one person just cover both jobs if the times clash a bit",
+            "asked_by": "production",
+            "relevant": [
+              "tms-610-production-reroute-and-shift-rules#S5"
+            ],
+            "retrieved_top4": [
+              "osha-1910-147-loto#S5",
+              "osha-1910-147-loto#S1",
+              "osha-1910-147-loto#S4",
+              "tms-450-emergency-maintenance-window#S2"
+            ],
+            "reciprocal_rank": 0.0,
+            "hit_at_4": false
+          },
+          {
+            "id": "Q51",
+            "query": "the number went up but so did the load on the motor, is something actually broken",
+            "asked_by": "reliability",
+            "relevant": [
+              "tms-101-spindle-bearing-maintenance#S2"
+            ],
+            "retrieved_top4": [
+              "tms-101-spindle-bearing-maintenance#S2",
+              "tms-310-lubrication-thermal-limits#S4",
+              "tms-204-vibration-severity-limits#S5",
+              "tms-204-vibration-severity-limits#S1"
+            ],
+            "reciprocal_rank": 1.0,
+            "hit_at_4": true
+          },
+          {
+            "id": "Q52",
+            "query": "who signs off before we take the thing apart on a Saturday",
+            "asked_by": "compliance_safety",
+            "relevant": [
+              "tms-450-emergency-maintenance-window#S2",
+              "tms-450-emergency-maintenance-window#S1"
+            ],
+            "retrieved_top4": [
+              "tms-450-emergency-maintenance-window#S3",
+              "iso-10218-ts15066-collaborative-robots#S7",
+              "tms-450-emergency-maintenance-window#S2",
+              "tms-101-spindle-bearing-maintenance#S5"
+            ],
+            "reciprocal_rank": 0.3333,
+            "hit_at_4": true
+          }
+        ]
+      },
       "dense": {
         "mode": "dense",
         "available": false,
@@ -2066,7 +3039,7 @@
         "note": "not configured: set TOS_EMBEDDINGS to score this retriever (see rag/embeddings.py). Reported as unavailable rather than silently falling back to lexical."
       }
     },
-    "best_available_mode": "lexical"
+    "best_available_mode": "prf"
   },
   "live": null
 }

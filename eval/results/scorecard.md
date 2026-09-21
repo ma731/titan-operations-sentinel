@@ -1,6 +1,6 @@
 # Evaluation scorecard
 
-Generated 2026-09-21 14:52 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
+Generated 2026-09-21 14:59 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
 
 Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
 
@@ -51,6 +51,7 @@ The two error types are not equally bad, so this class is reported as precision 
 | Retriever | recall@1 | recall@4 | MRR | precision@4 | Status |
 |---|---:|---:|---:|---:|---|
 | `lexical` | 78.8% | 86.5% | 0.820 | 22.1% | scored |
+| `prf` | 71.2% | 88.5% | 0.777 | 22.6% | scored |
 | `dense` | | | | | not configured |
 | `hybrid` | | | | | not configured |
 

@@ -60,7 +60,7 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Retrieval | recall@4 **100%** on direct queries, **41.7%** on paraphrases (52 labelled queries) |
 | Triage gate | 240 readings produce **1** agent run: a 0.4% wake rate |
 | Cost of a full run | about 18k tokens, 0 EUR on a free tier |
-| Tests | **131** offline, no API key required |
+| Tests | **190** offline, no API key required |
 
 Every number above is produced by `python -m eval.run_eval` or `python -m pytest`, not
 typed into this file by hand. Where the system disagrees with its own documentation, the
@@ -226,6 +226,14 @@ That gap is the case for embeddings, measured rather than asserted. Set `TOS_EMB
 and the scorecard fills in the dense and hybrid rows; without it they are reported as
 "not configured" rather than quietly falling back to lexical and being labelled hybrid.
 
+A keyless attempt at closing the gap is also in the repo and is **not** switched on.
+Pseudo-relevance feedback (`rag/expansion.py`) lifts paraphrase recall@4 from 41.7% to
+50.0%, which sounds good until you look at the whole picture: it fixes two queries, breaks
+one, and costs 7.5 points of recall@1. Net, one query out of 52, which is noise. It ships
+as an option and is scored on every run, but the default stays plain lexical.
+[F-05](eval/FINDINGS.md) has the table. The harness earned its keep there by stopping a
+change, not by catching a bug.
+
 **This is separate from case memory.** `recall_similar_cases` matches past incidents in a
 structured JSON library. That is case-based memory, not retrieval over documents. Both are
 useful, they are different things, and this README keeps them apart on purpose.
@@ -320,6 +328,12 @@ When the gate trips, the request goes to whoever is configured:
 All three resolve through the same `/api/decision` path, so a run has one resume path and
 one audit record however it was approved. Nothing in the integration decides anything: it
 carries a question to a person and carries the answer back.
+
+The gate is **write-once**. The first decision stands and later clicks are refused,
+whichever channel they arrive on. Before that, a run stayed writable from the moment it
+paused until it finished, so approving in the email and then clicking reject changed the
+recorded decision after the fact. An approval over money cannot be last-click-wins, and
+the audit trail has to hold the decision that was actually acted on.
 
 ---
 

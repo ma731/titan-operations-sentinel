@@ -94,7 +94,7 @@ def evaluate_mode(queries: list[RagQuery], mode: str) -> dict:
 
 def run(queries: list[RagQuery] | None = None) -> dict:
     queries = queries if queries is not None else load_rag_queries()
-    results = {mode: evaluate_mode(queries, mode) for mode in ("lexical", "dense", "hybrid")}
+    results = {mode: evaluate_mode(queries, mode) for mode in ("lexical", "prf", "dense", "hybrid")}
     best = max(
         (r for r in results.values() if r.get("available")),
         key=lambda r: r["recall_at_k"][f"recall@{REPORT_K}"],

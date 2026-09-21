@@ -1,10 +1,13 @@
 """
 The public retrieval API: `search(query, k, mode)` returns cited passages.
 
-Three modes:
-  lexical  BM25 only. Always available, no key, no network. The CI default.
+Four modes:
+  lexical  BM25 only. Always available, no key, no network.
+  prf      BM25 plus pseudo-relevance feedback (rag/expansion.py). Keyless. Available
+           but NOT the default: measured, it trades top-1 accuracy for deeper recall and
+           the net effect is one query out of 52. See F-05 in eval/FINDINGS.md.
   dense    Embedding cosine similarity. Requires TOS_EMBEDDINGS (see rag/embeddings.py).
-  hybrid   Reciprocal rank fusion of the two. Falls back to lexical when dense is off.
+  hybrid   Reciprocal rank fusion of PRF and dense. Falls back to PRF when dense is off.
 
 Hybrid uses reciprocal rank fusion rather than a weighted score blend because BM25 scores
 and cosine similarities are not on comparable scales, and RRF needs no tuning constant per
@@ -16,6 +19,7 @@ from __future__ import annotations
 import os
 
 from . import embeddings as emb
+from .expansion import search as prf_search
 from .index import Chunk, get_index
 
 RRF_K = 60          # the standard reciprocal-rank-fusion damping constant
@@ -26,9 +30,16 @@ Mode = str          # "lexical" | "dense" | "hybrid"
 
 
 def default_mode() -> Mode:
-    """hybrid when embeddings are configured, lexical otherwise. TOS_RAG_MODE overrides."""
+    """hybrid when embeddings are configured, lexical otherwise. TOS_RAG_MODE overrides.
+
+    The keyless default is plain lexical rather than prf. That is an evaluated decision,
+    not an oversight: prf was built to close the paraphrase gap, and on the labelled set
+    it improves recall@4 by two points while losing seven and a half points of recall@1,
+    for a net difference of a single query out of 52. That is inside the noise of a set
+    this size, so it does not get to be the default. F-05 in eval/FINDINGS.md has the
+    numbers."""
     forced = os.getenv("TOS_RAG_MODE", "").strip().lower()
-    if forced in {"lexical", "dense", "hybrid"}:
+    if forced in {"lexical", "prf", "dense", "hybrid"}:
         return forced
     return "hybrid" if emb.available() else "lexical"
 
@@ -71,17 +82,21 @@ def rank(query: str, k: int = DEFAULT_K, mode: Mode | None = None) -> list[tuple
         hits = index.search(query, k=k)
         return [(chunks[i], s, "lexical") for i, s in hits]
 
+    if mode == "prf":
+        hits = prf_search(index, query, k=k)
+        return [(chunks[i], s, "prf") for i, s in hits]
+
     dense = _dense_ranking(query, chunks)
     if dense is None:
-        # Dense was asked for but is not configured. Degrade rather than fail, and say so
-        # in the returned mode so a caller (and the eval) can tell what actually ran.
+        # Dense was asked for but is not configured. Degrade rather than fail, and report
+        # what actually ran so a caller (and the eval) can tell the difference.
         hits = index.search(query, k=k)
         return [(chunks[i], s, "lexical") for i, s in hits]
 
     if mode == "dense":
         return [(chunks[i], s, "dense") for i, s in dense[:k] if s > 0]
 
-    lex = [i for i, _ in index.search(query, k=max(k * 3, 12))]
+    lex = [i for i, _ in prf_search(index, query, k=max(k * 3, 12))]
     den = [i for i, _ in dense[: max(k * 3, 12)]]
     return [(chunks[i], s, "hybrid") for i, s in _rrf([lex, den], k)]
 

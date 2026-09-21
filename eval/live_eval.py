@@ -10,6 +10,8 @@ the CI-on-every-push suite. What it measures that the offline suite cannot:
   gate_decision        did the run reach the human approval gate when it should have
   terminal_status      did the run end in the right state
   citation_rate        do the grounded agents cite a real corpus section, or just assert
+  numeric_groundedness every number in a report traced back to a tool result, because an
+                       invented figure in a costed plan is the expensive failure
   tokens / cost / s    what one run costs, per agent
 
 The human decision is auto-answered with "approve" so the run completes unattended. That
@@ -27,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import observability  # noqa: E402
 
+from . import groundedness  # noqa: E402
 from .metrics import SetScore, Tally  # noqa: E402
 from .scenarios import Scenario, load_scenarios  # noqa: E402
 
@@ -87,11 +90,13 @@ def run_one(scenario: Scenario, timeout_note: str = "") -> dict:
     elapsed = time.perf_counter() - started
 
     tools_by_agent: dict[str, set[str]] = {}
+    results_by_agent: dict[str, list] = {}
     reports: dict[str, str] = {}
     visited: list[str] = []
     for e in events:
         if e.get("type") == "tool_call":
             tools_by_agent.setdefault(e.get("agent", "?"), set()).add(e.get("tool", "?"))
+            results_by_agent.setdefault(e.get("agent", "?"), []).append(e.get("result"))
         elif e.get("type") == "agent_report":
             agent = e.get("agent", "?")
             reports[agent] = e.get("report", "")
@@ -107,6 +112,7 @@ def run_one(scenario: Scenario, timeout_note: str = "") -> dict:
         "visited": visited,
         "tools_by_agent": {a: sorted(t) for a, t in tools_by_agent.items()},
         "reports": reports,
+        "groundedness": groundedness.score_run(reports, results_by_agent),
         "reached_approval_gate": interrupted,
         "status": final.get("status"),
         "risk": final.get("risk"),
@@ -136,6 +142,8 @@ def run(scenarios: list[Scenario] | None = None, limit: int | None = None) -> di
 
     runs, cited, grounded_reports, hallucinated = [], 0, 0, []
     total_tokens = total_cost = total_seconds = 0.0
+    numbers_checked = numbers_ungrounded = 0
+    ungrounded_examples: list[dict] = []
     errors = 0
 
     for s in scenarios:
@@ -172,6 +180,14 @@ def run(scenarios: list[Scenario] | None = None, limit: int | None = None) -> di
             if bad:
                 hallucinated.append({"case": s.id, "agent": agent, "invented": bad})
 
+        g = obs.get("groundedness") or {}
+        numbers_checked += g.get("numbers_checked", 0)
+        numbers_ungrounded += g.get("ungrounded_numbers", 0)
+        for agent, detail in (g.get("by_agent") or {}).items():
+            if detail.get("ungrounded"):
+                ungrounded_examples.append({"case": s.id, "agent": agent,
+                                            "numbers": detail["ungrounded"]})
+
         total_tokens += obs["usage"]["total_tokens"]
         total_cost += obs["usage"]["estimated_cost_eur"]
         total_seconds += obs["seconds"]
@@ -190,6 +206,13 @@ def run(scenarios: list[Scenario] | None = None, limit: int | None = None) -> di
             "reports_with_a_valid_citation": cited,
             "citation_rate": round(cited / grounded_reports, 4) if grounded_reports else None,
             "invented_citations": hallucinated,
+            "numbers_checked": numbers_checked,
+            "ungrounded_numbers": numbers_ungrounded,
+            "numeric_groundedness": (
+                round((numbers_checked - numbers_ungrounded) / numbers_checked, 4)
+                if numbers_checked else None
+            ),
+            "ungrounded_examples": ungrounded_examples[:20],
         },
         "efficiency": {
             "tokens_per_run": round(total_tokens / n, 1),
