@@ -77,6 +77,37 @@ def test_health_reports_what_is_actually_wired_up(client):
     assert body["approval"]["active"] in {"console", "slack", "email"}
 
 
+def test_invalid_decision_does_not_become_approval(client, pending_run):
+    rid, event = pending_run
+    result = client.post("/api/decision", json={"run_id": rid, "decision": "anything"}).json()
+    assert not result["ok"]
+    assert not event.is_set()
+
+
+def test_ambiguous_decision_requires_run_id(client, pending_run):
+    main._decision_ready["second"] = threading.Event()
+    try:
+        result = client.post("/api/decision", json={"decision": "approve"}).json()
+        assert not result["ok"]
+        assert not pending_run[1].is_set()
+    finally:
+        main._decision_ready.pop("second")
+
+
+def test_stream_reports_scoped_usage_and_abstains_without_model(client, monkeypatch):
+    import graph
+    def unavailable():
+        raise RuntimeError("No model configured")
+    monkeypatch.setattr(graph, "build_agents", unavailable)
+    response = client.get("/api/run")
+    events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")]
+    plan = next(e for e in events if e["type"] == "plan")
+    assert plan["status"] == "escalated"
+    usage = next(e for e in events if e["type"] == "usage")
+    assert usage["total_tokens"] == 0
+    assert not main._decision_ready
+
+
 # --- the Slack approval path, end to end ----------------------------------- #
 def test_a_signed_slack_approve_resolves_the_paused_run(client, pending_run, monkeypatch):
     run_id, event = pending_run

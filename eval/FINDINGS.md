@@ -173,6 +173,21 @@ quietly reporting a lexical number under a hybrid label.
 
 ---
 
+## F-06 (fixed 2026-09-21) Policy unit results did not prove graph integration
+
+The original 190 passing tests missed four integration failures: historical failure text
+overrode a current LOW risk verdict; the last safety tool result could erase a HALT;
+missing safety output could clear a run; and rejection still entered model synthesis.
+All 34 labelled scenarios now traverse the real graph with scripted specialist messages
+and real tools. Separate failure tests cover construction, invocation and missing evidence.
+No labels were changed. Rejection and HALT now produce deterministic withheld plans.
+
+The live harness also ignored scenario fixtures and reread the demo files. Scoped tool
+inputs now supply telemetry and quotes, and labelled actions reach compliance instructions.
+Synthetic runs cannot modify case memory or send approval notifications. Citation credit
+requires retrieval by the reporting agent, while dense queries use the query embedding
+method and a separate cache namespace. See [the review](../docs/END_TO_END_REVIEW.md).
+
 ## Known limits of the suite itself
 
 Worth stating plainly, because a scorecard that does not describe its own blind spots is

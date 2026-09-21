@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile
     image: titan-operations-sentinel-backend
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     env_file:
       - path: .env
         required: false
@@ -32,7 +32,8 @@ services:
       LANGFUSE_HOST: ${LANGFUSE_HOST:-}
     volumes:
       # The audit trail is the point of the audit trail, so it survives the container.
-      - ./logs:/app/logs
+      - tos-logs:/app/logs
+      - tos-memory:/app/data/memory
     restart: unless-stopped
 
   console:
@@ -41,8 +42,12 @@ services:
       dockerfile: Dockerfile.frontend
     image: titan-operations-sentinel-console
     ports:
-      - "5173:80"
+      - "127.0.0.1:5173:80"
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  tos-logs:
+  tos-memory:

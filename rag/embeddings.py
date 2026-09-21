@@ -30,8 +30,8 @@ EMBEDDING_PROVIDERS = {
 }
 
 
-def _cache_key(model: str, text: str) -> str:
-    return f"{model}::{hashlib.sha1(text.encode('utf-8')).hexdigest()}"
+def _cache_key(model: str, text: str, kind: str = "document") -> str:
+    return f"{model}::{kind}::{hashlib.sha1(text.encode('utf-8')).hexdigest()}"
 
 
 @lru_cache(maxsize=1)
@@ -73,10 +73,9 @@ def available() -> bool:
     return resolve_embedding_model() is not None
 
 
-@lru_cache(maxsize=1)
-def _client():
+@lru_cache(maxsize=4)
+def _client(spec: str):
     """Build the LangChain embeddings client for the resolved provider, or None."""
-    spec = resolve_embedding_model()
     if not spec:
         return None
     provider, _, model = spec.partition(":")
@@ -98,29 +97,39 @@ def _client():
     return None
 
 
-def embed(texts: list[str]) -> list[list[float]] | None:
+def embed(texts: list[str], *, query: bool = False) -> list[list[float]] | None:
     """Embed a batch, using the cache for anything already seen. Returns None when dense
     retrieval is unavailable, which callers treat as 'lexical only'."""
     spec = resolve_embedding_model()
-    client = _client()
-    if not spec or client is None:
+    if not spec:
         return None
-
+    kind = "query" if query else "document"
     cache = _cache()
-    missing = [t for t in texts if _cache_key(spec, t) not in cache]
+    missing = list(dict.fromkeys(t for t in texts if _cache_key(spec, t, kind) not in cache))
     if missing:
+        client = _client(spec)
+        if client is None:
+            return None
         try:
-            fresh = client.embed_documents(missing)
+            fresh = ([client.embed_query(t) for t in missing] if query else
+                     client.embed_documents(missing))
+            if len(fresh) != len(missing) or not all(
+                vec and all(isinstance(x, (int, float)) and math.isfinite(x) for x in vec)
+                for vec in fresh
+            ):
+                return None
         except Exception as exc:  # noqa: BLE001
             print(f"[rag] embedding call failed ({exc}); falling back to lexical retrieval.")
             return None
         for text, vec in zip(missing, fresh, strict=True):
-            cache[_cache_key(spec, text)] = vec
+            cache[_cache_key(spec, text, kind)] = vec
         _save_cache(cache)
-    return [cache[_cache_key(spec, t)] for t in texts]
+    return [cache[_cache_key(spec, t, kind)] for t in texts]
 
 
 def cosine(a: list[float], b: list[float]) -> float:
+    if len(a) != len(b) or not a:
+        raise ValueError("embedding dimensions must match and be non-empty")
     dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(y * y for y in b))

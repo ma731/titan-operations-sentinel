@@ -116,8 +116,8 @@ class _StubLLM:
         return (
             "[LLM UNAVAILABLE — TEMPLATED FALLBACK]\n"
             "No model provider was reachable (drop any supported key in .env). "
-            "The deterministic pipeline below ran on real tool data; only the "
-            "natural-language synthesis is templated.\n\n" + user.strip()
+            "The following is the supplied context, not a validated action plan. "
+            "Review tool failures before drawing conclusions.\n\n" + user.strip()
         )
 
 

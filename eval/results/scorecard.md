@@ -1,6 +1,6 @@
 # Evaluation scorecard
 
-Generated 2026-09-21 14:59 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
+Generated 2026-09-21 16:34 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
 
 Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
 
@@ -47,6 +47,7 @@ The two error types are not equally bad, so this class is reported as precision 
 ## 2. Retrieval suite (no key, no tokens, deterministic)
 
 12 documents, 78 section-level chunks, 1208 terms. Scored at k=4, the default the `search_technical_docs` tool uses.
+The legacy metric name `recall@k` denotes an any-relevant-passage hit rate. It does not measure retrieval of every relevant section.
 
 | Retriever | recall@1 | recall@4 | MRR | precision@4 | Status |
 |---|---:|---:|---:|---:|---|

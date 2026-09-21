@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from .runtime_inputs import current
+
 DATA_DIR = Path(__file__).parent.parent / "data" / "suppliers"
 
 
@@ -20,6 +22,11 @@ def supplier_catalog(part_ids: list[str], scenario: str = "default") -> dict:
     which no external supplier or warehouse transfer fits the failure window, forcing
     the agent to adapt (cross-plant transfer). Same schema, different data.
     """
+    sourcing = current().get("sourcing")
+    if sourcing is not None:
+        return {"parts": {p: {"source": "labelled scenario"} for p in part_ids},
+                "combined_options": sourcing.get("options", []),
+                "scenario_note": "Use these scenario quotes; do not substitute demo quotes."}
     filename = "supplier_catalog_edge.json" if scenario == "edge" else "supplier_catalog.json"
     catalog_file = DATA_DIR / filename
     if not catalog_file.exists():
