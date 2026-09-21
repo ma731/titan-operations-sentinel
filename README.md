@@ -54,8 +54,8 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 
 | | |
 |---|---|
-| Evaluation | **98.2%** across **166** offline checks, **27** labelled scenarios ([scorecard](eval/results/scorecard.md)) |
-| Safety gate | **100%** recall on the HALT class, 0 missed halts, 1 known false positive ([F-02](eval/FINDINGS.md)) |
+| Evaluation | **100%** across **208** offline checks, **34** labelled scenarios ([scorecard](eval/results/scorecard.md)) |
+| Safety gate | **100%** recall **and** precision on the HALT class, 0 missed halts, 0 false positives |
 | Routing guarantee | verified over **every** path the policy permits, not a sampled run |
 | Retrieval | recall@4 **100%** on direct queries, **41.7%** on paraphrases (52 labelled queries) |
 | Triage gate | 240 readings produce **1** agent run: a 0.4% wake rate |
@@ -253,10 +253,13 @@ Two things worth knowing about how it is built:
    properties on all of them. This is how the suite found that a low-risk run could finish
    without ever passing the safety gate, which no demo had ever done but the policy
    permitted ([F-03](eval/FINDINGS.md)).
-2. **Misses are documented, not edited away.** The scorecard is at 98.2%, not 100%. The
-   gap is two open findings, each written up with why it has not simply been patched to
-   green. A suite that always reports 100% is either measuring nothing or being tuned to
-   the answer.
+2. **Misses are fixed or documented, never edited away.** The suite currently reports
+   100%, which is only worth anything because of how it got there. The safety test set
+   was deliberately made adversarial first, at which point HALT recall fell to 71% and
+   precision to 56%: the gate was missing a jumpered light curtain and halting a safety
+   sign-off. The rule was then rewritten and both went to 100%. The before and after are
+   in [eval/FINDINGS.md](eval/FINDINGS.md). No label was ever changed to make a metric
+   pass, and the limits of the suite itself are written down in the same file.
 
 ---
 
@@ -427,11 +430,12 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
   retrieval layer, the continuous stream, the approval integrations, CI, and 131 offline
   tests.
 - The remaining-life estimate is a heuristic, not a trained model. It is an MVP stub and is
-  labelled as one. [F-01](eval/FINDINGS.md) records a real threshold inconsistency in it
-  that the evaluation found.
-- The safety keyword list is broader than the rule it implements, which costs HALT
-  precision. It is measured, written up in [F-02](eval/FINDINGS.md), and deliberately not
-  loosened without the team, because narrowing a safety rule is not a lint fix.
+  labelled as one. The evaluation found that it ignored its own documented critical
+  threshold, which is now fixed ([F-01](eval/FINDINGS.md)); the model underneath is still a
+  band table, not a fitted one.
+- The safety rule was rewritten after the evaluation showed the old keyword list both
+  over-fired and under-fired. It now requires a defeating action *and* a hazard control.
+  Both directions are pinned by adversarial scenarios ([F-02](eval/FINDINGS.md)).
 - Reflection replay and automatic signature down-weighting are designed, not live.
 - The retrieval corpus is small and clean, so the direct-split recall says the corpus is
   well separated rather than that retrieval is solved. The

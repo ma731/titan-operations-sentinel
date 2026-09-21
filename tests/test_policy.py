@@ -11,6 +11,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import pytest
+
 import policy
 
 AGENTS = ["reliability", "supply_chain", "production", "quality", "compliance_safety"]
@@ -140,6 +142,76 @@ def test_every_permitted_high_risk_path_covers_all_agents_and_terminates():
         assert agents[0] == "reliability"
         assert agents[-1] == "compliance_safety"
         assert set(agents) == set(AGENTS)
+
+
+# --- the safety rule, both directions -------------------------------------- #
+# These pin F-02. The rule fires on a defeating action applied to a hazard control, so
+# both halves are tested: unusual phrasings of a bypass must still HALT, and merely
+# saying the word "safety" must not.
+DEFEATS_A_CONTROL = [
+    "bypass the cell safety interlock to keep the line running",
+    "remove the spindle guard to inspect the bearing while running",
+    "disable the door interlock so the machine can run during the repair",
+    "jumper the light curtain so the cell keeps running during the changeover",
+    "tape over the interlock switch during the changeover",
+    "temporarily override the safety system for diagnostics",
+    "defeat the two-hand control on the press to speed up the cycle",
+    "short out the safety relay",
+]
+
+MENTIONS_SAFETY_BUT_DEFEATS_NOTHING = [
+    "record the safety officer sign-off for the emergency maintenance window",
+    "notify the safety officer of the planned window",
+    "attach the safety data sheet to the work order",
+    "schedule the annual safety inspection for the cell",
+    "add the lockout/tagout reference to the maintenance record",
+]
+
+
+@pytest.mark.parametrize("action", DEFEATS_A_CONTROL)
+def test_defeating_a_hazard_control_always_halts(action):
+    """A false negative here is a safety failure, so this is the one list that is not
+    allowed to shrink."""
+    from tools.safety_gate import safety_gate
+
+    assert policy.halt_from_safety(safety_gate(action)) is True, action
+
+
+@pytest.mark.parametrize("action", MENTIONS_SAFETY_BUT_DEFEATS_NOTHING)
+def test_mentioning_safety_is_not_itself_a_violation(action):
+    """The old rule halted every one of these, including the sign-off that the emergency
+    window procedure requires, which meant the gate could block its own procedure."""
+    from tools.safety_gate import safety_gate
+
+    assert policy.halt_from_safety(safety_gate(action)) is False, action
+
+
+def test_a_safety_signoff_still_escalates_rather_than_passing_silently():
+    """Not halting is not the same as waving through: the sign-off still belongs to the
+    safety officer under SAFE-02."""
+    from tools.safety_gate import safety_gate
+
+    verdict = safety_gate("record the safety officer sign-off for the emergency "
+                          "maintenance window")
+    assert verdict["verdict"] == "ESCALATE"
+    assert verdict["authority"] == "safety_officer"
+
+
+def test_the_gate_fails_safe_when_the_rules_are_unreadable(monkeypatch, tmp_path):
+    import tools.safety_gate as sg
+
+    monkeypatch.setattr(sg, "DATA_DIR", tmp_path)       # no safety_rules.json here
+    assert sg.safety_gate("anything at all")["verdict"] == "ESCALATE"
+
+
+def test_tiering_and_the_safety_rule_share_a_vocabulary():
+    """If the gate learns a new phrasing and the tiering policy does not, the plan would
+    label an action AUTO that the gate then halts."""
+    from tools.safety_gate import safety_gate
+
+    for action in DEFEATS_A_CONTROL:
+        assert policy.action_tier(action) == "ESCALATE", action
+        assert safety_gate(action)["verdict"] == "HALT", action
 
 
 # --- action tiering -------------------------------------------------------- #

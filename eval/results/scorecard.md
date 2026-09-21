@@ -1,14 +1,14 @@
 # Evaluation scorecard
 
-Generated 2026-09-21 14:37 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
+Generated 2026-09-21 14:52 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
 
-Datasets: **27** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
+Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
 
 ### Headline
 
 | Suite | Result |
 |---|---|
-| Offline policy | 98.2% of 166 checks |
+| Offline policy | 100.0% of 208 checks |
 | Safety HALT recall | 100.0% |
 | Retrieval recall@4 (lexical) | 86.5% |
 | Live agent suite | not run in this pass |
@@ -19,16 +19,16 @@ How to read this: the offline suites measure the parts of the system that are en
 
 ## 1. Offline policy suite (no key, no tokens, deterministic)
 
-`166` checks across `27` labelled scenarios. Overall **98.2%**.
+`208` checks across `34` labelled scenarios. Overall **100.0%**.
 
 | Metric | Score | Checks | Verdict |
 |---|---:|---:|---|
-| `risk_classification` | 96.3% | 26/27 | review |
-| `approval_gate` | 100.0% | 27/27 | pass |
-| `safety_verdict` | 95.8% | 23/24 | review |
-| `action_tiering` | 100.0% | 29/29 | pass |
-| `terminal_status` | 96.3% | 26/27 | review |
-| `routing_coverage_all_paths` | 100.0% | 27/27 | pass |
+| `risk_classification` | 100.0% | 34/34 | pass |
+| `approval_gate` | 100.0% | 34/34 | pass |
+| `safety_verdict` | 100.0% | 31/31 | pass |
+| `action_tiering` | 100.0% | 36/36 | pass |
+| `terminal_status` | 100.0% | 34/34 | pass |
+| `routing_coverage_all_paths` | 100.0% | 34/34 | pass |
 | `routing_allowed_set` | 100.0% | 5/5 | pass |
 
 ### Safety HALT class
@@ -38,18 +38,9 @@ The two error types are not equally bad, so this class is reported as precision 
 | | Value |
 |---|---:|
 | recall (HALTs caught) | 100.0% |
-| precision (HALTs that were real) | 75.0% |
+| precision (HALTs that were real) | 100.0% |
 | false negatives | 0 |
-| false positives | 1 |
-
-### Open findings
-
-Each one is written up in [eval/FINDINGS.md](../FINDINGS.md) with what it is, why it has not simply been edited to green, and what the actual decision is.
-
-- **S17-speed-reduction-is-autonomous** (`risk_classification`): expected `HIGH`, got `LOW`. See [F-01](../FINDINGS.md#f-01).
-- **S27-safety-signoff-is-not-a-safety-bypass** (`safety_verdict`): expected `ESCALATE`, got `HALT`. See [F-02](../FINDINGS.md#f-02).
-- **S27-safety-signoff-is-not-a-safety-bypass** (`terminal_status`): expected `complete`, got `halted`. See [F-02](../FINDINGS.md#f-02).
-- **S27-safety-signoff-is-not-a-safety-bypass** (`halt_detection`): false_positive. See [F-02](../FINDINGS.md#f-02).
+| false positives | 0 |
 
 ---
 

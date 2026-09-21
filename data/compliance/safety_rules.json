@@ -4,15 +4,62 @@
   "rules": [
     {
       "rule_id": "SAFE-01",
-      "keywords": ["safety", "interlock", "guard", "shutdown", "lockout", "e-stop"],
       "verdict": "HALT",
       "authority": "safety_officer",
       "basis": "OSHA 1910.147 (lockout/tagout) + machine guarding",
-      "detail": "Any action that disables, bypasses, or modifies a safety interlock or guard is HALTED and escalated to the safety officer."
+      "detail": "Any action that disables, bypasses, defeats or modifies a safety interlock, guard or other hazard control is HALTED and escalated to the safety officer. Matching requires BOTH a defeating action and a hazard control, so mentioning safety is not itself a violation and an unusual wording (jumper, tape over, short out) is still caught.",
+      "match": {
+        "all_of": [
+          [
+            "bypass",
+            "disable",
+            "deactivate",
+            "defeat",
+            "jumper",
+            "override",
+            "remove",
+            "modify",
+            "tamper",
+            "tape over",
+            "block",
+            "wedge",
+            "disconnect",
+            "short out",
+            "circumvent",
+            "switch off",
+            "turn off"
+          ],
+          [
+            "interlock",
+            "guard",
+            "e-stop",
+            "emergency stop",
+            "light curtain",
+            "presence sensing",
+            "safety mat",
+            "two-hand control",
+            "safety system",
+            "safety device",
+            "safety control",
+            "lockout",
+            "tagout",
+            "protective separation",
+            "safety relay",
+            "guarding"
+          ]
+        ]
+      }
     },
     {
       "rule_id": "SAFE-02",
-      "keywords": ["emergency maintenance", "bearing replacement", "lockout/tagout", "open machine", "open the machine", "maintenance window"],
+      "keywords": [
+        "emergency maintenance",
+        "bearing replacement",
+        "lockout/tagout",
+        "open machine",
+        "open the machine",
+        "maintenance window"
+      ],
       "verdict": "ESCALATE",
       "authority": "safety_officer",
       "basis": "OSHA 1910.147",
@@ -20,7 +67,13 @@
     },
     {
       "rule_id": "SAFE-03",
-      "keywords": ["reduce speed", "throttle", "reroute", "update log", "draft"],
+      "keywords": [
+        "reduce speed",
+        "throttle",
+        "reroute",
+        "update log",
+        "draft"
+      ],
       "verdict": "OK",
       "authority": "none",
       "basis": "within OEM operating envelope",
@@ -28,7 +81,14 @@
     }
   ],
   "audit_requirements": {
-    "osha_log_fields": ["timestamp", "machine_id", "action", "approver", "lockout_tagout_ref", "operators_present"],
+    "osha_log_fields": [
+      "timestamp",
+      "machine_id",
+      "action",
+      "approver",
+      "lockout_tagout_ref",
+      "operators_present"
+    ],
     "note": "Audits currently require manual cross-referencing of 20+ systems; the agent assembles this from the run audit log automatically."
   }
 }

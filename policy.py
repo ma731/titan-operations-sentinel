@@ -157,12 +157,21 @@ def allowed_next(
 # --------------------------------------------------------------------------- #
 # 5. Action tiering (the reference the final plan is scored against)
 # --------------------------------------------------------------------------- #
+# Kept deliberately in step with SAFE-01 in data/compliance/safety_rules.json. If the
+# safety rule learns a new way of saying "defeat a hazard control", the tiering policy has
+# to learn it too, or the plan would tier an action AUTO that the gate then halts.
 _ESCALATE_MARKERS = (
-    "interlock", "guard", "lockout", "tagout", "e-stop", "emergency stop",
-    "safety system", "bypass", "override safety", "disable safety",
+    "interlock", "guard", "guarding", "lockout", "tagout", "e-stop", "emergency stop",
+    "light curtain", "presence sensing", "safety mat", "two-hand control",
+    "safety system", "safety device", "safety control", "safety relay",
+    "protective separation", "bypass", "defeat", "jumper", "tamper",
+    "override safety", "disable safety", "tape over",
 )
 _APPROVE_MARKERS = (
-    "purchase", "buy", "order", "expedite", "rush", "procure", "procurement",
+    # "order" on its own matched "work order", which tiered filing a document as a spend.
+    # Committing money reads as a verb phrase, so the markers are verb phrases.
+    "purchase", "buy", "order the", "place an order", "raise an order", "purchase order",
+    "expedite", "rush", "procure", "procurement",
     "emergency maintenance", "maintenance window", "overtime", "premium",
     "freight", "transfer", "replace the bearing", "bearing replacement",
 )

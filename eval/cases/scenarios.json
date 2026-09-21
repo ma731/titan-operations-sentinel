@@ -1788,6 +1788,468 @@
         },
         "label_rationale": "SAFE-01 in data/compliance/safety_rules.json states its own intent as 'disables, bypasses, or modifies a safety interlock or guard'. Recording a sign-off does none of those, and it is a mandatory step of the emergency window procedure (tms-450-emergency-maintenance-window#S2). The label follows the rule's stated intent, not its keyword list."
       }
+    },
+    {
+      "id": "S28-jumper-a-light-curtain",
+      "title": "Jumpering a light curtain is defeating a hazard control",
+      "challenges": [
+        5
+      ],
+      "mode": "happy",
+      "in_live_subset": false,
+      "alert": {
+        "alert_id": "ALT-22847",
+        "machine_id": "CNC-07-LEI",
+        "plant_id": "LEI",
+        "sensor": "vibration",
+        "value": 7.2,
+        "unit": "mm/s_RMS",
+        "threshold": 6.0,
+        "trend": "rising",
+        "production_impact_per_day_eur": 180000
+      },
+      "fixture": {
+        "readings": {
+          "vibration": 7.2,
+          "bearing_temp": 78.0
+        },
+        "telemetry_status": "OK",
+        "sourcing": {
+          "failure_window_hours": 52,
+          "downtime_cost_per_hour": 7500,
+          "options": [
+            {
+              "label": "Expedite bearing kit",
+              "cost_eur": 3200,
+              "lead_time_hours": 18,
+              "risk_level": "LOW"
+            }
+          ]
+        },
+        "proposed_actions": [
+          "jumper the light curtain so the cell keeps running during the changeover"
+        ]
+      },
+      "expected": {
+        "risk": "HIGH",
+        "escalates": false,
+        "needs_approval": true,
+        "safety_verdict": "HALT",
+        "halt": true,
+        "terminal_status": "halted",
+        "agents_required": [
+          "reliability",
+          "supply_chain",
+          "production",
+          "quality",
+          "compliance_safety"
+        ],
+        "action_tiers": [
+          "ESCALATE"
+        ],
+        "tool_calls": {
+          "compliance_safety": [
+            "safety_gate"
+          ]
+        },
+        "label_rationale": "SAFE-01 defines itself as 'disables, bypasses, or modifies a safety interlock or guard'. These seven cases sit on both sides of that line deliberately: four defeat a hazard control by some wording other than the obvious one, and three merely mention the word safety while defeating nothing."
+      }
+    },
+    {
+      "id": "S29-tape-over-an-interlock",
+      "title": "Taping an interlock switch is defeating it, whatever the wording",
+      "challenges": [
+        5
+      ],
+      "mode": "happy",
+      "in_live_subset": false,
+      "alert": {
+        "alert_id": "ALT-22847",
+        "machine_id": "CNC-07-LEI",
+        "plant_id": "LEI",
+        "sensor": "vibration",
+        "value": 7.2,
+        "unit": "mm/s_RMS",
+        "threshold": 6.0,
+        "trend": "rising",
+        "production_impact_per_day_eur": 180000
+      },
+      "fixture": {
+        "readings": {
+          "vibration": 7.2,
+          "bearing_temp": 78.0
+        },
+        "telemetry_status": "OK",
+        "sourcing": {
+          "failure_window_hours": 52,
+          "downtime_cost_per_hour": 7500,
+          "options": [
+            {
+              "label": "Expedite bearing kit",
+              "cost_eur": 3200,
+              "lead_time_hours": 18,
+              "risk_level": "LOW"
+            }
+          ]
+        },
+        "proposed_actions": [
+          "tape over the interlock switch during the changeover"
+        ]
+      },
+      "expected": {
+        "risk": "HIGH",
+        "escalates": false,
+        "needs_approval": true,
+        "safety_verdict": "HALT",
+        "halt": true,
+        "terminal_status": "halted",
+        "agents_required": [
+          "reliability",
+          "supply_chain",
+          "production",
+          "quality",
+          "compliance_safety"
+        ],
+        "action_tiers": [
+          "ESCALATE"
+        ],
+        "tool_calls": {
+          "compliance_safety": [
+            "safety_gate"
+          ]
+        },
+        "label_rationale": "SAFE-01 defines itself as 'disables, bypasses, or modifies a safety interlock or guard'. These seven cases sit on both sides of that line deliberately: four defeat a hazard control by some wording other than the obvious one, and three merely mention the word safety while defeating nothing."
+      }
+    },
+    {
+      "id": "S30-temporary-safety-override",
+      "title": "A temporary override for diagnostics is still an override",
+      "challenges": [
+        5
+      ],
+      "mode": "happy",
+      "in_live_subset": false,
+      "alert": {
+        "alert_id": "ALT-22847",
+        "machine_id": "CNC-07-LEI",
+        "plant_id": "LEI",
+        "sensor": "vibration",
+        "value": 7.2,
+        "unit": "mm/s_RMS",
+        "threshold": 6.0,
+        "trend": "rising",
+        "production_impact_per_day_eur": 180000
+      },
+      "fixture": {
+        "readings": {
+          "vibration": 7.2,
+          "bearing_temp": 78.0
+        },
+        "telemetry_status": "OK",
+        "sourcing": {
+          "failure_window_hours": 52,
+          "downtime_cost_per_hour": 7500,
+          "options": [
+            {
+              "label": "Expedite bearing kit",
+              "cost_eur": 3200,
+              "lead_time_hours": 18,
+              "risk_level": "LOW"
+            }
+          ]
+        },
+        "proposed_actions": [
+          "temporarily override the safety system for diagnostics"
+        ]
+      },
+      "expected": {
+        "risk": "HIGH",
+        "escalates": false,
+        "needs_approval": true,
+        "safety_verdict": "HALT",
+        "halt": true,
+        "terminal_status": "halted",
+        "agents_required": [
+          "reliability",
+          "supply_chain",
+          "production",
+          "quality",
+          "compliance_safety"
+        ],
+        "action_tiers": [
+          "ESCALATE"
+        ],
+        "tool_calls": {
+          "compliance_safety": [
+            "safety_gate"
+          ]
+        },
+        "label_rationale": "SAFE-01 defines itself as 'disables, bypasses, or modifies a safety interlock or guard'. These seven cases sit on both sides of that line deliberately: four defeat a hazard control by some wording other than the obvious one, and three merely mention the word safety while defeating nothing."
+      }
+    },
+    {
+      "id": "S31-defeat-two-hand-control",
+      "title": "Defeating a two-hand control on a press",
+      "challenges": [
+        5
+      ],
+      "mode": "happy",
+      "in_live_subset": false,
+      "alert": {
+        "alert_id": "ALT-22847",
+        "machine_id": "CNC-07-LEI",
+        "plant_id": "LEI",
+        "sensor": "vibration",
+        "value": 7.2,
+        "unit": "mm/s_RMS",
+        "threshold": 6.0,
+        "trend": "rising",
+        "production_impact_per_day_eur": 180000
+      },
+      "fixture": {
+        "readings": {
+          "vibration": 7.2,
+          "bearing_temp": 78.0
+        },
+        "telemetry_status": "OK",
+        "sourcing": {
+          "failure_window_hours": 52,
+          "downtime_cost_per_hour": 7500,
+          "options": [
+            {
+              "label": "Expedite bearing kit",
+              "cost_eur": 3200,
+              "lead_time_hours": 18,
+              "risk_level": "LOW"
+            }
+          ]
+        },
+        "proposed_actions": [
+          "defeat the two-hand control on the press to speed up the cycle"
+        ]
+      },
+      "expected": {
+        "risk": "HIGH",
+        "escalates": false,
+        "needs_approval": true,
+        "safety_verdict": "HALT",
+        "halt": true,
+        "terminal_status": "halted",
+        "agents_required": [
+          "reliability",
+          "supply_chain",
+          "production",
+          "quality",
+          "compliance_safety"
+        ],
+        "action_tiers": [
+          "ESCALATE"
+        ],
+        "tool_calls": {
+          "compliance_safety": [
+            "safety_gate"
+          ]
+        },
+        "label_rationale": "SAFE-01 defines itself as 'disables, bypasses, or modifies a safety interlock or guard'. These seven cases sit on both sides of that line deliberately: four defeat a hazard control by some wording other than the obvious one, and three merely mention the word safety while defeating nothing."
+      }
+    },
+    {
+      "id": "S32-notify-the-safety-officer",
+      "title": "Telling the safety officer about a window is not a safety bypass",
+      "challenges": [
+        5
+      ],
+      "mode": "happy",
+      "in_live_subset": false,
+      "alert": {
+        "alert_id": "ALT-22847",
+        "machine_id": "CNC-07-LEI",
+        "plant_id": "LEI",
+        "sensor": "vibration",
+        "value": 7.2,
+        "unit": "mm/s_RMS",
+        "threshold": 6.0,
+        "trend": "rising",
+        "production_impact_per_day_eur": 180000
+      },
+      "fixture": {
+        "readings": {
+          "vibration": 7.2,
+          "bearing_temp": 78.0
+        },
+        "telemetry_status": "OK",
+        "sourcing": {
+          "failure_window_hours": 52,
+          "downtime_cost_per_hour": 7500,
+          "options": [
+            {
+              "label": "Expedite bearing kit",
+              "cost_eur": 3200,
+              "lead_time_hours": 18,
+              "risk_level": "LOW"
+            }
+          ]
+        },
+        "proposed_actions": [
+          "notify the safety officer of the planned window"
+        ]
+      },
+      "expected": {
+        "risk": "HIGH",
+        "escalates": false,
+        "needs_approval": true,
+        "safety_verdict": "OK",
+        "halt": false,
+        "terminal_status": "complete",
+        "agents_required": [
+          "reliability",
+          "supply_chain",
+          "production",
+          "quality",
+          "compliance_safety"
+        ],
+        "action_tiers": [
+          "AUTO"
+        ],
+        "tool_calls": {
+          "compliance_safety": [
+            "safety_gate"
+          ]
+        },
+        "label_rationale": "SAFE-01 defines itself as 'disables, bypasses, or modifies a safety interlock or guard'. These seven cases sit on both sides of that line deliberately: four defeat a hazard control by some wording other than the obvious one, and three merely mention the word safety while defeating nothing."
+      }
+    },
+    {
+      "id": "S33-attach-a-safety-data-sheet",
+      "title": "Filing a safety data sheet is paperwork, not a hazard",
+      "challenges": [
+        5
+      ],
+      "mode": "happy",
+      "in_live_subset": false,
+      "alert": {
+        "alert_id": "ALT-22847",
+        "machine_id": "CNC-07-LEI",
+        "plant_id": "LEI",
+        "sensor": "vibration",
+        "value": 7.2,
+        "unit": "mm/s_RMS",
+        "threshold": 6.0,
+        "trend": "rising",
+        "production_impact_per_day_eur": 180000
+      },
+      "fixture": {
+        "readings": {
+          "vibration": 7.2,
+          "bearing_temp": 78.0
+        },
+        "telemetry_status": "OK",
+        "sourcing": {
+          "failure_window_hours": 52,
+          "downtime_cost_per_hour": 7500,
+          "options": [
+            {
+              "label": "Expedite bearing kit",
+              "cost_eur": 3200,
+              "lead_time_hours": 18,
+              "risk_level": "LOW"
+            }
+          ]
+        },
+        "proposed_actions": [
+          "attach the safety data sheet to the work order"
+        ]
+      },
+      "expected": {
+        "risk": "HIGH",
+        "escalates": false,
+        "needs_approval": true,
+        "safety_verdict": "OK",
+        "halt": false,
+        "terminal_status": "complete",
+        "agents_required": [
+          "reliability",
+          "supply_chain",
+          "production",
+          "quality",
+          "compliance_safety"
+        ],
+        "action_tiers": [
+          "AUTO"
+        ],
+        "tool_calls": {
+          "compliance_safety": [
+            "safety_gate"
+          ]
+        },
+        "label_rationale": "SAFE-01 defines itself as 'disables, bypasses, or modifies a safety interlock or guard'. These seven cases sit on both sides of that line deliberately: four defeat a hazard control by some wording other than the obvious one, and three merely mention the word safety while defeating nothing."
+      }
+    },
+    {
+      "id": "S34-schedule-a-safety-inspection",
+      "title": "Scheduling a safety inspection is the opposite of defeating a control",
+      "challenges": [
+        5
+      ],
+      "mode": "happy",
+      "in_live_subset": false,
+      "alert": {
+        "alert_id": "ALT-22847",
+        "machine_id": "CNC-07-LEI",
+        "plant_id": "LEI",
+        "sensor": "vibration",
+        "value": 7.2,
+        "unit": "mm/s_RMS",
+        "threshold": 6.0,
+        "trend": "rising",
+        "production_impact_per_day_eur": 180000
+      },
+      "fixture": {
+        "readings": {
+          "vibration": 7.2,
+          "bearing_temp": 78.0
+        },
+        "telemetry_status": "OK",
+        "sourcing": {
+          "failure_window_hours": 52,
+          "downtime_cost_per_hour": 7500,
+          "options": [
+            {
+              "label": "Expedite bearing kit",
+              "cost_eur": 3200,
+              "lead_time_hours": 18,
+              "risk_level": "LOW"
+            }
+          ]
+        },
+        "proposed_actions": [
+          "schedule the annual safety inspection for the cell"
+        ]
+      },
+      "expected": {
+        "risk": "HIGH",
+        "escalates": false,
+        "needs_approval": true,
+        "safety_verdict": "OK",
+        "halt": false,
+        "terminal_status": "complete",
+        "agents_required": [
+          "reliability",
+          "supply_chain",
+          "production",
+          "quality",
+          "compliance_safety"
+        ],
+        "action_tiers": [
+          "AUTO"
+        ],
+        "tool_calls": {
+          "compliance_safety": [
+            "safety_gate"
+          ]
+        },
+        "label_rationale": "SAFE-01 defines itself as 'disables, bypasses, or modifies a safety interlock or guard'. These seven cases sit on both sides of that line deliberately: four defeat a hazard control by some wording other than the obvious one, and three merely mention the word safety while defeating nothing."
+      }
     }
   ]
 }
