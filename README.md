@@ -9,6 +9,13 @@
 
 **[Open the live demo](https://ma731.github.io/titan-operations-sentinel/)** · [Evaluation scorecard](eval/results/scorecard.md) · [Open findings](eval/FINDINGS.md) · [Architecture](#architecture)
 
+![One alert, six agents, a costed and safety-gated plan](docs/demo.gif)
+
+*64 seconds, real time: one sensor alert enters, the supervisor routes five specialists,
+the spend hits the 500 EUR ceiling and stops for a human, and the run ends in a tiered
+action plan at 79.7:1 ROI. Regenerate it with `python scripts/record_demo.py`, which
+drives the real console rather than being a screen capture that quietly goes stale.*
+
 > The demo runs in Replay mode: a recorded run played back in the browser. No API key, no
 > cost, nothing to install. The console labels it as a recording rather than passing it off
 > as live.
@@ -390,7 +397,7 @@ integrations/         Slack and email approval routing
 prompts/              5 agent prompts plus supervisor, orchestrator, guardrails, self-eval
 data/                 simulated scenario data for all five challenges, plus case memory
 webapp/               React console and FastAPI SSE backend
-scripts/              run_demo.py, view_run.py
+scripts/              run_demo.py, view_run.py, record_demo.py (regenerates the GIF)
 tests/                131 offline tests
 docs/                 brief, case study, tool catalog, architecture, appendix pack
 ```

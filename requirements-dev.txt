@@ -7,3 +7,9 @@ ruff>=0.6.0
 # Optional. Tracing is off unless LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are set,
 # so this is installed for CI and local development rather than required to run anything.
 langfuse>=2.50.0
+
+# Only needed to regenerate the README demo GIF (scripts/record_demo.py). Nothing the app
+# runs imports either of these. CI installs the packages with the rest of this file, but
+# never runs `playwright install`, so the ~115 MB browser binary is not downloaded there.
+playwright>=1.45.0
+pillow>=10.0.0
