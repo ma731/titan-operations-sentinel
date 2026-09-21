@@ -18,3 +18,9 @@ data/skills/
 
 # vite build output (rebuild with npm run build)
 webapp/frontend/dist/
+
+# ruff cache
+.ruff_cache/
+
+# generated retrieval index cache (the manifest IS committed; embeddings are optional)
+# rag/index/embeddings.json is committed on purpose so dense numbers reproduce without a key

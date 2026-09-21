@@ -25,8 +25,13 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
+import hashlib
+import hmac
+import time as _time
+import urllib.parse
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
 
 # Make the repo root importable (graph.py, llm.py, agents/, tools/ live there).
@@ -45,7 +50,36 @@ def _sse(payload: dict) -> str:
 
 @app.get("/api/health")
 def health():
-    return {"ok": True}
+    """Liveness plus what is actually wired up, so a demo can show the integrations are
+    real rather than described."""
+    out = {"ok": True, "pending_approvals": list(_decision_ready)}
+    try:
+        import observability
+        import policy
+        from integrations.approval import approval_channels
+        out["observability"] = observability.status()
+        out["approval"] = approval_channels()
+        out["policy"] = policy.summary()
+    except Exception as exc:  # noqa: BLE001 — health must never 500
+        out["detail_error"] = str(exc)[:200]
+    try:
+        from rag.index import corpus_stats
+        from rag.retrieve import default_mode
+        out["retrieval"] = {**corpus_stats(), "mode": default_mode()}
+    except Exception:  # noqa: BLE001
+        pass
+    return out
+
+
+def _resolve(run_id: str | None, choice: str) -> dict:
+    """The single place a paused run is resumed. The console, a Slack button and an email
+    link all land here, so a decision is recorded identically however it arrived."""
+    rid = run_id or (next(iter(_decision_ready)) if _decision_ready else None)
+    if rid and rid in _decision_ready:
+        _decision_value[rid] = "approve" if choice.lower().startswith("a") else "reject"
+        _decision_ready[rid].set()
+        return {"ok": True, "run_id": rid, "decision": _decision_value[rid]}
+    return {"ok": False, "error": "no pending approval", "run_id": run_id}
 
 
 class Decision(BaseModel):
@@ -56,12 +90,87 @@ class Decision(BaseModel):
 @app.post("/api/decision")
 def decision(d: Decision):
     """Resolve the human-in-the-loop approval gate for a paused run."""
-    rid = d.run_id or (next(iter(_decision_ready)) if _decision_ready else None)
-    if rid and rid in _decision_ready:
-        _decision_value[rid] = "approve" if d.decision.lower().startswith("a") else "reject"
-        _decision_ready[rid].set()
-        return {"ok": True, "run_id": rid}
-    return {"ok": False, "error": "no pending approval"}
+    return _resolve(d.run_id, d.decision)
+
+
+@app.get("/api/decision/link", response_class=HTMLResponse)
+def decision_link(run_id: str, decision: str):
+    """Resolve the gate from a link in an approval email.
+
+    A GET that changes state is not something to do casually, so this is scoped as
+    narrowly as it can be: it resolves one named run that is already paused and waiting,
+    it cannot start anything, and a second click on the same link is a no-op because the
+    run is no longer pending. The security boundary is the mailbox, which is the same
+    boundary the plant already uses for a purchase approval by email. For anything
+    stronger, use the Slack channel, which is signed."""
+    result = _resolve(run_id, decision)
+    if result["ok"]:
+        body = (f"<h2>Recorded: {result['decision']}</h2>"
+                f"<p>Run <code>{result['run_id']}</code> has been resumed and your "
+                f"decision is in the audit log.</p>")
+    else:
+        body = ("<h2>Nothing to decide</h2><p>This run is not waiting for an approval. "
+                "It may already have been decided, or it may have timed out.</p>")
+    return HTMLResponse(
+        "<html><head><meta charset='utf-8'><title>Titan Operations Sentinel</title>"
+        "<style>body{font:16px/1.5 system-ui,sans-serif;max-width:34rem;margin:4rem auto;"
+        "padding:0 1rem;color:#111}code{background:#f4f4f5;padding:.1rem .3rem;"
+        "border-radius:4px}</style></head><body>" + body + "</body></html>"
+    )
+
+
+def _slack_signature_valid(body: bytes, timestamp: str, signature: str) -> bool:
+    """Verify Slack's request signature.
+
+    Without this, anyone who learns the URL can approve a spend. The timestamp check is
+    what stops a captured request being replayed later."""
+    secret = os.getenv("SLACK_SIGNING_SECRET")
+    if not secret:
+        return False
+    try:
+        if abs(_time.time() - int(timestamp)) > 60 * 5:
+            return False
+    except (TypeError, ValueError):
+        return False
+    basestring = b"v0:" + timestamp.encode() + b":" + body
+    expected = "v0=" + hmac.new(secret.encode(), basestring, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature or "")
+
+
+@app.post("/api/slack/interactions")
+async def slack_interactions(request: Request):
+    """Handle the Approve / Reject buttons from the Slack approval message.
+
+    The button value carries the run id, so a click on an older message resolves the run
+    it belongs to rather than whatever happens to be pending now."""
+    raw = await request.body()
+    ts = request.headers.get("X-Slack-Request-Timestamp", "")
+    sig = request.headers.get("X-Slack-Signature", "")
+    if not _slack_signature_valid(raw, ts, sig):
+        return {"text": "Signature verification failed. The decision was not recorded."}
+
+    # Slack posts application/x-www-form-urlencoded with a single `payload` field. We
+    # parse the raw body we already read rather than using fastapi.Form, which would pull
+    # in python-multipart purely to read one field we have in hand.
+    try:
+        form = urllib.parse.parse_qs(raw.decode("utf-8"))
+        payload = (form.get("payload") or [""])[0]
+        data = json.loads(payload)
+        action = (data.get("actions") or [{}])[0]
+        choice, _, run_id = str(action.get("value", "")).partition("::")
+        user = (data.get("user") or {}).get("username", "unknown")
+    except (ValueError, TypeError, IndexError):
+        return {"text": "Could not read that action."}
+
+    result = _resolve(run_id or None, choice or "reject")
+    if not result["ok"]:
+        return {"replace_original": False,
+                "text": "That run is no longer waiting for a decision."}
+    return {
+        "replace_original": True,
+        "text": (f"*{result['decision'].upper()}* by @{user} for run "
+                 f"`{result['run_id']}`. The decision is in the audit log."),
+    }
 
 
 @app.get("/api/providers")
@@ -152,8 +261,9 @@ def configure(c: Config):
 @app.get("/api/run")
 def run(scenario: str = "happy"):
     def gen():
-        from graph import build_graph, make_initial_state
         from langgraph.types import Command
+
+        from graph import build_graph, make_initial_state
 
         graph = build_graph()
         state = make_initial_state(scenario)

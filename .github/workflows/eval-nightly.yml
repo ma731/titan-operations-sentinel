@@ -1,0 +1,96 @@
+name: nightly evaluation
+
+# Runs the full harness, including the live agent suite when a provider key is available
+# as a repository secret, and commits the refreshed scorecard back to the branch.
+#
+# Separated from the on-every-push job for two reasons: the live suite costs tokens, and
+# it depends on a third-party API being up, so a provider outage should never turn a pull
+# request red.
+
+on:
+  schedule:
+    - cron: "0 3 * * *"        # 03:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Run the live agent suite (costs tokens)"
+        type: boolean
+        default: true
+      limit:
+        description: "Maximum live scenarios to run"
+        type: string
+        default: "8"
+
+permissions:
+  contents: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Decide whether the live suite can run
+        id: mode
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          requested="${{ github.event_name == 'schedule' && 'true' || inputs.live }}"
+          if [ "$requested" = "true" ] && { [ -n "$GOOGLE_API_KEY" ] || [ -n "$GROQ_API_KEY" ] || [ -n "$OPENROUTER_API_KEY" ]; }; then
+            echo "flags=--live --limit ${{ inputs.limit || '8' }}" >> "$GITHUB_OUTPUT"
+            echo "Live suite enabled."
+          else
+            echo "flags=" >> "$GITHUB_OUTPUT"
+            echo "No provider key available: running the offline suites only."
+          fi
+
+      - name: Run the evaluation
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # Embeddings score the dense and hybrid retrieval rows. Without this the
+          # scorecard reports them as not configured rather than pretending.
+          TOS_EMBEDDINGS: ${{ secrets.GOOGLE_API_KEY && 'auto' || '' }}
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          LANGFUSE_HOST: ${{ secrets.LANGFUSE_HOST }}
+        run: python -m eval.run_eval ${{ steps.mode.outputs.flags }} --fail-under 0.97
+
+      - name: Upload the scorecard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-scorecard
+          path: eval/results/
+          retention-days: 30
+
+      - name: Add the scorecard to the run summary
+        if: always()
+        run: cat eval/results/scorecard.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit the refreshed scorecard
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add eval/results/scorecard.md eval/results/scorecard.json rag/index/
+          if git diff --cached --quiet; then
+            echo "No change in the scorecard."
+          else
+            git commit -m "chore(eval): refresh the nightly scorecard"
+            git push
+          fi

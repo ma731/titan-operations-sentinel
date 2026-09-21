@@ -1,0 +1,556 @@
+{
+  "stats": {
+    "documents": 12,
+    "chunks": 78,
+    "avg_chunk_tokens": 55.8,
+    "vocabulary": 1208
+  },
+  "chunks": [
+    {
+      "citation": "iatf-16949-traceability-records#S1",
+      "document": "IATF 16949: Traceability, Records and Nonconforming Product Control",
+      "section": "S1 Why traceability exists",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 34
+    },
+    {
+      "citation": "iatf-16949-traceability-records#S2",
+      "document": "IATF 16949: Traceability, Records and Nonconforming Product Control",
+      "section": "S2 What must be traceable",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 42
+    },
+    {
+      "citation": "iatf-16949-traceability-records#S3",
+      "document": "IATF 16949: Traceability, Records and Nonconforming Product Control",
+      "section": "S3 Linking machine data to quality records",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 55
+    },
+    {
+      "citation": "iatf-16949-traceability-records#S4",
+      "document": "IATF 16949: Traceability, Records and Nonconforming Product Control",
+      "section": "S4 Suspect population when a machine fault is confirmed",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 50
+    },
+    {
+      "citation": "iatf-16949-traceability-records#S5",
+      "document": "IATF 16949: Traceability, Records and Nonconforming Product Control",
+      "section": "S5 Control of nonconforming output",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 55
+    },
+    {
+      "citation": "iatf-16949-traceability-records#S6",
+      "document": "IATF 16949: Traceability, Records and Nonconforming Product Control",
+      "section": "S6 Record retention",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 44
+    },
+    {
+      "citation": "iatf-16949-traceability-records#S7",
+      "document": "IATF 16949: Traceability, Records and Nonconforming Product Control",
+      "section": "S7 Records for an emergency maintenance intervention",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 45
+    },
+    {
+      "citation": "iso-10218-ts15066-collaborative-robots#S1",
+      "document": "ISO 10218 and ISO/TS 15066: Industrial Robot and Collaborative Operation Safety",
+      "section": "S1 The two parts of ISO 10218",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 43
+    },
+    {
+      "citation": "iso-10218-ts15066-collaborative-robots#S2",
+      "document": "ISO 10218 and ISO/TS 15066: Industrial Robot and Collaborative Operation Safety",
+      "section": "S2 The four collaborative operation modes",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 92
+    },
+    {
+      "citation": "iso-10218-ts15066-collaborative-robots#S3",
+      "document": "ISO 10218 and ISO/TS 15066: Industrial Robot and Collaborative Operation Safety",
+      "section": "S3 Protective separation distance",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 59
+    },
+    {
+      "citation": "iso-10218-ts15066-collaborative-robots#S4",
+      "document": "ISO 10218 and ISO/TS 15066: Industrial Robot and Collaborative Operation Safety",
+      "section": "S4 Power and force limiting thresholds",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 49
+    },
+    {
+      "citation": "iso-10218-ts15066-collaborative-robots#S5",
+      "document": "ISO 10218 and ISO/TS 15066: Industrial Robot and Collaborative Operation Safety",
+      "section": "S5 Risk assessment is mandatory and cell-specific",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 44
+    },
+    {
+      "citation": "iso-10218-ts15066-collaborative-robots#S6",
+      "document": "ISO 10218 and ISO/TS 15066: Industrial Robot and Collaborative Operation Safety",
+      "section": "S6 Operator assignment and shift conflicts",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 67
+    },
+    {
+      "citation": "iso-10218-ts15066-collaborative-robots#S7",
+      "document": "ISO 10218 and ISO/TS 15066: Industrial Robot and Collaborative Operation Safety",
+      "section": "S7 Safety shutdowns as a leading indicator",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 54
+    },
+    {
+      "citation": "osha-1910-147-loto#S1",
+      "document": "OSHA 1910.147: Control of Hazardous Energy (Lockout/Tagout)",
+      "section": "S1 What the rule covers",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 58
+    },
+    {
+      "citation": "osha-1910-147-loto#S2",
+      "document": "OSHA 1910.147: Control of Hazardous Energy (Lockout/Tagout)",
+      "section": "S2 Energy sources in scope",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 49
+    },
+    {
+      "citation": "osha-1910-147-loto#S3",
+      "document": "OSHA 1910.147: Control of Hazardous Energy (Lockout/Tagout)",
+      "section": "S3 The energy control procedure",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 74
+    },
+    {
+      "citation": "osha-1910-147-loto#S4",
+      "document": "OSHA 1910.147: Control of Hazardous Energy (Lockout/Tagout)",
+      "section": "S4 Who may apply and remove a lock",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 75
+    },
+    {
+      "citation": "osha-1910-147-loto#S5",
+      "document": "OSHA 1910.147: Control of Hazardous Energy (Lockout/Tagout)",
+      "section": "S5 Group lockout and shift handover",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 48
+    },
+    {
+      "citation": "osha-1910-147-loto#S6",
+      "document": "OSHA 1910.147: Control of Hazardous Energy (Lockout/Tagout)",
+      "section": "S6 Training and records",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 51
+    },
+    {
+      "citation": "osha-1910-147-loto#S7",
+      "document": "OSHA 1910.147: Control of Hazardous Energy (Lockout/Tagout)",
+      "section": "S7 Interaction with emergency maintenance",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 34
+    },
+    {
+      "citation": "osha-1910-212-machine-guarding#S1",
+      "document": "OSHA 1910.212: General Requirements for All Machines (Guarding)",
+      "section": "S1 The general duty to guard",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 39
+    },
+    {
+      "citation": "osha-1910-212-machine-guarding#S2",
+      "document": "OSHA 1910.212: General Requirements for All Machines (Guarding)",
+      "section": "S2 Acceptable guarding methods",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 56
+    },
+    {
+      "citation": "osha-1910-212-machine-guarding#S3",
+      "document": "OSHA 1910.212: General Requirements for All Machines (Guarding)",
+      "section": "S3 Point of operation guarding",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 53
+    },
+    {
+      "citation": "osha-1910-212-machine-guarding#S4",
+      "document": "OSHA 1910.212: General Requirements for All Machines (Guarding)",
+      "section": "S4 Interlock integrity",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 56
+    },
+    {
+      "citation": "osha-1910-212-machine-guarding#S5",
+      "document": "OSHA 1910.212: General Requirements for All Machines (Guarding)",
+      "section": "S5 Anchoring and stationary machines",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 24
+    },
+    {
+      "citation": "osha-1910-212-machine-guarding#S6",
+      "document": "OSHA 1910.212: General Requirements for All Machines (Guarding)",
+      "section": "S6 Inspection and defect reporting",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 46
+    },
+    {
+      "citation": "rolling-element-bearing-failure-modes#S1",
+      "document": "Rolling Element Bearing Failure Modes: Diagnostic Reference",
+      "section": "S1 Why failure mode matters",
+      "provenance": "internal-synthetic",
+      "tokens": 54
+    },
+    {
+      "citation": "rolling-element-bearing-failure-modes#S2",
+      "document": "Rolling Element Bearing Failure Modes: Diagnostic Reference",
+      "section": "S2 Subsurface fatigue (spalling)",
+      "provenance": "internal-synthetic",
+      "tokens": 53
+    },
+    {
+      "citation": "rolling-element-bearing-failure-modes#S3",
+      "document": "Rolling Element Bearing Failure Modes: Diagnostic Reference",
+      "section": "S3 Lubrication failure",
+      "provenance": "internal-synthetic",
+      "tokens": 44
+    },
+    {
+      "citation": "rolling-element-bearing-failure-modes#S4",
+      "document": "Rolling Element Bearing Failure Modes: Diagnostic Reference",
+      "section": "S4 Contamination and abrasive wear",
+      "provenance": "internal-synthetic",
+      "tokens": 41
+    },
+    {
+      "citation": "rolling-element-bearing-failure-modes#S5",
+      "document": "Rolling Element Bearing Failure Modes: Diagnostic Reference",
+      "section": "S5 Electrical discharge damage",
+      "provenance": "internal-synthetic",
+      "tokens": 43
+    },
+    {
+      "citation": "rolling-element-bearing-failure-modes#S6",
+      "document": "Rolling Element Bearing Failure Modes: Diagnostic Reference",
+      "section": "S6 Misalignment and preload error",
+      "provenance": "internal-synthetic",
+      "tokens": 38
+    },
+    {
+      "citation": "rolling-element-bearing-failure-modes#S7",
+      "document": "Rolling Element Bearing Failure Modes: Diagnostic Reference",
+      "section": "S7 Reading the signature before estimating life",
+      "provenance": "internal-synthetic",
+      "tokens": 44
+    },
+    {
+      "citation": "rolling-element-bearing-failure-modes#S8",
+      "document": "Rolling Element Bearing Failure Modes: Diagnostic Reference",
+      "section": "S8 Repeat failure as evidence",
+      "provenance": "internal-synthetic",
+      "tokens": 48
+    },
+    {
+      "citation": "tms-101-spindle-bearing-maintenance#S1",
+      "document": "TMS-101: Spindle Bearing Condition Monitoring and Replacement",
+      "section": "S1 Scope and purpose",
+      "provenance": "internal-synthetic",
+      "tokens": 68
+    },
+    {
+      "citation": "tms-101-spindle-bearing-maintenance#S2",
+      "document": "TMS-101: Spindle Bearing Condition Monitoring and Replacement",
+      "section": "S2 Monitored parameters",
+      "provenance": "internal-synthetic",
+      "tokens": 91
+    },
+    {
+      "citation": "tms-101-spindle-bearing-maintenance#S3",
+      "document": "TMS-101: Spindle Bearing Condition Monitoring and Replacement",
+      "section": "S3 Severity bands and required response",
+      "provenance": "internal-synthetic",
+      "tokens": 96
+    },
+    {
+      "citation": "tms-101-spindle-bearing-maintenance#S4",
+      "document": "TMS-101: Spindle Bearing Condition Monitoring and Replacement",
+      "section": "S4 Remaining useful life estimation",
+      "provenance": "internal-synthetic",
+      "tokens": 106
+    },
+    {
+      "citation": "tms-101-spindle-bearing-maintenance#S5",
+      "document": "TMS-101: Spindle Bearing Condition Monitoring and Replacement",
+      "section": "S5 Speed reduction as a life extension measure",
+      "provenance": "internal-synthetic",
+      "tokens": 77
+    },
+    {
+      "citation": "tms-101-spindle-bearing-maintenance#S6",
+      "document": "TMS-101: Spindle Bearing Condition Monitoring and Replacement",
+      "section": "S6 Replacement procedure summary",
+      "provenance": "internal-synthetic",
+      "tokens": 73
+    },
+    {
+      "citation": "tms-101-spindle-bearing-maintenance#S7",
+      "document": "TMS-101: Spindle Bearing Condition Monitoring and Replacement",
+      "section": "S7 Records",
+      "provenance": "internal-synthetic",
+      "tokens": 39
+    },
+    {
+      "citation": "tms-204-vibration-severity-limits#S1",
+      "document": "TMS-204: Vibration Severity Assessment (ISO 10816-3 aligned)",
+      "section": "S1 What the standard measures",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 67
+    },
+    {
+      "citation": "tms-204-vibration-severity-limits#S2",
+      "document": "TMS-204: Vibration Severity Assessment (ISO 10816-3 aligned)",
+      "section": "S2 Machine groups and mounting",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 53
+    },
+    {
+      "citation": "tms-204-vibration-severity-limits#S3",
+      "document": "TMS-204: Vibration Severity Assessment (ISO 10816-3 aligned)",
+      "section": "S3 Evaluation zones",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 82
+    },
+    {
+      "citation": "tms-204-vibration-severity-limits#S4",
+      "document": "TMS-204: Vibration Severity Assessment (ISO 10816-3 aligned)",
+      "section": "S4 Change is more diagnostic than absolute level",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 64
+    },
+    {
+      "citation": "tms-204-vibration-severity-limits#S5",
+      "document": "TMS-204: Vibration Severity Assessment (ISO 10816-3 aligned)",
+      "section": "S5 Limitations",
+      "provenance": "public-standard-paraphrase",
+      "tokens": 45
+    },
+    {
+      "citation": "tms-310-lubrication-thermal-limits#S1",
+      "document": "TMS-310: Spindle Lubrication and Thermal Operating Limits",
+      "section": "S1 Thermal limits",
+      "provenance": "internal-synthetic",
+      "tokens": 87
+    },
+    {
+      "citation": "tms-310-lubrication-thermal-limits#S2",
+      "document": "TMS-310: Spindle Lubrication and Thermal Operating Limits",
+      "section": "S2 The temperature-to-vibration lag",
+      "provenance": "internal-synthetic",
+      "tokens": 78
+    },
+    {
+      "citation": "tms-310-lubrication-thermal-limits#S3",
+      "document": "TMS-310: Spindle Lubrication and Thermal Operating Limits",
+      "section": "S3 Lubrication intervals",
+      "provenance": "internal-synthetic",
+      "tokens": 61
+    },
+    {
+      "citation": "tms-310-lubrication-thermal-limits#S4",
+      "document": "TMS-310: Spindle Lubrication and Thermal Operating Limits",
+      "section": "S4 Warm-up requirement",
+      "provenance": "internal-synthetic",
+      "tokens": 50
+    },
+    {
+      "citation": "tms-310-lubrication-thermal-limits#S5",
+      "document": "TMS-310: Spindle Lubrication and Thermal Operating Limits",
+      "section": "S5 Coolant interaction",
+      "provenance": "internal-synthetic",
+      "tokens": 53
+    },
+    {
+      "citation": "tms-450-emergency-maintenance-window#S1",
+      "document": "TMS-450: Emergency Maintenance Window Procedure",
+      "section": "S1 When an emergency window may be opened",
+      "provenance": "internal-synthetic",
+      "tokens": 49
+    },
+    {
+      "citation": "tms-450-emergency-maintenance-window#S2",
+      "document": "TMS-450: Emergency Maintenance Window Procedure",
+      "section": "S2 Prerequisites before the window opens",
+      "provenance": "internal-synthetic",
+      "tokens": 93
+    },
+    {
+      "citation": "tms-450-emergency-maintenance-window#S3",
+      "document": "TMS-450: Emergency Maintenance Window Procedure",
+      "section": "S3 Weekend and off-shift windows",
+      "provenance": "internal-synthetic",
+      "tokens": 60
+    },
+    {
+      "citation": "tms-450-emergency-maintenance-window#S4",
+      "document": "TMS-450: Emergency Maintenance Window Procedure",
+      "section": "S4 Duration and overrun",
+      "provenance": "internal-synthetic",
+      "tokens": 39
+    },
+    {
+      "citation": "tms-450-emergency-maintenance-window#S5",
+      "document": "TMS-450: Emergency Maintenance Window Procedure",
+      "section": "S5 Requalification before release",
+      "provenance": "internal-synthetic",
+      "tokens": 37
+    },
+    {
+      "citation": "tms-450-emergency-maintenance-window#S6",
+      "document": "TMS-450: Emergency Maintenance Window Procedure",
+      "section": "S6 Cost authority",
+      "provenance": "internal-synthetic",
+      "tokens": 45
+    },
+    {
+      "citation": "tms-520-parts-sourcing-expedite-policy#S1",
+      "document": "TMS-520: Parts Sourcing, Expedite and Cross-Plant Transfer Policy",
+      "section": "S1 Sourcing order of preference",
+      "provenance": "internal-synthetic",
+      "tokens": 73
+    },
+    {
+      "citation": "tms-520-parts-sourcing-expedite-policy#S2",
+      "document": "TMS-520: Parts Sourcing, Expedite and Cross-Plant Transfer Policy",
+      "section": "S2 The fit-to-window test",
+      "provenance": "internal-synthetic",
+      "tokens": 63
+    },
+    {
+      "citation": "tms-520-parts-sourcing-expedite-policy#S3",
+      "document": "TMS-520: Parts Sourcing, Expedite and Cross-Plant Transfer Policy",
+      "section": "S3 Return on investment calculation",
+      "provenance": "internal-synthetic",
+      "tokens": 53
+    },
+    {
+      "citation": "tms-520-parts-sourcing-expedite-policy#S4",
+      "document": "TMS-520: Parts Sourcing, Expedite and Cross-Plant Transfer Policy",
+      "section": "S4 Autonomous spend ceiling",
+      "provenance": "internal-synthetic",
+      "tokens": 57
+    },
+    {
+      "citation": "tms-520-parts-sourcing-expedite-policy#S5",
+      "document": "TMS-520: Parts Sourcing, Expedite and Cross-Plant Transfer Policy",
+      "section": "S5 Tier-2 exposure",
+      "provenance": "internal-synthetic",
+      "tokens": 52
+    },
+    {
+      "citation": "tms-520-parts-sourcing-expedite-policy#S6",
+      "document": "TMS-520: Parts Sourcing, Expedite and Cross-Plant Transfer Policy",
+      "section": "S6 Cross-plant transfer mechanics",
+      "provenance": "internal-synthetic",
+      "tokens": 66
+    },
+    {
+      "citation": "tms-520-parts-sourcing-expedite-policy#S7",
+      "document": "TMS-520: Parts Sourcing, Expedite and Cross-Plant Transfer Policy",
+      "section": "S7 Supply disruption handling",
+      "provenance": "internal-synthetic",
+      "tokens": 47
+    },
+    {
+      "citation": "tms-610-production-reroute-and-shift-rules#S1",
+      "document": "TMS-610: Production Reroute and Shift Coverage Rules",
+      "section": "S1 When a reroute is required",
+      "provenance": "internal-synthetic",
+      "tokens": 46
+    },
+    {
+      "citation": "tms-610-production-reroute-and-shift-rules#S2",
+      "document": "TMS-610: Production Reroute and Shift Coverage Rules",
+      "section": "S2 Target machine eligibility",
+      "provenance": "internal-synthetic",
+      "tokens": 62
+    },
+    {
+      "citation": "tms-610-production-reroute-and-shift-rules#S3",
+      "document": "TMS-610: Production Reroute and Shift Coverage Rules",
+      "section": "S3 Quality safety of the target",
+      "provenance": "internal-synthetic",
+      "tokens": 47
+    },
+    {
+      "citation": "tms-610-production-reroute-and-shift-rules#S4",
+      "document": "TMS-610: Production Reroute and Shift Coverage Rules",
+      "section": "S4 Operator and shift conflicts",
+      "provenance": "internal-synthetic",
+      "tokens": 60
+    },
+    {
+      "citation": "tms-610-production-reroute-and-shift-rules#S5",
+      "document": "TMS-610: Production Reroute and Shift Coverage Rules",
+      "section": "S5 Resolution order for a conflict",
+      "provenance": "internal-synthetic",
+      "tokens": 44
+    },
+    {
+      "citation": "tms-610-production-reroute-and-shift-rules#S6",
+      "document": "TMS-610: Production Reroute and Shift Coverage Rules",
+      "section": "S6 Recording the reroute",
+      "provenance": "internal-synthetic",
+      "tokens": 35
+    },
+    {
+      "citation": "tms-705-telemetry-data-quality-and-abstention#S1",
+      "document": "TMS-705: Telemetry Data Quality, Alert Triage and Abstention Rules",
+      "section": "S1 The alert noise problem",
+      "provenance": "internal-synthetic",
+      "tokens": 58
+    },
+    {
+      "citation": "tms-705-telemetry-data-quality-and-abstention#S2",
+      "document": "TMS-705: Telemetry Data Quality, Alert Triage and Abstention Rules",
+      "section": "S2 Deduplication and correlation",
+      "provenance": "internal-synthetic",
+      "tokens": 54
+    },
+    {
+      "citation": "tms-705-telemetry-data-quality-and-abstention#S3",
+      "document": "TMS-705: Telemetry Data Quality, Alert Triage and Abstention Rules",
+      "section": "S3 Priority scoring",
+      "provenance": "internal-synthetic",
+      "tokens": 52
+    },
+    {
+      "citation": "tms-705-telemetry-data-quality-and-abstention#S4",
+      "document": "TMS-705: Telemetry Data Quality, Alert Triage and Abstention Rules",
+      "section": "S4 Data quality requirements for a life estimate",
+      "provenance": "internal-synthetic",
+      "tokens": 60
+    },
+    {
+      "citation": "tms-705-telemetry-data-quality-and-abstention#S5",
+      "document": "TMS-705: Telemetry Data Quality, Alert Triage and Abstention Rules",
+      "section": "S5 The abstention rule",
+      "provenance": "internal-synthetic",
+      "tokens": 55
+    },
+    {
+      "citation": "tms-705-telemetry-data-quality-and-abstention#S6",
+      "document": "TMS-705: Telemetry Data Quality, Alert Triage and Abstention Rules",
+      "section": "S6 Sensor fault versus machine fault",
+      "provenance": "internal-synthetic",
+      "tokens": 51
+    },
+    {
+      "citation": "tms-705-telemetry-data-quality-and-abstention#S7",
+      "document": "TMS-705: Telemetry Data Quality, Alert Triage and Abstention Rules",
+      "section": "S7 What to do while abstaining",
+      "provenance": "internal-synthetic",
+      "tokens": 44
+    }
+  ]
+}

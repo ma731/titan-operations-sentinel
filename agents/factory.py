@@ -20,6 +20,18 @@ from tools import lc as T
 
 PROMPTS = Path(__file__).parent.parent / "prompts"
 
+# Appended to the two agents that can retrieve from the technical corpus (rag/corpus).
+# Grounding is only worth having if the citation reaches the report, so the instruction is
+# explicit about putting the citation inline rather than merely "consulting the standard".
+CITATION_FOOTER = (
+    "\n\nGROUNDING: before you assert a severity band, a life-estimate rule, a safety "
+    "authority limit, or a procedural requirement, call `search_technical_docs` and quote "
+    "the standard. Put the returned `citation` (for example "
+    "`tms-101-spindle-bearing-maintenance#S3`) inline next to the claim it supports. If "
+    "retrieval returns nothing relevant, say the claim is unsourced rather than inventing "
+    "a reference."
+)
+
 # name → (prompt file, tools, optional footer appended to the system prompt)
 AGENT_SPECS = {
     "reliability": (
@@ -28,7 +40,8 @@ AGENT_SPECS = {
         # "Do not output only the RISK line" guards against an agent that skips the full assessment.
         "\n\nWrite your FULL assessment in the required format — including the specific part IDs "
         "the Supply Chain Agent will need — THEN add a final line that is exactly one of: "
-        "`RISK: HIGH`, `RISK: LOW`, or `RISK: ESCALATE`. Do not output only the RISK line.",
+        "`RISK: HIGH`, `RISK: LOW`, or `RISK: ESCALATE`. Do not output only the RISK line."
+        + CITATION_FOOTER,
     ),
     "supply_chain": (
         "supply_chain_agent_system.md", T.SUPPLY_CHAIN_TOOLS,
@@ -40,7 +53,8 @@ AGENT_SPECS = {
         "compliance_agent_system.md", T.COMPLIANCE_TOOLS,
         # Reinforce the VERDICT line — the graph parses it to set state["halt"].
         "\n\nWrite your full gate assessment in the required format, THEN add a final line that "
-        "is exactly one of: `VERDICT: PROCEED`, `VERDICT: SIGN-OFF`, or `VERDICT: HALT`.",
+        "is exactly one of: `VERDICT: PROCEED`, `VERDICT: SIGN-OFF`, or `VERDICT: HALT`."
+        + CITATION_FOOTER,
     ),
 }
 

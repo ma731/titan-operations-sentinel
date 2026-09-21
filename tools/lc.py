@@ -13,6 +13,7 @@ from langchain_core.tools import tool
 from .alert_triage import alert_triage as _alert_triage
 from .asset_profile import asset_profile as _asset_profile
 from .audit_assemble import audit_assemble as _audit_assemble
+from .doc_search import search_technical_docs as _search_technical_docs
 from .expedite_cost import expedite_cost as _expedite_cost
 from .job_reroute import job_reroute as _job_reroute
 from .maintenance_schedule import maintenance_schedule as _maintenance_schedule
@@ -74,6 +75,18 @@ def maintenance_schedule(plant_id: str, horizon: str = "7d") -> dict:
     """Get the plant's scheduled + emergency maintenance windows over a horizon ('7d'/'14d'/
     '30d'). Compare the next available window against the RUL to find the schedule gap."""
     return _maintenance_schedule(plant_id, horizon)
+
+
+# --- Shared: retrieval over the technical reference corpus (RAG) ----------- #
+@tool
+def search_technical_docs(query: str, k: int = 4) -> dict:
+    """Search the technical reference corpus (maintenance standards, OSHA lockout/tagout
+    and machine guarding, ISO robot safety, IATF traceability, sourcing and reroute
+    policy) and return passages WITH citations. Use it to ground a severity band, a
+    life-estimate rule, an authority limit, or a safety procedure in the written standard
+    instead of asserting it. Ask a full question, e.g. 'may an automated system authorise
+    bypassing a safety interlock'. Cite the returned `citation` field in your report."""
+    return _search_technical_docs(query, k)
 
 
 # --- Supply Chain (challenge 2) ------------------------------------------- #
@@ -183,9 +196,9 @@ def audit_assemble(run_id: str) -> dict:
 
 # Grouped per agent — imported by agents/factory.py.
 RELIABILITY_TOOLS = [alert_triage, sensor_query, rul_predictor, recall_similar_cases,
-                     asset_profile, maintenance_schedule]
+                     asset_profile, maintenance_schedule, search_technical_docs]
 SUPPLY_CHAIN_TOOLS = [parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk,
                       work_order_draft, notify]
 PRODUCTION_TOOLS = [job_reroute, robot_cell_status, shift_conflict_check]
 QUALITY_TOOLS = [quality_history, telemetry_correlate]
-COMPLIANCE_TOOLS = [safety_gate, audit_assemble]
+COMPLIANCE_TOOLS = [safety_gate, audit_assemble, search_technical_docs]

@@ -24,14 +24,13 @@ Three paths via `scenario`: happy / edge / escalation.
 """
 from __future__ import annotations
 
+import ast
 import json
 import logging
 import operator
-import ast
 import re
 import sys
 import time
-from collections import Counter
 from pathlib import Path
 from typing import Annotated, TypedDict
 
@@ -40,11 +39,17 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
 import llm
+import observability
+import policy
 from agents import AGENT_NAMES, build_agents
 from audit_log import new_run_id, write_event
 
 PROMPTS = Path(__file__).parent / "prompts"
-COST_CEILING_EUR = 500
+
+# The code-enforced decision rules live in policy.py so they can be evaluated without
+# a model (see eval/policy_eval.py). These names are re-exported for backwards
+# compatibility with the tests and the webapp that already import them from here.
+COST_CEILING_EUR = policy.COST_CEILING_EUR
 
 # Live run status. The graph emits concise, timestamped progress lines to this logger AS it
 # runs (which agent is working, how long it took, tools used, routing, the approval gate) so a
@@ -69,8 +74,8 @@ def configure_console_logging(level: int | str = logging.INFO, stream=None) -> N
     log.setLevel(level)
     log.propagate = False                # don't double-print via the root logger
 JOBS = ["J4421", "J4422", "J4423", "J4424", "J4425"]
-CORE_AGENTS = ["supply_chain", "production", "quality"]
-MAX_VISITS = 2          # cap re-engagement per agent so follow-ups can't loop forever
+CORE_AGENTS = policy.CORE_AGENTS
+MAX_VISITS = policy.MAX_VISITS
 
 # Token budget: the 6-agent transcript is re-sent to every later agent and on every routing
 # call, so its size drives cost on the Groq free tier (~100k tokens/day). These caps bound
@@ -263,7 +268,15 @@ def _make_worker(name: str):
         t0 = time.perf_counter()
         agents = build_agents()
         try:
-            result = agents[name].invoke({"messages": [("user", _task_for(name, state))]})
+            # Tokens, latency and (when configured) the Langfuse trace are attributed to
+            # this agent for the duration of its ReAct loop. Uninstrumented runs get an
+            # empty callback list, so this is free on the default path.
+            with observability.instrumented_agent(name):
+                result = agents[name].invoke(
+                    {"messages": [("user", _task_for(name, state))]},
+                    config={"callbacks": observability.callbacks(name),
+                            "recursion_limit": 30},
+                )
             msgs = result["messages"]
         except Exception as exc:  # noqa: BLE001 — a flaky tool call must not kill the run
             log.warning("FAIL  %-17s| after %.1fs — %s", name, time.perf_counter() - t0,
@@ -297,61 +310,44 @@ def _make_worker(name: str):
             update["trace"].append(_ev(rid, "decision", name,
                                        message=f"{name} asks {followup} a direct follow-up."))
 
+        # The three verdicts below are the code-enforced layer. They read structured tool
+        # fields, not the agent's prose, and the rules themselves live in policy.py so the
+        # offline evaluation can score them directly.
         if name == "reliability":
-            # Prefer the rul_predictor structured result; fall back to text if unavailable.
             rp = results.get("rul_predictor", {})
-            fmode = str(rp.get("failure_mode", "")).lower()
             rh = rp.get("rul_hours") or {}
             if rh.get("min") is not None:
                 update["predicted_rul"] = [rh["min"], rh.get("max", rh["min"])]
-            if rp.get("low_confidence_flag") or "interrupted" in blob or "data_unavailable" in blob:
-                update["escalate"], update["risk"] = True, "ESCALATE"
-            elif "bearing_failure" in fmode or "spindle_bearing_failure" in blob:
-                update["risk"] = "HIGH"
-            else:
-                update["risk"] = "LOW"
-            log.info("  ↳ reliability verdict: risk=%s", update["risk"])
+            risk = policy.classify_risk(rp, blob)
+            update["risk"] = risk
+            if risk == "ESCALATE":
+                update["escalate"] = True
+            log.info("  ↳ reliability verdict: risk=%s", risk)
         if name == "supply_chain":
-            # Code-enforced €500 ceiling: read the recommended option's cost and gate only
-            # when it exceeds the autonomy ceiling (so sub-ceiling actions run autonomously).
             top = (results.get("expedite_cost", {}).get("options_ranked") or [{}])[0]
-            cost = top.get("cost_eur")
-            fits = top.get("fits_failure_window", True)
-            # autonomous only when the recommended option is BOTH under the ceiling AND
-            # actually fits the failure window; otherwise a human decides.
-            update["needs_approval"] = (cost is None) or (cost > COST_CEILING_EUR) or (not fits)
-            log.info("  ↳ supply_chain spend=%s fits_window=%s ceiling=%d → %s", cost, fits,
-                     COST_CEILING_EUR, "needs approval" if update["needs_approval"] else "autonomous")
+            update["needs_approval"] = policy.needs_human_approval(top, COST_CEILING_EUR)
+            log.info("  ↳ supply_chain gate: %s (%s)",
+                     "needs approval" if update["needs_approval"] else "autonomous",
+                     policy.approval_reason(top, COST_CEILING_EUR))
         if name == "compliance_safety":
-            sg = results.get("safety_gate", {})
-            if sg:
-                update["halt"] = str(sg.get("verdict", "")).upper() == "HALT"
-            else:
-                update["halt"] = ('"verdict": "halt"' in blob or "verdict: halt" in report.lower())
+            update["halt"] = policy.halt_from_safety(results.get("safety_gate", {}), report, blob)
             log.info("  ↳ compliance verdict: %s", "HALT" if update["halt"] else "cleared")
         return update
     return node
 
 
 def _allowed_next(state: OpsState) -> list[str]:
-    visited = state.get("visited", [])
-    counts = Counter(visited)
-    if "reliability" not in visited:
-        return ["reliability"]
-    if state.get("escalate"):
-        return ["FINISH"]
-    # Honour a direct agent-to-agent follow-up, bounded by MAX_VISITS to prevent loops.
-    fu = state.get("pending_followup")
-    if fu and fu in AGENT_NAMES and counts[fu] < MAX_VISITS:
-        return [fu]
-    if state.get("risk") != "HIGH":
-        return ["compliance_safety", "FINISH"] if "compliance_safety" not in visited else ["FINISH"]
-    missing = [a for a in CORE_AGENTS if a not in visited]
-    if missing:
-        return missing                      # LLM picks the ORDER among these
-    if "compliance_safety" not in visited:
-        return ["compliance_safety"]
-    return ["FINISH"]
+    """The agents the supervisor may choose from. The rules live in policy.allowed_next so
+    they can be evaluated without a model; this is the graph-state adapter for them."""
+    return policy.allowed_next(
+        visited=state.get("visited", []),
+        risk=state.get("risk"),
+        escalate=bool(state.get("escalate")),
+        pending_followup=state.get("pending_followup"),
+        agent_names=AGENT_NAMES,
+        core_agents=CORE_AGENTS,
+        max_visits=MAX_VISITS,
+    )
 
 
 def _llm_route(state: OpsState, allowed: list[str]) -> str:
@@ -397,6 +393,27 @@ def approval_gate(state: OpsState) -> dict:
                "ceiling_eur": COST_CEILING_EUR,
                "supply_summary": str(state.get("ops_context", {}).get("supply_chain", ""))[:400]}
     write_event(rid, "approval_request", request, "orchestrator")
+
+    # Reach the approver wherever they are. Slack or email when configured, console
+    # otherwise. This only carries the question out; the decision still comes back
+    # through the same interrupt() resume path the web console uses, so there is one
+    # place a run can be approved and one place it gets recorded.
+    try:
+        from integrations.approval import send_approval_request
+        delivery = send_approval_request(
+            rid, state["alert"],
+            reason=f"The recommended option exceeds the EUR {COST_CEILING_EUR} "
+                   f"autonomous ceiling or does not fit the failure window.",
+        )
+        if delivery.get("channel") != "console":
+            log.info("GATE          | approval request sent via %s (%s)",
+                     delivery.get("channel"),
+                     "delivered" if delivery.get("sent") else delivery.get("error"))
+            write_event(rid, "decision", {"message": "Approval request dispatched",
+                                          **delivery}, "orchestrator")
+    except Exception as exc:  # noqa: BLE001 — a notification failure must not block the gate
+        log.warning("GATE          | approval notification failed: %s", str(exc)[:120])
+
     log.info("GATE          | ⏸ awaiting human decision (ceiling €%d)…", COST_CEILING_EUR)
     decision = interrupt(request)
     log.info("GATE          | human decided: %s", decision)
@@ -432,6 +449,7 @@ def _log_closed_case(state: OpsState, status: str) -> None:
     Outcome is 'pending' until the predicted failure window resolves. Never raises."""
     try:
         from datetime import datetime, timezone
+
         from tools.recall_cases import append_case
         a = state.get("alert", {})
         append_case({
@@ -510,7 +528,10 @@ FRIDAY_CASCADE_ALERT = {
 }
 
 
-def make_initial_state(scenario: str = "happy") -> OpsState:
-    return {"run_id": new_run_id(), "alert": dict(FRIDAY_CASCADE_ALERT),
+def make_initial_state(scenario: str = "happy", alert: dict | None = None) -> OpsState:
+    """Fresh graph state. `alert` overrides the Friday Cascade default, which is how the
+    evaluation harness drives the graph across its labelled scenarios without touching
+    the demo entrypoints."""
+    return {"run_id": new_run_id(), "alert": dict(alert or FRIDAY_CASCADE_ALERT),
             "scenario": scenario, "ops_context": {}, "visited": [], "transcript": [],
             "trace": []}

@@ -1,0 +1,42 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    "webapp/frontend",
+    ".venv",
+    "venv",
+    "logs",
+]
+
+[tool.ruff.lint]
+# Deliberately a small, high-signal set. This is a student project with a demo to give,
+# not a codebase that benefits from arguing with a linter about import order at 2am.
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # import sorting
+    "B",    # bugbear
+    "UP",   # pyupgrade
+    "C4",   # comprehensions
+]
+ignore = [
+    "E501",   # line length is handled by line-length above, not by hard failures
+    "B008",   # FastAPI dependency defaults are call-in-default by design
+    "UP017",  # datetime.UTC is 3.11+; timezone.utc is used consistently and is portable
+    "UP042",  # enum.StrEnum is 3.11+; `str, Enum` keeps the project runnable on 3.10
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Entrypoints put the repo root on sys.path before importing project modules, which is
+# what makes `python scripts/run_demo.py` work from a clone with no install step.
+"eval/*.py" = ["E402"]
+"stream/*.py" = ["E402"]
+"scripts/*.py" = ["E402"]
+"tests/*.py" = ["E402"]
+"webapp/backend/main.py" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The live agent tests skip themselves without a provider key, so a plain `pytest` on a
+# fresh clone runs the whole offline surface and passes.
+addopts = "-q"

@@ -112,7 +112,7 @@ class _StubLLM:
 
     available = False
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, agent: str = "orchestrator") -> str:
         return (
             "[LLM UNAVAILABLE — TEMPLATED FALLBACK]\n"
             "No model provider was reachable (drop any supported key in .env). "
@@ -127,9 +127,21 @@ class _ChatLLM:
     def __init__(self, model):
         self._model = model
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, agent: str = "orchestrator") -> str:
         from langchain_core.messages import HumanMessage, SystemMessage
-        resp = self._model.invoke([SystemMessage(content=system), HumanMessage(content=user)])
+        # Routing and synthesis calls are the orchestrator's own token spend, so they are
+        # attributed to it rather than to whichever specialist ran last.
+        config = {}
+        try:
+            import observability
+            handlers = observability.callbacks(agent)
+            if handlers:
+                config["callbacks"] = handlers
+        except Exception:  # noqa: BLE001 — instrumentation must never break a call
+            pass
+        resp = self._model.invoke(
+            [SystemMessage(content=system), HumanMessage(content=user)], config=config or None
+        )
         return resp.content if hasattr(resp, "content") else str(resp)
 
 
@@ -166,12 +178,12 @@ def get_chat_model():
     return _build(model_str)
 
 
-def complete(system: str, user: str) -> str:
+def complete(system: str, user: str, agent: str = "orchestrator") -> str:
     """Convenience wrapper used by graph nodes. Degrades to the stub on runtime errors
     (dead network / rate limit mid-demo) so a node never hard-crashes."""
     llm = get_llm()
     try:
-        return llm.complete(system, user)
+        return llm.complete(system, user, agent=agent)
     except Exception as exc:  # noqa: BLE001
         print(f"[llm] invoke failed ({exc}); falling back to templated output.")
-        return _StubLLM().complete(system, user)
+        return _StubLLM().complete(system, user, agent=agent)
