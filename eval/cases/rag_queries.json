@@ -1,0 +1,482 @@
+{
+  "dataset": "tos-rag-queries",
+  "version": "1.0",
+  "description": "Labelled retrieval queries over the technical reference corpus in rag/corpus. Each query names the section(s) that actually answer it. Two splits: 'direct' queries use the vocabulary of the target section, and 'paraphrase' queries deliberately avoid it, asking the way an operator or an agent mid-reasoning would. The paraphrase split is where a lexical retriever is expected to struggle and where embeddings should earn their keep, so the scorecard reports the two splits separately.",
+  "labelling_note": "Relevance was labelled by reading the corpus, not by running the retriever. A query is allowed more than one relevant section when more than one genuinely answers it; recall@k counts a hit if ANY relevant section is retrieved, and precision@k counts the fraction of retrieved passages that are relevant.",
+  "queries": [
+    {
+      "id": "Q01",
+      "query": "at what vibration level does a spindle enter the critical band and what must happen",
+      "relevant": [
+        "tms-101-spindle-bearing-maintenance#S3"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q02",
+      "query": "how is remaining useful life estimated from the rate of change of vibration",
+      "relevant": [
+        "tms-101-spindle-bearing-maintenance#S4"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q03",
+      "query": "how much extra life does reducing spindle speed buy and does it need a safety sign-off",
+      "relevant": [
+        "tms-101-spindle-bearing-maintenance#S5"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q04",
+      "query": "how many technicians and which certifications are needed for a spindle bearing replacement",
+      "relevant": [
+        "tms-101-spindle-bearing-maintenance#S6"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q05",
+      "query": "what are the ISO evaluation zones for machine vibration severity",
+      "relevant": [
+        "tms-204-vibration-severity-limits#S3"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q06",
+      "query": "is a change from baseline more important than the absolute vibration reading",
+      "relevant": [
+        "tms-204-vibration-severity-limits#S4"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q07",
+      "query": "can a broadband vibration reading identify the root cause of a fault",
+      "relevant": [
+        "tms-204-vibration-severity-limits#S5"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q08",
+      "query": "what is the maximum permissible front bearing temperature before the spindle must be stopped",
+      "relevant": [
+        "tms-310-lubrication-thermal-limits#S1"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q09",
+      "query": "does a normal bearing temperature rule out a bearing defect",
+      "relevant": [
+        "tms-310-lubrication-thermal-limits#S2"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q10",
+      "query": "should readings taken right after a cold start be used for a condition assessment",
+      "relevant": [
+        "tms-310-lubrication-thermal-limits#S4",
+        "tms-705-telemetry-data-quality-and-abstention#S4"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q11",
+      "query": "may an automated system authorise removing a lockout tagout lock",
+      "relevant": [
+        "osha-1910-147-loto#S4"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q12",
+      "query": "what is the required sequence of steps to isolate a machine before servicing",
+      "relevant": [
+        "osha-1910-147-loto#S3"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q13",
+      "query": "does an emergency remove the requirement to apply lockout tagout",
+      "relevant": [
+        "osha-1910-147-loto#S7"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q14",
+      "query": "what happens to locks when maintenance continues across a shift change",
+      "relevant": [
+        "osha-1910-147-loto#S5"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q15",
+      "query": "is it permitted to bypass or jumper an interlocked guard for diagnostics",
+      "relevant": [
+        "osha-1910-212-machine-guarding#S4"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q16",
+      "query": "what should happen to a machine found with a damaged or defeated guard",
+      "relevant": [
+        "osha-1910-212-machine-guarding#S6"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q17",
+      "query": "what are the four collaborative operation modes for an industrial robot",
+      "relevant": [
+        "iso-10218-ts15066-collaborative-robots#S2"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q18",
+      "query": "is one operator assigned to two collaborative cells in the same shift a safety problem",
+      "relevant": [
+        "iso-10218-ts15066-collaborative-robots#S6"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q19",
+      "query": "can we raise a robot speed limit to reduce how often the cell stops",
+      "relevant": [
+        "iso-10218-ts15066-collaborative-robots#S7"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q20",
+      "query": "how is the suspect population defined when a machine fault is confirmed",
+      "relevant": [
+        "iatf-16949-traceability-records#S4"
+      ],
+      "asked_by": "quality",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q21",
+      "query": "why must quality records reference the machine condition time window",
+      "relevant": [
+        "iatf-16949-traceability-records#S3"
+      ],
+      "asked_by": "quality",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q22",
+      "query": "what is the difference between rework and repair and what does repair require",
+      "relevant": [
+        "iatf-16949-traceability-records#S5"
+      ],
+      "asked_by": "quality",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q23",
+      "query": "what must be in place before an emergency maintenance window is opened",
+      "relevant": [
+        "tms-450-emergency-maintenance-window#S2"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q24",
+      "query": "who decides whether to open an emergency window and who only recommends it",
+      "relevant": [
+        "tms-450-emergency-maintenance-window#S1"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q25",
+      "query": "what has to pass before a repaired machine is released back to production",
+      "relevant": [
+        "tms-450-emergency-maintenance-window#S5"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q26",
+      "query": "in what order should parts sources be considered for a critical spare",
+      "relevant": [
+        "tms-520-parts-sourcing-expedite-policy#S1"
+      ],
+      "asked_by": "supply_chain",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q27",
+      "query": "should an option be tested against the lower or upper bound of the failure window",
+      "relevant": [
+        "tms-520-parts-sourcing-expedite-policy#S2"
+      ],
+      "asked_by": "supply_chain",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q28",
+      "query": "can a purchase be split into smaller orders to stay under the approval ceiling",
+      "relevant": [
+        "tms-520-parts-sourcing-expedite-policy#S4"
+      ],
+      "asked_by": "supply_chain",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q29",
+      "query": "what happens if two supplier options depend on the same tier 2 supplier",
+      "relevant": [
+        "tms-520-parts-sourcing-expedite-policy#S5"
+      ],
+      "asked_by": "supply_chain",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q30",
+      "query": "what must the sending plant confirm before a cross plant stock transfer",
+      "relevant": [
+        "tms-520-parts-sourcing-expedite-policy#S6"
+      ],
+      "asked_by": "supply_chain",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q31",
+      "query": "which signature indicates a lubrication failure rather than fatigue spalling",
+      "relevant": [
+        "rolling-element-bearing-failure-modes#S3"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q32",
+      "query": "what causes fluting on a bearing raceway and what is the actual fix",
+      "relevant": [
+        "rolling-element-bearing-failure-modes#S5"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q33",
+      "query": "what does it mean when a replaced bearing fails again at a similar interval",
+      "relevant": [
+        "rolling-element-bearing-failure-modes#S8"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q34",
+      "query": "when is a target machine eligible to receive rerouted jobs",
+      "relevant": [
+        "tms-610-production-reroute-and-shift-rules#S2"
+      ],
+      "asked_by": "production",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q35",
+      "query": "in what order should an operator scheduling conflict be resolved",
+      "relevant": [
+        "tms-610-production-reroute-and-shift-rules#S5"
+      ],
+      "asked_by": "production",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q36",
+      "query": "is splitting one operator across two conflicting positions acceptable",
+      "relevant": [
+        "tms-610-production-reroute-and-shift-rules#S5"
+      ],
+      "asked_by": "production",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q37",
+      "query": "what conditions must telemetry meet before a life estimate is valid",
+      "relevant": [
+        "tms-705-telemetry-data-quality-and-abstention#S4"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q38",
+      "query": "what should the system output when the data quality requirements are not met",
+      "relevant": [
+        "tms-705-telemetry-data-quality-and-abstention#S5"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q39",
+      "query": "is a signal that disappears entirely a machine fault or a sensor fault",
+      "relevant": [
+        "tms-705-telemetry-data-quality-and-abstention#S6"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q40",
+      "query": "does abstaining from a prediction mean taking no protective action at all",
+      "relevant": [
+        "tms-705-telemetry-data-quality-and-abstention#S7"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "direct"
+    },
+    {
+      "id": "Q41",
+      "query": "the machine is shaking a lot more than it did last month, does that matter if it is still under the limit",
+      "relevant": [
+        "tms-204-vibration-severity-limits#S4"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q42",
+      "query": "we are already late, can we skip isolating the machine just this once to save an hour",
+      "relevant": [
+        "osha-1910-147-loto#S7"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q43",
+      "query": "the cheaper kit turns up after the machine would already be dead, should we still take it",
+      "relevant": [
+        "tms-520-parts-sourcing-expedite-policy#S2"
+      ],
+      "asked_by": "supply_chain",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q44",
+      "query": "one person covering two robot stations at the same time, is that fine",
+      "relevant": [
+        "iso-10218-ts15066-collaborative-robots#S6"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q45",
+      "query": "it is running hot but the shaking has not changed at all, what does that point to",
+      "relevant": [
+        "tms-310-lubrication-thermal-limits#S2",
+        "rolling-element-bearing-failure-modes#S3"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q46",
+      "query": "we only have two hours of readings, can we still put a number on how long it has left",
+      "relevant": [
+        "tms-705-telemetry-data-quality-and-abstention#S4",
+        "tms-705-telemetry-data-quality-and-abstention#S5",
+        "tms-101-spindle-bearing-maintenance#S4"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q47",
+      "query": "how far back do we have to go when deciding which finished parts might be bad",
+      "relevant": [
+        "iatf-16949-traceability-records#S4"
+      ],
+      "asked_by": "quality",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q48",
+      "query": "the new one died at about the same age as the one we took out",
+      "relevant": [
+        "rolling-element-bearing-failure-modes#S8"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q49",
+      "query": "is it acceptable to take the cover off while the tool is still turning",
+      "relevant": [
+        "osha-1910-212-machine-guarding#S4",
+        "osha-1910-212-machine-guarding#S3"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q50",
+      "query": "can one person just cover both jobs if the times clash a bit",
+      "relevant": [
+        "tms-610-production-reroute-and-shift-rules#S5"
+      ],
+      "asked_by": "production",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q51",
+      "query": "the number went up but so did the load on the motor, is something actually broken",
+      "relevant": [
+        "tms-101-spindle-bearing-maintenance#S2"
+      ],
+      "asked_by": "reliability",
+      "difficulty": "paraphrase"
+    },
+    {
+      "id": "Q52",
+      "query": "who signs off before we take the thing apart on a Saturday",
+      "relevant": [
+        "tms-450-emergency-maintenance-window#S2",
+        "tms-450-emergency-maintenance-window#S1"
+      ],
+      "asked_by": "compliance_safety",
+      "difficulty": "paraphrase"
+    }
+  ]
+}
