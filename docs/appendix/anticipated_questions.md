@@ -45,6 +45,15 @@ The *agent loop* is fully real; the *integrations* are stubbed. Tools read produ
 behaviour is representative. Real SCADA/SAP wiring is OT access + pipelines — next step, not a
 research risk. We're honest about this rather than faking integrations.
 
+**Is any of it backtested?**
+The RUL model is, on real data: NASA C-MAPSS, 707 held-out engines, test RMSE 17.0 cycles
+against a mean-predictor baseline of 41.8, with a conformalised lower bound whose coverage
+is measured rather than asserted. The CNC demo asset is **not** backtested, because no
+public run-to-failure dataset exists for spindle bearings, and every prediction it makes is
+labelled `declared_thresholds` in the tool output, the transcript and the audit log. The
+honest answer is "the model is, that asset is not, and the system tells you which you are
+looking at". See `eval/results/rul_backtest.md` and decision 008.
+
 ---
 
 ## Risk, safety & security

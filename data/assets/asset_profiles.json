@@ -89,5 +89,22 @@
       "P-7803": {"qty": 1}
     },
     "note": "Sister plant — cross-plant transfer feasible in 24h if primary procurement fails"
+  },
+  "TRB-01-LEI": {
+    "machine_id": "TRB-01-LEI",
+    "name": "Turbine Test Cell #1",
+    "plant_id": "LEI",
+    "plant_name": "Titan Leipzig (Plant 7)",
+    "asset_class": "turbofan",
+    "year_installed": 2021,
+    "telemetry_file": "TRB-01-LEI_cmapss.json",
+    "rul_source": "fitted_model",
+    "note": "The only asset here whose remaining-life prediction comes from a model fitted to real run-to-failure data rather than declared thresholds. Its telemetry is real NASA C-MAPSS benchmark data (FD001 test unit 53), not invented, so the fitted path runs on data the model was validated against and the prediction has a known right answer. See eval/results/rul_backtest.md and docs/decisions/008-label-every-rul-prediction-with-its-provenance.md",
+    "failure_modes": {
+      "turbofan_degradation": {
+        "description": "Progressive efficiency loss across compressor and turbine stages, observed through 21 onboard sensors rather than a single vibration channel.",
+        "bom": []
+      }
+    }
   }
 }

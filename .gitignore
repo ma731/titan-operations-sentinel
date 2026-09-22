@@ -24,3 +24,10 @@ webapp/frontend/dist/
 
 # generated retrieval index cache (the manifest IS committed; embeddings are optional)
 # rag/index/embeddings.json is committed on purpose so dense numbers reproduce without a key
+
+# RUL model artifacts. Only FD001 is served by the fleet (see ml/predict.py), so only
+# its artifacts are committed. The other subsets' backtest results ARE committed as
+# eval/results/rul_backtest_FD00*.json; rebuild their models with ml.train_rul.
+models/rul_FD002_*
+models/rul_FD003_*
+models/rul_FD004_*

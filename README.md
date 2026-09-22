@@ -59,8 +59,9 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Routing | exhaustive policy checks plus all **34** cases through the real graph with scripted specialists |
 | Retrieval | recall@4 **100%** on direct queries, **41.7%** on paraphrases (52 labelled queries) |
 | Triage gate | default 48 ticks: **192** readings, **1** wake, **0.52%** wake rate (dry run) |
+| RUL model | **RMSE 17.0 cycles** on **707** held-out engines (NASA C-MAPSS), against a mean-predictor baseline of 41.8 ([backtest](eval/results/rul_backtest.md)) |
 | Live cost and latency | instrumented per run; provider benchmark not yet measured |
-| Tests | **264** passed, **4** provider-dependent tests skipped in the offline validation |
+| Tests | **293** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
 `python -m stream.run`. The scorecard is generated; this table is a summary.
@@ -425,6 +426,8 @@ agents/               the 5 specialist ReAct agents
 tools/                20 domain tools plus the @tool wrappers (docs/tool_catalog.md)
 rag/                  technical corpus, BM25 + optional embeddings, cited retrieval
 eval/                 labelled datasets, metric suites, generated scorecard, findings register
+ml/                  C-MAPSS loading, the RUL model, conformal bound, fitted serving
+models/              fitted RUL artifacts
 stream/              fleet simulator, triage gate, the continuous loop
 integrations/         Slack and email approval routing
 prompts/              5 agent prompts plus supervisor, orchestrator, guardrails, self-eval
@@ -445,12 +448,19 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
 - **Why the policy is in code.** Coverage, termination, the spend ceiling and the safety
   override are promises. A promise that depends on the model happening to choose well is
   not a promise, and it cannot be tested cheaply.
-- **Why simulated data.** Real SCADA and SAP integration needs OT access and months of
-  pipelines. The tools read realistic JSON shaped like production systems, so the agent
-  behaviour is representative even though the data is not real.
-- **Honest labelling.** The heuristic life estimate, the Replay recording, the design-stage
-  learning parts, the corpus provenance and the open evaluation findings are all labelled
-  as what they are, in the code, the docs, the console and the deck.
+- **Why simulated data, and where it stops.** Real SCADA and SAP integration needs OT
+  access and months of pipelines, so the tools read realistic JSON shaped like production
+  systems and the agent behaviour is representative even though the data is not. The
+  exception is the remaining-life model, which is fitted and scored on real run-to-failure
+  data, because "our predictions are good" is the one claim that cannot be made on invented
+  inputs.
+- **Why provenance travels with the number.** A prediction from a fitted model and a
+  prediction from a threshold someone wrote down are different kinds of claim. Keeping them
+  visibly apart costs one field and removes the temptation to let the demo imply more than
+  it earned.
+- **Honest labelling.** The declared-threshold life estimate, the Replay recording, the
+  design-stage learning parts, the corpus provenance and the open evaluation findings are
+  all labelled as what they are, in the code, the docs, the console and the deck.
 
 ---
 
@@ -459,10 +469,22 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
 - Working: all five challenges, the learning loop, the audit trail, the web console, the
   retrieval layer, the continuous stream, the approval integrations and CI. See the
   validation snapshot above for the current test result.
-- The remaining-life estimate is a heuristic, not a trained model. It is an MVP stub and is
-  labelled as one. The evaluation found that it ignored its own documented critical
-  threshold, which is now fixed ([F-01](eval/FINDINGS.md)); the model underneath is still a
-  band table, not a fitted one.
+- The remaining-life estimate now comes from one of two estimators, and **every prediction
+  says which**. A model fitted to real run-to-failure data serves assets that have such
+  data; a declared threshold table serves the CNC assets, because no public run-to-failure
+  dataset exists for spindle bearings. The `source` field reaches the transcript and the
+  audit log, so a reviewer can always tell a measured number from an asserted one
+  ([decision 008](docs/decisions/008-label-every-rul-prediction-with-its-provenance.md)).
+- Building that model surfaced two errors in it, both recorded rather than quietly fixed.
+  Cross-validation reported an RMSE of 11 while held-out ground truth said 74, caused by a
+  feature that encoded each engine's total lifetime ([F-07](eval/FINDINGS.md)). The first
+  reported interval was a band that could not fail, because the upper quantile was
+  degenerate under the RUL cap ([F-08](eval/FINDINGS.md)). The bound that replaced it is
+  conformalised, and its coverage is reported on both an exchangeable hold-out and the
+  benchmark's own shifted test set rather than only the flattering one.
+- The demo's fitted prediction is **wrong on its own demo engine**: the bound says at least
+  34.4 cycles and the truth is 26. That engine was chosen before training, by remaining life
+  alone, and kept rather than swapped for one the model handles well.
 - The safety rule was rewritten after the evaluation showed the old keyword list both
   over-fired and under-fired. It now requires a defeating action *and* a hazard control.
   Both directions are pinned by adversarial scenarios ([F-02](eval/FINDINGS.md)).
