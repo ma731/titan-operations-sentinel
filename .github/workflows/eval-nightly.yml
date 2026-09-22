@@ -16,7 +16,7 @@ on:
       limit:
         description: "Maximum live scenarios to run"
         type: string
-        default: "8"
+        default: "4"
 
 permissions:
   contents: write
@@ -52,7 +52,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           REQUESTED: ${{ github.event_name == 'schedule' && 'true' || inputs.live }}
-          LIVE_LIMIT: ${{ inputs.limit || '8' }}
+          LIVE_LIMIT: ${{ inputs.limit || '4' }}
         run: |
           requested="$REQUESTED"
           [[ "$LIVE_LIMIT" =~ ^[1-9][0-9]*$ ]] || { echo "limit must be a positive integer"; exit 1; }
@@ -72,6 +72,11 @@ jobs:
           # Embeddings score the dense and hybrid retrieval rows. Without this the
           # scorecard reports them as not configured rather than pretending.
           TOS_EMBEDDINGS: ${{ secrets.GOOGLE_API_KEY && 'auto' || '' }}
+          # Flash-Lite, because the free tier is the binding constraint. Flash allows
+          # 250 requests a day at 10/min; four scenarios is roughly 160 model calls, which
+          # busts neither the daily cap nor the job timeout. Flash-Lite gives 1,000/day at
+          # 15/min for headroom. Override with the TOS_MODEL secret if a paid key is used.
+          TOS_MODEL: ${{ secrets.TOS_MODEL || (secrets.GOOGLE_API_KEY && 'google_genai:gemini-2.5-flash-lite' || '') }}
           LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
           LANGFUSE_HOST: ${{ secrets.LANGFUSE_HOST }}
