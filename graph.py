@@ -99,7 +99,8 @@ class OpsState(TypedDict, total=False):
     pending_followup: str                        # agent name another agent asked for
     next_agent: str
     risk: str                                    # HIGH | LOW | ESCALATE
-    predicted_rul: list                          # [min_h, max_h] from rul_predictor, for case memory
+    predicted_rul: list                          # [min, max] from rul_predictor, for case memory
+    rul_provenance: dict                         # which estimator produced it, and its measured error
     proposed_actions: list[str]
     escalate: bool
     halt: bool
@@ -108,6 +109,22 @@ class OpsState(TypedDict, total=False):
     final_plan: str
     status: str
     trace: Annotated[list, operator.add]
+
+
+def _provenance_message(rp: dict, rh: dict) -> str:
+    """One line a human can read, saying how much the RUL number is worth."""
+    unit = rh.get("unit") or "hours"
+    if rp.get("source") == "fitted_model":
+        err = (rp.get("measured_error") or {}).get("test_mae_cycles")
+        return (
+            f"RUL from a model fitted to real run-to-failure data "
+            f"({rp.get('model_id')}), reported as a lower bound in {unit}"
+            + (f"; held-out test MAE {err} cycles." if err is not None else ".")
+        )
+    return (
+        f"RUL from declared thresholds, in {unit}. Not fitted to failures of this asset "
+        "class and not backtested."
+    )
 
 
 def _ev(rid: str, etype: str, agent: str, **detail) -> dict:
@@ -312,9 +329,32 @@ def _make_worker(name: str):
         # offline evaluation can score them directly.
         if name == "reliability":
             rp = results.get("rul_predictor", {})
-            rh = rp.get("rul_hours") or {}
+            # Prefer the generic block, which carries its own unit. rul_hours is kept for
+            # hour-based assets so older consumers keep working.
+            rh = rp.get("rul") or rp.get("rul_hours") or {}
             if rh.get("min") is not None:
-                update["predicted_rul"] = [rh["min"], rh.get("max", rh["min"])]
+                upper = rh.get("max")
+                update["predicted_rul"] = [rh["min"], upper if upper is not None else rh["min"]]
+
+            # Provenance travels with the number. A prediction from a model fitted to real
+            # failures and one from a threshold someone wrote down are different kinds of
+            # claim, and the plan, the transcript and the audit log all get to see which
+            # is which. See docs/decisions/008 and F-08.
+            if rp.get("source"):
+                update["rul_provenance"] = {
+                    "source": rp["source"],
+                    "model_id": rp.get("model_id"),
+                    "unit": rh.get("unit"),
+                    "bound": rh.get("bound"),
+                    "note": rp.get("provenance_note"),
+                    "measured_error": rp.get("measured_error"),
+                }
+                update["trace"].append(_ev(
+                    rid, "provenance", name,
+                    source=rp["source"],
+                    model_id=rp.get("model_id"),
+                    message=_provenance_message(rp, rh),
+                ))
             risk = (policy.classify_risk(rp, blob)
                     if rp.get("failure_mode") and not rp.get("error") else "ESCALATE")
             update["risk"] = risk

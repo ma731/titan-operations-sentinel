@@ -190,7 +190,8 @@ label, and open the agents' written notes if that panel is visible.
 
 | If they ask… | Say… |
 |---|---|
-| **Is the data real?** | It's realistic but simulated — same shape as real factory systems. Hooking up the real machines takes months of plumbing; what we're showing is the **agents' decision-making**, which is the point. We label it honestly. |
+| **Is the data real?** | Mostly simulated, and labelled as such: same shape as real factory systems, because hooking up real machines is months of plumbing and what we're showing is the **agents' decision-making**. One asset is the exception. `TRB-01-LEI` runs on real NASA benchmark telemetry, so the fitted RUL model is exercised on data it was validated against. |
+| **Is the prediction backtested?** | The model is, on 707 held-out engines. The CNC asset is not, and it says so: every RUL result carries a `source` field reading either `fitted_model` or `declared_thresholds`, and it reaches the transcript and the audit log. See `eval/results/rul_backtest.md`. |
 | **Is the failure prediction a real AI model?** | No — it's a **simple stand-in**, and we say so in the app. The real work here is the **teamwork between agents**, not the predictor. It's easy to swap in a trained one later. |
 | **Why a team of agents instead of one big AI?** | Five focused agents, each with a few tools, make **better choices** than one trying to juggle twenty tools — and they match how the real departments are split. |
 | **What stops it doing something crazy?** | Hard-coded limits: the €500 cap, mandatory safety sign-off, and a human approval step on spending. The AI decides; **the rules guarantee.** |

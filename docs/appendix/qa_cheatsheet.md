@@ -74,7 +74,8 @@ the professor can ask **anyone** about **any** part). Roles from brief §18.
 ---
 
 ## Traps to rehearse (likely investor-style pushes)
-- *"Your data is simulated."* → Yes — MVP. The schemas are production-shaped; swapping in live SCADA/ERP is a connector, not a redesign.
-- *"RUL is a heuristic."* → Correct, and we say so. It's a stub; the architecture is model-agnostic — drop in a trained model behind the same tool interface.
+- *"Your data is simulated."* → Mostly yes, and we label it. Schemas are production-shaped; swapping in live SCADA/ERP is a connector, not a redesign. One asset (`TRB-01-LEI`) runs on real NASA benchmark telemetry so the fitted path is exercised on data with a known answer.
+- *"RUL is a heuristic."* → For the CNC assets, yes, and every one of those predictions says `declared_thresholds`. There is also a real fitted model, backtested on 707 held-out engines, serving `TRB-01-LEI`. The point is that the system never presents the two as the same kind of claim.
+- *"Your model looks wrong on the demo asset."* → It is, on that engine: the bound says at least 34.4 cycles and the truth is 26. The engine was picked before training, by remaining life alone, and kept rather than swapped for a flattering one. That miss is what a measured 80% coverage means in practice.
 - *"What if Gemini is down on demo day?"* → Recorded replay runs with zero API calls; backoff handles transient 429s.
 - *"18 tools seems like a lot."* → They're 5 clusters of capability, each justified in `tool_catalog.md`, each with a fallback.

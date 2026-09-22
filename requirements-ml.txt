@@ -1,0 +1,10 @@
+# Machine learning stack for ml/ (the RUL model). Deliberately separate from
+# requirements.txt: the demo, the agents and the offline eval suite all run without
+# these. Only training and serving a fitted RUL model needs them.
+-r requirements.txt
+
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.4
+lightgbm>=4.0
+joblib>=1.3

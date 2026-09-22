@@ -188,6 +188,102 @@ Synthetic runs cannot modify case memory or send approval notifications. Citatio
 requires retrieval by the reporting agent, while dense queries use the query embedding
 method and a separate cache namespace. See [the review](../docs/END_TO_END_REVIEW.md).
 
+---
+
+## F-07 (fixed 2026-09-22) Cross-validation said RMSE 11, held-out ground truth said 74
+
+The first RUL model looked excellent and was broken.
+
+Grouped 5-fold CV over the training engines reported RMSE 11.0 cycles, which is better
+than published results for this benchmark. Scored against the held-out test engines and
+their true remaining-life labels, the same model reported RMSE 73.7. The naive baseline,
+predicting the training mean for every engine, scored 41.9. The model was more than
+twice as bad as doing nothing.
+
+**The cause.** A feature called `cycle_norm`, defined as a unit's current cycle divided
+by that unit's last cycle. In training that denominator is the engine's total lifetime,
+which is only knowable once the engine has already failed, so the feature encoded the
+target almost directly. At inference the test engines are truncated, so every unit's most
+recent cycle divides by itself and scores exactly 1.0, which the model had learnt to read
+as "at failure". It predicted near-zero remaining life for all 100 test engines.
+
+**Why cross-validation did not catch it.** Every fold shared the defect. Splitting by
+engine prevents a unit straddling the boundary; it does nothing about a feature that is
+computed from the whole of each unit's future. Grouped CV is not a leakage detector, and
+treating it as one is how this survived to the first real evaluation.
+
+**The fix.** The feature was removed. Raw cycle count replaced it, which is genuinely
+observable at prediction time. CV moved to 15.6 and held-out test to 16.5. The two
+agreeing is the actual result here; the earlier 11.0 was never real.
+
+**The regression test.** `tests/test_rul_model.py::test_features_do_not_use_the_future`
+truncates a unit and asserts that the features of the surviving cycles are unchanged. Any
+feature computed from a unit's full history fails it. This is the property that was
+violated, tested directly, rather than an assertion about the score.
+
+A second, smaller defect surfaced the same way: constant sensors were being dropped from
+the rolling features but survived as raw columns. Harmless to a tree model, and fixed,
+but it had gone unnoticed until a test asked the question.
+
+**What this cost and what it bought.** One wrong number, caught before it was reported.
+It is also the strongest argument for the work in decision 008: this project had no way
+to catch an error like this before, because it had nothing to check a prediction against.
+
+---
+
+## F-08 (fixed 2026-09-22) The RUL interval was a band that could not fail
+
+The first version of the model reported an 80% interval from a pair of quantile models,
+10th and 90th percentile, and measured coverage between 0.76 and 0.87. That looked like a
+reasonable calibration result. It was not a result at all.
+
+**The upper bound was degenerate.** The RUL target is clipped at 125 cycles and 39.4% of
+training rows sit exactly at the clip, so the 90th percentile of the target is the cap
+almost everywhere. The fitted upper-quantile model contained zero splits: it returned
+125.0 for all 100 test engines. Its saved artifact was 10 KB against 1.7 MB for the lower
+model, which is what prompted the check.
+
+Because the truth is clipped at the same 125, the upper bound could never be violated.
+The reported "interval coverage" was therefore just P(truth >= lower bound) wearing a
+two-sided label, and no number in it was evidence of calibration.
+
+**What replaced it.** A one-sided lower bound, which is the decision-relevant quantity
+anyway: for maintenance planning the expensive mistake is believing there is more time
+left than there is. The bound is conformalised on engines held out from fitting.
+
+**The second finding, which is the more interesting one.** Split conformal guarantees
+coverage only when the calibration points are exchangeable with the points it is applied
+to. They are not, by construction of this benchmark:
+
+| | fraction of points at the RUL cap |
+|---|---|
+| training cycles (calibration pool) | 39.4% |
+| official benchmark test points | 11.0% |
+
+The benchmark truncates its test engines toward later life on purpose. Calibrating on a
+uniform sample of training cycles tunes the bound on a much easier distribution, so the
+guarantee does not transfer. Measured rather than assumed: coverage on the official test
+set runs below internal coverage on every subset.
+
+The fix was to stop conflating the two and report both. Training engines are now split
+three ways: fitted on, calibration, and an internal test set built by the *same* random
+truncation process as the calibration set, so the two are exchangeable and the guarantee
+does apply there. The official benchmark is reported separately as an external check
+under known shift.
+
+**The third finding.** Even on the exchangeable internal set, realised coverage varies
+widely: 0.820, 0.985, 0.890 and 0.900 against a 0.90 target. Coverage on the calibration
+set itself is exactly 0.905, so the arithmetic is right. The cause is that cycles within
+one engine are heavily correlated. On FD001, per-engine coverage has a median of 0.90 but
+three of twenty engines score below 0.5, one at 0.20, and each bad engine drags ten
+correlated points down together.
+
+**The effective sample size is the number of engines, not the number of rows.** Twenty
+calibration engines cannot pin a 90% guarantee, and the two subsets with fifty-plus
+engines land nearer the target. This is reported rather than tuned away, because the
+tuning available (raise the quantile until the number looks right on the test set) is
+precisely the thing that makes a calibration claim worthless.
+
 ## Known limits of the suite itself
 
 Worth stating plainly, because a scorecard that does not describe its own blind spots is
@@ -207,3 +303,12 @@ marketing. These are the reasons 100% does not mean finished:
 - **Cost figures are indicative.** Token counts are real, per-token prices are
   order-of-magnitude constants in `observability.py`, and free-tier providers are priced
   at zero because that is what this project spends.
+- **The RUL lower bound is calibrated, not guaranteed, in deployment.** The conformal
+  guarantee holds on data exchangeable with the calibration set. Under the shift the
+  benchmark itself introduces it degrades measurably, and with few engines it is noisy.
+  See F-08.
+- **The RUL model is fitted to turbofan data, not to the demo asset.** It shows the method
+  works on real degradation data with held-out labels, on 707 units. CNC spindle bearing
+  predictions remain threshold-based and are labelled `declared_thresholds` in every tool
+  result. Nothing in this repo backtests the demo asset, because no public run-to-failure
+  data for it exists. See `eval/results/rul_backtest.md`.

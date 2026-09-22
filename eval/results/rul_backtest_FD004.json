@@ -1,0 +1,23 @@
+{
+  "subset": "FD004",
+  "n_fit_units": 149,
+  "n_calibration_units": 50,
+  "n_internal_test_units": 50,
+  "n_official_test_units": 248,
+  "cv_rmse_mean": 16.504,
+  "cv_rmse_std": 1.11,
+  "test_rmse": 19.242,
+  "test_mae": 13.48,
+  "test_phm08": 2549.0,
+  "baseline_rmse_mean_predictor": 45.305,
+  "lower_bound_target_coverage": 0.9,
+  "internal_coverage_raw": 0.822,
+  "internal_coverage_conformal": 0.9,
+  "official_coverage_raw": 0.798,
+  "official_coverage_conformal": 0.915,
+  "official_fraction_at_cap": 0.27,
+  "calibration_fraction_at_cap": 0.49,
+  "conformal_adjustment_cycles": 5.6,
+  "mean_lower_bound_slack": 22.85,
+  "rul_cap": 125
+}

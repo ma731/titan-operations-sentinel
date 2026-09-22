@@ -107,8 +107,12 @@ routing entry in `graph.py`.
   reroute to avoid an operator conflict, and Compliance returning a sign-off verdict).
 
 **Honest limitations (say these in Q&A)**
-- RUL is a **heuristic**, not a trained model — MVP stub.
-- All data is **simulated** (realistic schemas, no live SCADA/SAP).
+- RUL comes from **two estimators, and every prediction says which one produced it**. The
+  CNC assets use declared thresholds (a heuristic, never backtested). `TRB-01-LEI` uses a
+  model fitted to NASA C-MAPSS run-to-failure data, scored on 707 held-out engines
+  (`eval/results/rul_backtest.md`). Do not claim the CNC numbers are measured.
+- **Most data is simulated** (realistic schemas, no live SCADA/SAP). The exception is
+  `TRB-01-LEI`, whose telemetry is real C-MAPSS benchmark data with a known true answer.
 - Live runs are bounded by the **Groq daily token budget**.
 
 ---

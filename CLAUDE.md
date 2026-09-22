@@ -87,6 +87,11 @@ rag/
   index.py               # chunker + BM25 (no dependencies, runs in CI)
   embeddings.py          # optional dense vectors, on-disk cache, opt-in via TOS_EMBEDDINGS
   retrieve.py            # search(query, k, mode) -> cited passages  (lexical|dense|hybrid)
+ml/
+  cmapss.py              # NASA C-MAPSS loading, RUL target, leak-free rolling features
+  train_rul.py           # quantile model + split-conformal lower bound + backtest
+  predict.py             # serves a fitted prediction with its measured error attached
+models/                  # fitted RUL artifacts (joblib) — FD001 only, ~3.5 MB
 eval/
   cases/                 # 34 labelled scenarios + 52 labelled retrieval queries
   policy_eval.py         # offline suite: tools + policy, incl. EXHAUSTIVE routing check
@@ -173,6 +178,8 @@ to the audit log. Event types:
 {"type": "route",        "agent": "orchestrator", "allowed": list, "message": str}
 {"type": "tool_call",    "agent": str, "tool": str, "input": dict, "result": any}
 {"type": "agent_report", "agent": str, "report": str}
+{"type": "provenance",   "agent": str, "source": "fitted_model"|"declared_thresholds",
+                         "model_id": str|None, "message": str}
 {"type": "agent_error",  "agent": str, "error": str}     # degraded — run continues
 {"type": "decision" | "escalation", "agent": str, "message": str}
 {"type": "approval_request", "question": str, "ceiling_eur": int}
@@ -193,6 +200,8 @@ python scripts/run_demo.py escalation  # telemetry dropout → stops after relia
 python scripts/view_run.py             # replay last recorded run (no tokens) — also --list, RUN-id
 python -m pytest tests/                # offline regression tests (flow tests skip without a key)
 python -m eval.run_eval                # regenerate eval/results/scorecard.md (free, no key)
+python scripts/fetch_prognostics_data.py   # download NASA C-MAPSS (~12 MB, once)
+python -m ml.train_rul FD001          # retrain + rebacktest the RUL model (needs requirements-ml.txt)
 python -m eval.run_eval --live         # adds the live agent suite (costs tokens)
 python -m stream.run                   # continuous alert stream, triage only, no model calls
 python -m stream.run --live            # let the stream actually trigger agent runs
@@ -226,6 +235,10 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
   otherwise and Groq rejects the tool call (see `SHARED_FOOTER` in agents.py).
 - Do not change autonomy tiers / the €500 ceiling without updating §5 and the agent prompts.
 - Do not use `git add -A`/`git add .` — stage explicit paths to avoid committing `.env`.
+- Do not present a rule-derived RUL number as a measured one. Every prediction carries a
+  `source` field; keep it accurate. See decision 008 and F-07/F-08.
+- Do not add a feature to `ml/` computed from a unit's full history. That is F-07, and
+  `tests/test_rul_model.py::test_features_do_not_use_the_future` exists to catch it.
 - Do not hardcode machine IDs or part numbers in agent code — they come from alerts/tool outputs.
 
 ---
@@ -250,6 +263,9 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 | Slack / email approval routing | Done (untested against a real workspace) |
 | CI, Docker, GitHub Pages deploy | Done |
 | Live Groq run verified (happy path end-to-end) | Done |
+| RUL model on real run-to-failure data (C-MAPSS, 707 held-out units) | Done |
+| Provenance on every RUL prediction (fitted_model vs declared_thresholds) | Done |
+| Backtested predictions for the CNC demo asset | Not possible: no public run-to-failure data for it |
 | Live evaluation suite scored against a provider | Needs a key: not yet run |
 | Dense / hybrid retrieval rows on the scorecard | Needs TOS_EMBEDDINGS: not yet run |
 | Slides | Done (webapp/frontend/public/deck.html) |
