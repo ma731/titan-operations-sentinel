@@ -1,22 +1,14 @@
 """
-Live evaluation: run the real six-agent graph and score what the model actually did.
+Live evaluation: run the real graph and score what the model actually did.
 
-This is the expensive half of the harness, so it runs on a labelled subset
-(`in_live_subset` in scenarios.json) rather than all 27 scenarios, and it is not part of
-the CI-on-every-push suite. What it measures that the offline suite cannot:
+The expensive half, so it runs on the labelled subset (`in_live_subset`) and stays out of
+the on-every-push job. It measures what the offline suite cannot: whether each agent
+picked the right tools, whether the run reached the gate when it should have, whether the
+grounded agents cite real corpus sections, whether the numbers in a report trace back to a
+tool, and what a run costs in tokens and seconds.
 
-  routing_coverage     did every required agent actually run, in a legal order
-  tool_call_*          did each agent pick the tools its job needs (micro P / R / F1)
-  gate_decision        did the run reach the human approval gate when it should have
-  terminal_status      did the run end in the right state
-  citation_rate        do the grounded agents cite a real corpus section, or just assert
-  numeric_groundedness every number in a report traced back to a tool result, because an
-                       invented figure in a costed plan is the expensive failure
-  tokens / cost / s    what one run costs, per agent
-
-The human decision is auto-answered with "approve" so the run completes unattended. That
-is a measurement choice, not a claim that the gate is optional: the gate firing at all is
-itself one of the scored metrics.
+The human decision is auto-answered so runs complete unattended. That the gate fires at
+all is itself one of the scored metrics.
 """
 from __future__ import annotations
 

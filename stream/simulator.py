@@ -50,9 +50,8 @@ class Reading:
 class MachineProfile:
     """How one machine behaves over the run.
 
-    `degradation_per_tick` is the exponential growth rate applied to vibration. A healthy
-    machine has 0.0 and just wanders around its baseline. A degrading machine compounds,
-    which is what makes the rate-of-change signal that TMS-101 estimates life from."""
+    degradation_per_tick compounds vibration each tick. 0.0 means healthy, so the machine
+    just wanders around its baseline."""
 
     machine_id: str
     plant_id: str = "LEI"
@@ -65,12 +64,10 @@ class MachineProfile:
 
 
 def _stable_offset(text: str, modulo: int) -> int:
-    """A per-machine constant that is the same in every process.
+    """A per-machine constant that is stable across processes.
 
-    Python's builtin hash() is randomised per process for strings (PYTHONHASHSEED), so
-    using it here would have made the "seeded and deterministic" claim false: every run
-    would give each machine a different baseline. crc32 is stable across processes and
-    platforms, which is what a reproducible demo and an asserting test both need."""
+    hash() is randomised per process for strings, so using it made the "deterministic"
+    claim false: every run gave each machine a different baseline. crc32 does not."""
     return zlib.crc32(text.encode("utf-8")) % modulo
 
 

@@ -1,18 +1,12 @@
 """
-Per-run, per-agent observability: tokens, model calls, latency, and estimated cost.
+Per-run, per-agent tokens, cost, latency, and optional tracing.
 
-Two layers, both optional and both off by default so nothing here can break a demo:
+UsageTracker is a LangChain callback that counts tokens per agent. It costs nothing and
+is what the eval reports efficiency from. Langfuse tracing attaches only when
+LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are set; without them nothing changes.
 
-1. `UsageTracker` is a LangChain callback handler that counts prompt and completion
-   tokens per agent. It is always attached when a run is instrumented, costs nothing, and
-   is what the evaluation harness reports tokens and cost from.
-2. Langfuse tracing is attached only when LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are
-   present in the environment. It gives a per-agent waterfall in the Langfuse UI. Without
-   the keys, `langfuse_handler()` returns None and the run is unaffected.
-
-Why count tokens ourselves rather than read them from Langfuse: the eval has to run in CI
-with no network and no account, and a scorecard that only exists when a SaaS is reachable
-is not a scorecard.
+Tokens are counted here rather than read back from Langfuse because the eval runs in CI
+with no account, and a cost figure that needs a SaaS to exist is not a cost figure.
 """
 from __future__ import annotations
 
@@ -110,11 +104,10 @@ class RunUsage:
 
 
 def _extract_tokens(response) -> tuple[int, int]:
-    """Pull (prompt, completion) tokens out of an LLMResult across provider shapes.
+    """(prompt, completion) tokens from an LLMResult.
 
-    Providers disagree: some fill llm_output['token_usage'], some only put
-    usage_metadata on the message. Try both before giving up, and return zeros rather
-    than raising, because a missing token count must never fail a run."""
+    Providers disagree on where they put it, so try both shapes. Returns zeros rather
+    than raising: a missing token count must never fail a run."""
     out = getattr(response, "llm_output", None) or {}
     usage = out.get("token_usage") or out.get("usage") or {}
     prompt = usage.get("prompt_tokens") or usage.get("input_tokens") or 0
@@ -136,11 +129,10 @@ def _extract_tokens(response) -> tuple[int, int]:
 
 
 class UsageTracker(BaseCallbackHandler):
-    """Counts model calls and tokens, attributed to whichever agent is currently running.
+    """Counts model calls and tokens against whichever agent is running.
 
-    The graph is sequential (one agent node at a time), so a single current-label field is
-    accurate. The lock is there because LangChain may deliver callbacks from a worker
-    thread, not because two agents run at once."""
+    The graph is sequential, so one current-label field is accurate. The lock is for
+    callbacks arriving on worker threads, not for concurrent agents."""
 
     def __init__(self, provider: str = "unknown"):
         self.usage = RunUsage(provider=provider)
@@ -180,11 +172,9 @@ class UsageTracker(BaseCallbackHandler):
 
 
 def langfuse_handler():
-    """Langfuse CallbackHandler when configured, else None.
+    """Langfuse CallbackHandler when the keys are set, else None.
 
-    Set LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and (for EU) LANGFUSE_HOST. The free
-    tier is enough for this project. Any failure here degrades to no tracing rather than
-    to a broken run."""
+    Any failure degrades to no tracing rather than a broken run."""
     if not (os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY")):
         return None
     try:

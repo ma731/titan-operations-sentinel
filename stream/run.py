@@ -1,14 +1,14 @@
 """
-The continuous loop: watch the stream, wake the agents when it matters.
+The loop: watch the stream, wake the agents when it matters.
 
-    python -m stream.run --dry-run            # no model calls: shows what it WOULD run
-    python -m stream.run --ticks 60           # simulate 10 hours of plant time
-    python -m stream.run --live               # actually invoke the graph on a wake
-    python -m stream.run --live --interval 2  # pace it for a live demo
+    python -m stream.run                        # triage only, no model calls
+    python -m stream.run --ticks 60             # about 10 hours of plant time
+    python -m stream.run --live                 # actually invoke the graph on a wake
+    python -m stream.run --live --interval 2    # paced for a demo
 
-Dry run is the default, deliberately. An autonomous loop that starts spending tokens the
-first time somebody runs it is a bad default, and the interesting number (how many
-readings produce how many runs) does not need a model to compute.
+Dry run is the default. An autonomous loop that starts spending tokens the first time
+somebody runs it is a bad default, and the interesting number (how many readings produce
+how many runs) needs no model.
 """
 from __future__ import annotations
 

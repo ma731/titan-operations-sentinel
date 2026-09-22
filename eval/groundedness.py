@@ -1,30 +1,13 @@
 """
-Numeric groundedness: did the agent get that number from a tool, or invent it?
+Did the agent get that number from a tool, or invent it?
 
-The citation metric catches an agent that invents a source. It does not catch the more
-common and more expensive failure: an agent that cites nothing and simply states a
-number. "ROI 94:1", "the bearing has 40 hours left", "the expedite costs 2,800 euros" all
-read as authoritative, and a plant manager approving a spend has no way to tell which of
-them came from a tool.
+The citation metric catches an invented source. This catches the more expensive failure:
+an agent that cites nothing and just states "ROI 94:1". Every number in a report is
+checked against the numbers its tools returned, or arithmetic on them.
 
-So every number in an agent's report is checked against the numbers its tools actually
-returned. A number is grounded if it appears in a tool result, or is derivable from them
-by the arithmetic the agents are expected to do (a ratio, a sum, a unit conversion).
-
-Deliberate design choices, because a groundedness metric that cries wolf gets ignored:
-
-- Small integers, years, percentages of the form "60%" and anything that appears in the
-  task prompt are excluded. An agent writing "two technicians" or "the 6h trend window"
-  is not hallucinating; it is reading its own instructions.
-- Matching is tolerant of formatting. 3200, 3,200, 3200.0 and "EUR 3,200" are the same
-  number, and 79.7 matches a computed 79.68.
-- Derived values are accepted. An agent that multiplies 52 hours by 7,500 EUR/hour and
-  writes 390,000 is doing its job, so sums, differences, products, ratios and round
-  numbers built from tool values all count as grounded.
-
-The metric is reported as a rate with the offending numbers listed, not as a pass/fail.
-Some ungrounded numbers are legitimate rounding or restatement, and the list is there to
-be read rather than to gate a build.
+Tuned to avoid crying wolf: small integers, years and anything in the task prompt are
+skipped, formatting is ignored (3,200 == 3200), and rounding is tolerated. Reported as a
+rate with the offenders listed, not as a pass/fail.
 """
 from __future__ import annotations
 
@@ -38,11 +21,9 @@ NUMBER_RE = re.compile(r"(?<![\w.])(\d{1,3}(?:[, ]\d{3})+|\d+)(?:\.(\d+))?(?![\
 # own instructions ("two technicians", "5 jobs"). Flagging them produces noise.
 MIN_INTERESTING = 10
 
-# Tolerance for a derived figure, as a fraction. Agents round, so 79.7 has to match a
-# computed 79.68 (0.03% apart). It is deliberately far tighter than that: at 1% an
-# invented ROI of 94.3 was accepted because two unrelated tool values, 76 and 18, happen
-# to sum to 94. Tolerance and combinatorics multiply, and the failure they cause is
-# silent under-reporting of hallucination.
+# Agents round, so 79.7 must match a computed 79.68 (0.03% apart). Kept far tighter than
+# that: at 1%, an invented 94.3 was accepted because two unrelated tool values, 76 and 18,
+# sum to 94. Tolerance and combinatorics multiply.
 RELATIVE_TOLERANCE = 0.001
 
 
@@ -78,21 +59,14 @@ def _numbers_in_obj(obj) -> set[float]:
 
 
 def derivable(value: float, sources: set[float]) -> bool:
-    """Is `value` reachable from the tool numbers by the arithmetic agents actually do?
+    """Is `value` reachable from the tool numbers by arithmetic an agent would do?
 
-    Division between arbitrary pairs is deliberately NOT allowed, and that restriction is
-    the whole reason this function is trustworthy. With n source numbers there are n^2
-    pairs; admitting ratios as well as products meant an invented ROI of 94.3 was accepted
-    because 7500/79.7 happens to be 94.1. A derivation rule permissive enough to explain
-    any number reports no hallucination at all, which is worse than having no metric.
+    Division between arbitrary pairs is not allowed. With n source numbers there are n^2
+    pairs, and admitting ratios let an invented ROI of 94.3 through because 7500/79.7 is
+    94.1. It is not needed either: expedite_cost already returns roi_ratio, so an agent
+    quoting an ROI is restating, not dividing.
 
-    It is not needed anyway: the tools already compute the ratios. `expedite_cost` returns
-    `roi_ratio` and `downtime_cost_avoided_eur`, so an agent quoting an ROI is restating a
-    tool value, not dividing. What agents genuinely do by hand is scale a figure (per day
-    to per hour) and multiply a rate by a duration, so those are what is allowed.
-
-    The cost of the restriction is some false positives: an agent doing an unusual but
-    legitimate division gets flagged. That is the right direction for this metric to err.
+    Costs some false positives on unusual but legitimate division. Right direction to err.
     """
     if _close(value, sources):
         return True

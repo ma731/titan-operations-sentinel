@@ -1,18 +1,11 @@
 """
-The code-enforced decision policy: the parts of this system that are NOT the model.
+The decision rules the model does not get a vote on.
 
-Everything here is deterministic and pure. It is the layer that gives the guarantees the
-README claims: coverage of every cross-domain agent on a high-risk event, termination,
-the spend ceiling, the safety override, and abstention on thin data. The model chooses
-inside the space this policy allows; it cannot choose outside it.
+Pure and deterministic so eval/policy_eval.py can score them without an API key. These
+are the guarantees: coverage, termination, the spend ceiling, the safety override, and
+abstention on thin data. The model picks inside what these allow.
 
-These functions used to be inline in graph.py. They live here so the evaluation harness
-can score them directly, with no API key, no tokens and no flakiness: a policy that
-guarantees something should be tested as a policy, not inferred from watching a few
-agent runs.
-
-graph.py is the only production caller. If you change a rule here, the offline evaluation
-in `eval/policy_eval.py` will tell you what it moved.
+graph.py is the only caller. Change a rule and re-run the eval to see what moved.
 """
 from __future__ import annotations
 
@@ -28,12 +21,10 @@ CORE_AGENTS = ["supply_chain", "production", "quality"]
 # 1. Risk classification (Reliability agent verdict)
 # --------------------------------------------------------------------------- #
 def classify_risk(rul_result: dict | None, evidence: str = "") -> str:
-    """HIGH | LOW | ESCALATE from the rul_predictor result, with text as a fallback.
+    """HIGH | LOW | ESCALATE from the rul_predictor result.
 
-    The order matters and is a safety choice: a low-confidence flag beats a confident
-    failure mode. If the data is too thin to trust, we abstain even when the thin data
-    happens to look alarming, because acting on an untrustworthy estimate is the failure
-    mode the escalation path exists to prevent.
+    Order matters: a low-confidence flag beats a confident failure mode. Thin data that
+    looks alarming is still thin data.
     """
     rp = rul_result or {}
     blob = (evidence or "").lower()
@@ -41,8 +32,8 @@ def classify_risk(rul_result: dict | None, evidence: str = "") -> str:
 
     if rp.get("low_confidence_flag") or "interrupted" in blob or "data_unavailable" in blob:
         return "ESCALATE"
-    # Historical matches in the tool output can describe a failed bearing even when
-    # the current assessment is normal. Structured current evidence wins.
+    # asset_profile and recall_similar_cases both mention past bearing failures, so the
+    # text blob lies. Only fall back to it when there is no structured verdict at all.
     if "bearing_failure" in failure_mode or (not failure_mode and "spindle_bearing_failure" in blob):
         return "HIGH"
     return "LOW"
@@ -52,14 +43,10 @@ def classify_risk(rul_result: dict | None, evidence: str = "") -> str:
 # 2. Spend ceiling (Supply Chain agent -> human approval gate)
 # --------------------------------------------------------------------------- #
 def needs_human_approval(top_option: dict | None, ceiling_eur: int = COST_CEILING_EUR) -> bool:
-    """True when a human must decide before the recommended option is committed.
+    """True if a human must approve before this option is committed.
 
-    Three ways to land in the human gate, and the second two are the ones people miss:
-      1. The cost exceeds the autonomous ceiling.
-      2. The cost is unknown. An unknown cost is not a small cost.
-      3. The option does not fit the failure window. A cheap option that arrives after
-         the machine fails is not an autonomous action, it is a decision about accepting
-         the failure, and that belongs to a person.
+    Gates on cost over the ceiling, unknown cost, or an option that arrives after the
+    predicted failure. The last two are the easy ones to miss.
     """
     opt = top_option or {}
     cost = opt.get("cost_eur")
@@ -88,11 +75,10 @@ def approval_reason(top_option: dict | None, ceiling_eur: int = COST_CEILING_EUR
 # 3. Safety override (Compliance & Safety agent)
 # --------------------------------------------------------------------------- #
 def halt_from_safety(safety_result: dict | None, report_text: str = "", evidence: str = "") -> bool:
-    """True when Compliance & Safety halted the plan.
+    """True if Compliance & Safety halted the plan.
 
-    The structured tool field wins. Text matching is only a fallback for the case where
-    the agent reported a verdict without a parseable safety_gate result, and it is
-    deliberately narrow: a HALT is too consequential to infer from a loose keyword.
+    Prefers the structured safety_gate verdict. The text fallback is narrow on purpose,
+    for the case where the agent stated a verdict but the tool result did not parse.
     """
     sg = safety_result or {}
     if sg:
@@ -114,20 +100,13 @@ def allowed_next(
     core_agents: list[str] | None = None,
     max_visits: int = MAX_VISITS,
 ) -> list[str]:
-    """The set of agents the supervisor may route to next.
+    """Which agents the supervisor may route to next. The model picks from this list.
 
-    The model picks from this list. It never picks the list. That is the whole point:
-      - Reliability always runs first, because nothing downstream is meaningful without
-        a failure assessment.
-      - An escalation ends the run. There is nothing to plan from untrusted data.
-      - A direct agent-to-agent follow-up is honoured, but only up to max_visits, so a
-        pair of agents cannot ping-pong forever.
-      - A HIGH risk event must cover every core agent before it can finish. This is the
-        cross-silo guarantee, and it is the reason the system is not just five chatbots.
-      - Compliance & Safety always gates before FINISH, on every path that reaches a plan.
+    Reliability runs first. An escalation ends the run. Follow-ups are honoured up to
+    max_visits so two agents cannot ping-pong. A HIGH-risk run must cover every core
+    agent, and compliance_safety gates before FINISH on any path that reaches a plan.
 
-    Returns a single-element list when the choice is forced, which is how graph.py
-    distinguishes a forced route from an LLM-picked one in the trace.
+    A one-element list means the choice was forced; graph.py logs that distinction.
     """
     core_agents = core_agents or CORE_AGENTS
     visited = visited or []
@@ -143,10 +122,8 @@ def allowed_next(
         return [fu]
 
     if risk != "HIGH":
-        # The safety gate is forced, not offered. Until 2026-09 this branch returned
-        # ["compliance_safety", "FINISH"], which let the supervisor finish a low-risk run
-        # without gating it at all, contradicting the documented guarantee. The exhaustive
-        # routing check in eval/policy_eval.py found it; this is the fix.
+        # Forced, not offered. This used to also return FINISH, so a low-risk run could
+        # legally skip the gate. The exhaustive path check in the eval caught it.
         return ["compliance_safety"] if "compliance_safety" not in visited else ["FINISH"]
 
     missing = [a for a in core_agents if a not in visited]
@@ -160,9 +137,8 @@ def allowed_next(
 # --------------------------------------------------------------------------- #
 # 5. Action tiering (the reference the final plan is scored against)
 # --------------------------------------------------------------------------- #
-# Kept deliberately in step with SAFE-01 in data/compliance/safety_rules.json. If the
-# safety rule learns a new way of saying "defeat a hazard control", the tiering policy has
-# to learn it too, or the plan would tier an action AUTO that the gate then halts.
+# Keep in step with SAFE-01 in data/compliance/safety_rules.json, or the plan will tier
+# an action AUTO that the gate then halts. test_policy.py asserts the two agree.
 _ESCALATE_MARKERS = (
     "interlock", "guard", "guarding", "lockout", "tagout", "e-stop", "emergency stop",
     "light curtain", "presence sensing", "safety mat", "two-hand control",
@@ -171,8 +147,8 @@ _ESCALATE_MARKERS = (
     "override safety", "disable safety", "tape over",
 )
 _APPROVE_MARKERS = (
-    # "order" on its own matched "work order", which tiered filing a document as a spend.
-    # Committing money reads as a verb phrase, so the markers are verb phrases.
+    # Verb phrases, not bare nouns: "order" alone matched "work order" and tiered filing
+    # a document as a spend.
     "purchase", "buy", "order the", "place an order", "raise an order", "purchase order",
     "expedite", "rush", "procure", "procurement",
     "emergency maintenance", "maintenance window", "overtime", "premium",
@@ -181,12 +157,11 @@ _APPROVE_MARKERS = (
 
 
 def action_tier(action_description: str) -> str:
-    """AUTO | APPROVE | ESCALATE for a proposed action, by the documented autonomy tiers.
+    """AUTO | APPROVE | ESCALATE for a proposed action.
 
-    This is the reference classifier the live evaluation scores the model's final plan
-    against. It is intentionally simple and keyword-driven: its job is to encode the
-    written policy in docs/appendix, not to be clever. Safety markers are checked first
-    so that anything touching a safety system escalates even when it also mentions money.
+    The reference the live eval scores the model plan against. Keyword-driven on purpose:
+    it encodes the written tiers, nothing more. Safety is checked first so an action that
+    touches a hazard control escalates even when it also mentions money.
     """
     text = (action_description or "").lower()
     if any(m in text for m in _ESCALATE_MARKERS):
