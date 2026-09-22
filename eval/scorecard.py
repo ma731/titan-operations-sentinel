@@ -200,6 +200,61 @@ def _live_section(r: dict | None) -> list[str]:
     return lines
 
 
+def _economics_section() -> list[str]:
+    """What a run costs. Computed from the real triage gate and the pricing table."""
+    try:
+        from . import economics
+        e = economics.run()
+    except Exception as exc:  # noqa: BLE001 - never block the scorecard on this
+        return ["## 4. Unit economics", "", f"Not computed: {str(exc)[:120]}", ""]
+
+    m = e["measured"]
+    t = m["triage"]
+    lines = [
+        "## 4. Unit economics",
+        "",
+        "What it costs to run, as opposed to what the case study says it saves. The "
+        "triage figures are measured by running the real gate over a simulated plant "
+        "day; it is deterministic and needs no model, so they are exact.",
+        "",
+        "| | Value |",
+        "|---|---:|",
+        f"| Sensor readings per day ({t['machines']} machines) | {t['readings']} |",
+        f"| Agent runs triggered | **{t['runs']}** |",
+        f"| Suppressed by the cooldown | {t['suppressed_by_cooldown']} |",
+        f"| Wake rate | {(t['wake_rate'] or 0) * 100:.2f}% of readings |",
+        f"| Tokens per run | {m['tokens_per_run']:,.0f} ({m['tokens_per_run_source']}) |",
+        "",
+        "Cost per run, and at the plant's rate of "
+        f"{m['runs_per_plant_day']} actionable alerts a day:",
+        "",
+        "| Provider | Per run | Per plant day | Per 1,000 alerts |",
+        "|---|---:|---:|---:|",
+    ]
+    for name, c in e["cost_by_provider"].items():
+        free = " (free tier)" if c["eur_per_run"] == 0 else ""
+        lines.append(
+            f"| `{name}`{free} | EUR {c['eur_per_run']:.5f} | "
+            f"EUR {c['eur_per_plant_day']:.3f} | EUR {c['eur_per_1000_alerts']:.5f} |"
+        )
+    lines += [
+        "",
+        f"Runs per day comes from the case study's {m['runs_per_plant_day']} deduplicated "
+        f"critical alerts, not from scaling the wake rate against raw alert volume: a "
+        f"reading and an alert are different units. As a cross-check, the simulated fleet "
+        f"independently triggered {m['simulator_cross_check_runs_per_day']} runs in 24 "
+        f"hours, the same order of magnitude.",
+        "",
+        "The value side (EUR "
+        f"{e['case_study_inputs']['production_value_per_day_eur']:,} a day of production "
+        "at risk, "
+        f"{e['case_study_inputs']['alerts_per_day']:,} alerts a day) is an input from the "
+        "case study, not a result this system produced.",
+        "",
+    ]
+    return lines
+
+
 def render(policy_result: dict, rag_result: dict, live_result: dict | None,
            meta: dict) -> str:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -225,6 +280,7 @@ def render(policy_result: dict, rag_result: dict, live_result: dict | None,
         f"{_pct(rag_result['modes']['lexical']['recall_at_k']['recall@4'])} |",
         f"| Live agent suite | "
         f"{'run, see below' if live_result else 'not run in this pass'} |",
+        "| Cost to run | see unit economics below |",
         "",
         "How to read this: the offline suites measure the parts of the system that are "
         "enforced in code, exhaustively and for free. The live suite measures what the "
@@ -237,7 +293,8 @@ def render(policy_result: dict, rag_result: dict, live_result: dict | None,
     return "\n".join(
         header + _policy_section(policy_result) + ["---", ""]
         + _rag_section(rag_result) + ["---", ""]
-        + _live_section(live_result)
+        + _live_section(live_result) + ["---", ""]
+        + _economics_section()
         + ["---", "",
            "Regenerate with `python -m eval.run_eval` (offline suites) or "
            "`python -m eval.run_eval --live` (adds the agent suite). "

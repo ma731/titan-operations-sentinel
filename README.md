@@ -475,6 +475,12 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
 
 ## Docs
 
+- [Decision records](docs/decisions/) — why it is built this way, including the change we
+  measured and rejected, and the two guarantees the evaluation caught us breaking.
+- [What carries to the next problem](docs/REUSABILITY.md) — what is domain-specific, what
+  is scaffolding, and what it would actually take to move this somewhere else.
+- [Evaluation findings](eval/FINDINGS.md) — every miss the suite has surfaced.
+
 [`docs/`](docs/) and [`docs/appendix/`](docs/appendix/): the prompt pack, the tool catalog,
 the risk matrix and FMEA, the confidence policy, the sequence diagram and audit log schema,
 why an agent rather than a dashboard, the evidence checklist against the assignment rubric,
