@@ -1,14 +1,12 @@
 """
 Evaluation CLI.
 
-    python -m eval.run_eval                 # offline suites only (free, no key, CI default)
-    python -m eval.run_eval --live          # adds the live agent suite (needs a key)
-    python -m eval.run_eval --live --limit 3
-    python -m eval.run_eval --fail-under 0.95   # non-zero exit if the offline suite drops
+    python -m eval.run_eval                     # offline suites, free, the CI default
+    python -m eval.run_eval --live              # adds the agent suite, needs a key
+    python -m eval.run_eval --fail-under 1.0    # non-zero exit if the offline suite drops
 
-The exit code is what CI reads: 0 when the offline suite meets the floor, 1 when it does
-not. The floor defaults to 0 (report only) so a normal run never fails a build by
-surprise; the CI workflow sets it explicitly.
+The exit code is what CI reads. The floor defaults to 0 so a local run never fails by
+surprise; the workflows set it explicitly.
 """
 from __future__ import annotations
 

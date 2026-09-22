@@ -1,23 +1,13 @@
 """
 Offline evaluation of the tool layer plus the code-enforced policy.
 
-No model, no API key, no network, no randomness. It runs the same tool functions and the
-same policy functions the graph runs, over the labelled scenarios, and scores:
+No model, no key, no network, no randomness. Runs the same tools and policy functions the
+graph runs, over the labelled scenarios, and scores: risk classification, the approval
+gate, safety verdicts, HALT precision and recall, action tiering, terminal status, and
+routing.
 
-  risk_classification     abstain / high / low, from real rul_predictor output
-  approval_gate           does the 500 EUR + fit-to-window rule land where it should
-  safety_verdict          does safety_gate return the labelled verdict per action
-  halt_detection          precision and recall on the HALT class specifically
-  action_tiering          AUTO / APPROVE / ESCALATE per proposed action
-  terminal_status         complete / halted / escalated
-  routing_coverage        EXHAUSTIVE: over every path the routing policy permits, does
-                          every terminating path cover the required agents and end at the
-                          safety gate
-  routing_probe           the explicitly labelled allowed-set cases
-
-The routing metric is the one worth reading twice. It does not sample a run: it enumerates
-every sequence the policy allows and checks the guarantee holds on all of them. A coverage
-guarantee that only holds on the path the model happened to pick is not a guarantee.
+The routing metric enumerates every sequence the policy allows rather than sampling one
+run. A coverage guarantee that only holds on the path the model picked is not a guarantee.
 """
 from __future__ import annotations
 
@@ -86,12 +76,11 @@ def observed_terminal_status(s: Scenario, risk: str, halt: bool) -> str:
 # Exhaustive routing verification
 # --------------------------------------------------------------------------- #
 def enumerate_routing_paths(risk: str, escalate: bool, max_steps: int = 12) -> list[list[str]]:
-    """Every agent sequence the routing policy permits for this risk level.
+    """Every agent sequence the policy permits at this risk level.
 
-    Depth-first over policy.allowed_next, branching on every choice the supervisor could
-    make. Follow-ups are not simulated here (they are covered by the labelled routing
-    probes) because they depend on agent output, not on the policy alone. The step cap is
-    a termination check, not a search limit: hitting it is itself a failure."""
+    Depth-first over allowed_next, branching on each choice. Follow-ups are not simulated
+    (the labelled probes cover those) since they depend on agent output. The step cap is
+    a termination check, not a search limit: hitting it is a failure."""
     paths: list[list[str]] = []
     overruns: list[list[str]] = []
 

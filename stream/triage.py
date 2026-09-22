@@ -9,14 +9,11 @@ expensive multi-agent run. It answers three questions in order:
      (tms-204-vibration-severity-limits#S4: change beats absolute level)
   3. Have we already woken the team for this machine recently?
 
-Only a yes-yes-no starts a run. The third question is the one people forget: a degrading
-machine stays over threshold for hours, so without a cooldown one event becomes a run
-every tick and the token bill is the same shape as the alert noise problem the project
-exists to solve.
+Only a yes-yes-no starts a run. The cooldown is the one people forget: a degrading machine
+stays over threshold for hours, so without it one event becomes a run every tick.
 
-A telemetry dropout is treated as a wake condition in its own right, not as silence. A
-sensor that stops reporting on a machine that was trending upward is exactly the case the
-abstention path exists for (tms-705-telemetry-data-quality-and-abstention#S6).
+A dropout is its own wake condition, not silence. A sensor that stops reporting on a
+machine that was trending up is the case the abstention path exists for.
 """
 from __future__ import annotations
 
@@ -96,7 +93,7 @@ class TriageGate:
         return self._state.setdefault(machine_id, _MachineState())
 
     def observe(self, reading) -> TriageVerdict:
-        """Score one reading and decide whether to wake the agent team."""
+        """Score one reading and decide whether to wake the agents."""
         self.seen += 1
         st = self._machine(reading.machine_id)
         st.last_seen_tick = reading.tick
@@ -141,8 +138,8 @@ class TriageGate:
     def check_dropouts(self, tick: int) -> list[TriageVerdict]:
         """Machines that were reporting and have gone quiet.
 
-        A feed that stops on a machine that was already elevated is a wake condition: the
-        system should abstain loudly rather than fall silent with it."""
+        A feed dying on an elevated machine is a wake condition: abstain loudly rather
+        than fall silent with it."""
         out = []
         for machine_id, st in self._state.items():
             if st.last_seen_tick < 0 or tick - st.last_seen_tick < MISSING_FEED_TICKS:
@@ -155,9 +152,8 @@ class TriageGate:
                 continue                    # a healthy machine going quiet is an IT ticket
             if band is Band.WARNING and self._in_cooldown(st, tick):
                 continue
-            # A feed that dies on a machine already in the critical band is new
-            # information, not a repeat of the alert that woke us, so it is exempt from
-            # the cooldown. The dropout_reported flag is what stops it repeating instead.
+            # A dropout on a critical machine is new information, not a repeat, so it
+            # skips the cooldown. dropout_reported is what stops it firing every tick.
             st.dropout_reported = True
             st.last_wake_tick = tick
             self.woken += 1

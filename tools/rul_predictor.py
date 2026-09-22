@@ -31,17 +31,9 @@ def rul_predictor(machine_id: str, current_readings: dict) -> dict:
         rul_low, rul_high, confidence = 52, 76, 0.95
         failure_mode = "spindle_bearing_failure"
     elif vibration >= 6.0:
-        # Above the documented critical threshold but below the severe band. Before this
-        # band existed, a machine reading 6.0-7.0 mm/s was classified as degradation and
-        # routed as LOW risk, while the asset profile
-        # (vibration_threshold_critical_mm_s = 6.0) and the corpus
-        # (tms-101-spindle-bearing-maintenance#S3, "Critical: above 6.0") both called it
-        # critical. The evaluation caught the disagreement as F-01.
-        #
-        # Same failure mode, deliberately wider window and lower confidence: the machine
-        # is confirmed to be failing, and the timing is less certain than at 7.2 mm/s.
-        # This band only ever makes the system MORE cautious. Nothing that was HIGH
-        # becomes LOW, and no existing window is lengthened.
+        # Past the critical threshold the asset profile and tms-101#S3 both use, but below
+        # the severe band. Wider window, lower confidence. Added for F-01; it only ever
+        # makes the system more cautious.
         rul_low, rul_high, confidence = 72, 120, 0.82
         failure_mode = "spindle_bearing_failure"
     elif vibration >= 5.0 or bearing_temp >= 65:

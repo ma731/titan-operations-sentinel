@@ -35,10 +35,8 @@ class Tally:
 class BinaryConfusion:
     """Precision, recall and F1 for one positive class.
 
-    Used for the safety HALT class, where the two error types are not equally bad: a
-    missed HALT (false negative) is a safety failure, a spurious HALT (false positive) is
-    an availability cost. Reporting a single accuracy number would hide that asymmetry,
-    which is exactly the number a reviewer will ask about."""
+    Used for HALT, where the errors are not equally bad: a missed HALT is a safety
+    failure, a spurious one is an availability cost. Accuracy would hide that."""
 
     name: str
     positive_label: str = "positive"
@@ -88,10 +86,8 @@ class BinaryConfusion:
 class SetScore:
     """Micro-averaged precision/recall/F1 over set-valued predictions.
 
-    Used for tool-call correctness: the expected tools for an agent are a set, the agent
-    called a set, and both a missed required tool and a pile of irrelevant calls are worth
-    knowing about. Micro-averaging (pooling counts across cases) rather than macro keeps a
-    case with one expected tool from outweighing a case with five."""
+    For tool-call correctness. Micro rather than macro so a case expecting one tool does
+    not outweigh a case expecting five."""
 
     name: str
     matched: int = 0
@@ -136,12 +132,10 @@ class SetScore:
 
 
 def recall_at_k(retrieved: list[str], relevant: list[str], k: int) -> float:
-    """1.0 if any labelled-relevant item appears in the top k, else 0.0.
+    """1.0 if any labelled-relevant item is in the top k.
 
-    This is the "did it find an answer at all" definition, which is the right one here:
-    a passage list is handed to an agent, and one correct passage in it is enough for the
-    agent to ground its claim. A set-coverage definition would punish the retriever for
-    not returning every paraphrase of the same rule."""
+    Any-hit rather than set coverage: the agent only needs one correct passage to ground
+    a claim, and several corpus sections often say the same thing."""
     return 1.0 if set(retrieved[:k]) & set(relevant) else 0.0
 
 

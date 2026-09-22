@@ -4,7 +4,7 @@
 
 [![tests](https://github.com/ma731/titan-operations-sentinel/actions/workflows/tests.yml/badge.svg)](https://github.com/ma731/titan-operations-sentinel/actions/workflows/tests.yml)
 [![nightly evaluation](https://github.com/ma731/titan-operations-sentinel/actions/workflows/eval-nightly.yml/badge.svg)](https://github.com/ma731/titan-operations-sentinel/actions/workflows/eval-nightly.yml)
-[![scorecard](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/ma731/titan-operations-sentinel/main/eval/results/badge.json)](eval/results/scorecard.md)
+[![scorecard](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/ma731/titan-operations-sentinel/eval-results/badge.json)](eval/results/scorecard.md)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **[Open the live demo](https://ma731.github.io/titan-operations-sentinel/)** · [Evaluation scorecard](eval/results/scorecard.md) · [Open findings](eval/FINDINGS.md) · [Architecture](#architecture)

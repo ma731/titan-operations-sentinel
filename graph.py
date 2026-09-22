@@ -1,26 +1,16 @@
 """
-Titan Operations Sentinel — multi-agent orchestration (LangGraph).
+Titan Operations Sentinel: the LangGraph orchestration.
 
-A society of six agents that solve all five TMC challenges by sharing one running
-conversation and being routed by an LLM orchestrator:
+    perceive -> SUPERVISOR <-> { reliability, supply_chain, production, quality,
+                                 compliance_safety } -> finalize(approval) -> synthesize
 
-    perceive → SUPERVISOR ⇄ { reliability, supply_chain, production, quality,
-                              compliance_safety }  → finalize(approval) → synthesize
+Agents talk through one shared transcript that every later agent reads in full, and can
+end a report with `FOLLOWUP: <agent> - <question>` to ask another specialist directly.
+The supervisor is an LLM, but it can only pick from what policy.allowed_next permits,
+which is what guarantees coverage and termination.
 
-How they communicate (natural language):
-- Every specialist writes a natural-language report; it is appended to a SHARED
-  TRANSCRIPT that every later agent reads in full. So agents converse through one
-  growing dialogue, not isolated handoffs.
-- An agent may end its report with `FOLLOWUP: <agent> — <question>` to put a direct
-  question to another specialist; the orchestrator honours it (bounded re-routing),
-  which is genuine agent-to-agent messaging.
-- The SUPERVISOR (LLM) decides who acts next, constrained by a policy that guarantees
-  coverage (all cross-domain agents on HIGH risk) and termination (compliance_safety
-  gates before FINISH, and each agent runs at most MAX_VISITS times).
-
-Specialists are autonomous ReAct agents (agents.py) — each LLM picks its own tools.
-Compliance & Safety can HALT the plan; the approval gate uses interrupt() for HITL.
-Three paths via `scenario`: happy / edge / escalation.
+Specialists are ReAct agents (agents/factory.py) that choose their own tools.
+compliance_safety can HALT. The approval gate uses interrupt() for the human decision.
 """
 from __future__ import annotations
 

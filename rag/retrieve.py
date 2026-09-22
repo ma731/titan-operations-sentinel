@@ -1,18 +1,14 @@
 """
-The public retrieval API: `search(query, k, mode)` returns cited passages.
+The retrieval API: `search(query, k, mode)` returns passages with citations.
 
-Four modes:
-  lexical  BM25 only. Always available, no key, no network.
-  prf      BM25 plus pseudo-relevance feedback (rag/expansion.py). Keyless. Available
-           but NOT the default: measured, it trades top-1 accuracy for deeper recall and
-           the net effect is one query out of 52. See F-05 in eval/FINDINGS.md.
-  dense    Embedding cosine similarity. Requires TOS_EMBEDDINGS (see rag/embeddings.py).
-  hybrid   Reciprocal rank fusion of PRF and dense. Falls back to lexical when dense is off.
+  lexical  BM25. Always available, no key. The default and the CI baseline.
+  prf      BM25 plus pseudo-relevance feedback. Keyless, available, not the default:
+           measured, it is worth one query in 52. See F-05 in eval/FINDINGS.md.
+  dense    Embedding cosine. Needs TOS_EMBEDDINGS.
+  hybrid   Reciprocal rank fusion of lexical and dense.
 
-Hybrid uses reciprocal rank fusion rather than a weighted score blend because BM25 scores
-and cosine similarities are not on comparable scales, and RRF needs no tuning constant per
-corpus. The eval in eval/rag_eval.py reports recall@k and MRR for all three so the choice
-is backed by a number rather than by taste.
+Hybrid fuses by rank rather than blending scores, because BM25 scores and cosine
+similarities are not on comparable scales. eval/rag_eval.py scores every mode.
 """
 from __future__ import annotations
 
@@ -32,12 +28,9 @@ Mode = str          # "lexical" | "dense" | "hybrid"
 def default_mode() -> Mode:
     """hybrid when embeddings are configured, lexical otherwise. TOS_RAG_MODE overrides.
 
-    The keyless default is plain lexical rather than prf. That is an evaluated decision,
-    not an oversight: prf was built to close the paraphrase gap, and on the labelled set
-    it improves recall@4 by two points while losing seven and a half points of recall@1,
-    for a net difference of a single query out of 52. That is inside the noise of a set
-    this size, so it does not get to be the default. F-05 in eval/FINDINGS.md has the
-    numbers."""
+    Lexical rather than prf is an evaluated decision, not an oversight: prf gains two
+    points of recall@4 and loses seven of recall@1, a net of one query in 52. See F-05.
+    """
     forced = os.getenv("TOS_RAG_MODE", "").strip().lower()
     if forced in {"lexical", "prf", "dense", "hybrid"}:
         return forced
@@ -45,10 +38,10 @@ def default_mode() -> Mode:
 
 
 def _dense_ranking(query: str, chunks: list[Chunk]) -> list[tuple[int, float]] | None:
-    """Cosine similarity ranking over the whole corpus, or None when dense is unavailable.
+    """Cosine ranking over the corpus, or None when dense is unavailable.
 
-    The corpus is ~60 chunks, so a brute-force scan is both simpler and faster than any
-    approximate index would be. A vector database here would be architecture theatre."""
+    Brute force: the corpus is under a hundred chunks, so an approximate index would be
+    slower and more to maintain."""
     doc_vectors = emb.embed([f"{c.doc_title}\n{c.section_title}\n{c.text}" for c in chunks])
     if doc_vectors is None:
         return None
@@ -109,11 +102,10 @@ def rank(query: str, k: int = DEFAULT_K, mode: Mode | None = None) -> list[tuple
 
 
 def search(query: str, k: int = DEFAULT_K, mode: Mode | None = None) -> dict:
-    """Retrieve the k most relevant corpus passages, each with its citation.
+    """The k most relevant passages, each with its citation.
 
-    The return shape is what the agent sees, so it leads with the citation and the
-    provenance label: an agent citing a paraphrase of a regulation should be able to tell
-    that it is a paraphrase."""
+    Leads with the citation and the provenance label so an agent quoting a paraphrase of
+    a regulation can tell that it is a paraphrase."""
     ranked = rank(query, k=k, mode=mode)
     passages = []
     for chunk, score, _mode in ranked:

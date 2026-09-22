@@ -1,14 +1,11 @@
 """
-The dense half of the retriever: optional embeddings with an on-disk cache.
+Optional dense embeddings with an on-disk cache.
 
-Design constraint: the whole project has to run offline, free, and in CI. So dense
-retrieval is strictly opt-in. When no embedding provider is configured, `available()`
-returns False and `rag/retrieve.py` falls back to lexical-only search. Nothing breaks and
-the eval simply reports the lexical row of the scorecard.
+Strictly opt-in, because the project has to run offline and in CI. With no provider
+configured, `available()` is False and retrieve.py falls back to lexical.
 
 Vectors are cached to rag/index/embeddings.json keyed by (model, sha1(text)), so a second
-run, and the retrieval eval in particular, costs nothing. The cache is committed so a
-reviewer can reproduce the dense numbers without a key.
+run costs nothing. The cache is committed so the dense numbers reproduce without a key.
 """
 from __future__ import annotations
 

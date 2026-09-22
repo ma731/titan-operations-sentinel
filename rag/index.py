@@ -1,15 +1,13 @@
 """
-Corpus loading, chunking and the lexical (BM25) half of the retriever.
+Corpus loading, chunking, and the BM25 half of the retriever.
 
-The corpus lives in rag/corpus/*.md. Every retrievable chunk is one `## S<n> Title`
-section, so a citation is always `doc_id#S<n>` and a human can open the exact section the
-agent relied on. Section-level chunking is deliberate: these documents are already
-written as self-contained clauses, so a fixed-size sliding window would cut a severity
-table in half for no benefit.
+Every chunk is one `## S<n>` section, so a citation is always `doc_id#S<n>` and a reader
+can open the exact section an agent used. Section-level chunking is deliberate: these
+documents are already written as self-contained clauses, so a sliding window would cut a
+severity table in half for no benefit.
 
-BM25 is implemented here rather than pulled in as a dependency for two reasons: it is
-about sixty lines, and it must run in CI with no network, no API key and no model
-download so the retrieval evaluation is free and reproducible.
+BM25 is implemented here rather than pulled in: it is sixty lines, and it has to run in
+CI with no network so the retrieval eval stays free and reproducible.
 """
 from __future__ import annotations
 
@@ -39,9 +37,8 @@ _STOPWORDS = {
 
 
 def _stem(word: str) -> str:
-    """A deliberately small suffix stemmer. Enough to make 'bearings'/'bearing' and
-    'lubricated'/'lubrication' collide, without pulling in a stemming dependency or the
-    over-aggressive truncation a full Porter stemmer would apply to short domain terms."""
+    """Small suffix stemmer: enough to collide bearings/bearing, without the
+    over-truncation a full Porter stemmer does to short domain terms."""
     for suffix in ("ations", "ation", "ingly", "ings", "ing", "edly", "ed", "es", "s"):
         if word.endswith(suffix) and len(word) - len(suffix) >= 4:
             return word[: -len(suffix)]
@@ -49,8 +46,8 @@ def _stem(word: str) -> str:
 
 
 def tokenize(text: str) -> list[str]:
-    """Lowercase, split on non-alphanumerics, drop stopwords, stem. Numbers are kept:
-    '1910.147' and '6.0' are meaningful query terms in this corpus."""
+    """Lowercase, split, drop stopwords, stem. Numbers are kept: '1910.147' and '6.0' are
+    real query terms here."""
     raw = re.findall(r"[a-z0-9]+(?:\.[0-9]+)*", (text or "").lower())
     return [_stem(t) for t in raw if t not in _STOPWORDS and len(t) > 1]
 
@@ -155,8 +152,8 @@ class BM25Index:
             self.tf.append(counts)
             for t in counts:
                 df[t] = df.get(t, 0) + 1
-        # Standard BM25 idf with the +1 inside the log so it can never go negative for a
-        # term that appears in most documents (this corpus is small, so that matters).
+        # +1 inside the log so idf cannot go negative for a term in most documents,
+        # which matters on a corpus this small.
         self.idf = {t: math.log(1 + (self.n - d + 0.5) / (d + 0.5)) for t, d in df.items()}
 
     def score(self, query: str) -> list[float]:

@@ -1,31 +1,15 @@
 """
-Getting the human decision from outside the app.
+Reaching a human who is not sitting in front of the web console.
 
-The approval gate already pauses the graph correctly with `interrupt()`. What it lacked
-was a way to reach a person who is not sitting in front of the web console, which is the
-normal case for a plant manager at 17:40 on a Friday.
+Three channels, picked in the order they are configured: Slack (Block Kit buttons, the
+callback is signature verified), email (SMTP with two links), or console. All of them
+resolve through the same /api/decision path the console uses, so a run has one resume
+path and one audit record however the answer arrived.
 
-Three channels, tried in the order they are configured:
+Nothing here decides anything. It carries a question out and an answer back.
 
-  slack    Posts a Block Kit message with Approve and Reject buttons. The buttons call
-           back into the FastAPI backend, which resolves the same `/api/decision`
-           endpoint the web console uses, so there is exactly one resume path.
-  email    Sends an SMTP message with two links to the same endpoint. Less pretty, but it
-           works through a corporate mail server with no app install.
-  console  The fallback. Prints the request and returns the caller's default. Used by the
-           stream loop when running unattended and by tests.
-
-Nothing here decides anything. It carries a question to a person and carries an answer
-back. The decision is still recorded in the audit log by the graph, exactly as it is when
-a human clicks Approve in the console.
-
-Configuration (all optional, all via environment):
-    TOS_APPROVAL_CHANNEL   slack | email | console | auto   (default: auto)
-    TOS_PUBLIC_URL         base URL the buttons and links call back to
-    SLACK_BOT_TOKEN        xoxb-... with chat:write
-    SLACK_APPROVAL_CHANNEL #ops-approvals
-    SLACK_SIGNING_SECRET   used by the backend to verify button callbacks
-    SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASSWORD / SMTP_FROM / TOS_APPROVER_EMAIL
+Config is all optional, all environment: TOS_APPROVAL_CHANNEL, TOS_PUBLIC_URL,
+SLACK_BOT_TOKEN, SLACK_APPROVAL_CHANNEL, SLACK_SIGNING_SECRET, SMTP_*, TOS_APPROVER_EMAIL.
 """
 from __future__ import annotations
 
@@ -89,8 +73,8 @@ def _summary(alert: dict, cost_eur: float | None, reason: str) -> str:
 
 def slack_blocks(run_id: str, alert: dict, cost_eur: float | None, reason: str,
                  deadline: str | None = None) -> list[dict]:
-    """Block Kit payload. The two buttons carry the run id, so a late click on an old
-    message resolves the run it belongs to rather than whatever is pending now."""
+    """Block Kit payload. Both buttons carry the run id, so a late click on an old message
+    resolves its own run rather than whatever is pending now."""
     machine = alert.get("machine_id", "unknown")
     fields = [
         {"type": "mrkdwn", "text": f"*Machine*\n{machine}"},
@@ -212,10 +196,9 @@ def request_approval(run_id: str, alert: dict, default: str = "reject",
                      cost_eur: float | None = None, reason: str = "") -> str:
     """Send the request and return a decision.
 
-    Out of the box this returns `default` immediately, because blocking an unattended
-    loop on a human is how a demo hangs. In a deployment the click or link resolves the
-    graph through `/api/decision` and this return value is never used, which is why the
-    backend owns the resume path rather than this module.
+    Returns `default` immediately rather than blocking an unattended loop. In a real
+    deployment the click resolves the graph through /api/decision and this return value
+    is never used, which is why the backend owns the resume path.
     """
     send_approval_request(run_id, alert, cost_eur, reason)
     return default
