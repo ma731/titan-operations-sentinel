@@ -150,40 +150,25 @@ the policy permits, rather than watching one run and hoping.
 
 ## My contribution
 
-This is a five-person group project. What I (Marco Ortiz Togashi) built, so you can ask me
-about the right things:
+This was a five-person project, so it is worth saying which parts I can speak to in
+detail rather than leaving you to guess.
 
-**Owned end to end**
+Most of my work was on the orchestration and the evaluation side. In `graph.py` and
+`policy.py` that means the LangGraph supervisor, the shared transcript, the routing
+policy, the code-enforced spend ceiling and the abstention path that stops the run when
+the telemetry cannot be trusted. Alongside that I built the evaluation harness in `eval/`
+and its labelled scenarios, the retrieval layer in `rag/`, the web console in `webapp/`,
+the provider-agnostic model layer in `llm.py`, and the observability, alert stream and
+approval integrations, together with CI and Docker. The RUL model in `ml/` is later work,
+done after the course finished.
 
-- **Orchestration** (`graph.py`, `policy.py`). Replaced the initial skeleton with the
-  LangGraph supervisor: the shared transcript, agent-to-agent `FOLLOWUP` messaging bounded
-  by `MAX_VISITS`, the routing policy, the code-enforced 500 EUR ceiling with the
-  fit-to-window test, structured verdicts read from tool fields rather than prose, and the
-  deterministic abstention path that spends no tokens when the telemetry cannot be trusted.
-- **Evaluation harness** (`eval/`). The 34 labelled scenarios, the 52 labelled retrieval
-  queries, the metrics, the exhaustive routing verification, the generated scorecard and
-  the findings register.
-- **Retrieval** (`rag/`). The corpus, the section chunker, the BM25 implementation, the
-  optional embedding layer, hybrid fusion, and the recall@k evaluation.
-- **Web console** (`webapp/`). The React and FastAPI console: the live orchestration
-  graph, SSE streaming, the approval gate UI, the learning view, run history, provider
-  switching, and the slide deck.
-- **Model layer** (`llm.py`). Provider-agnostic factory with auto-detection, retry and
-  backoff for free-tier limits, and the offline fallback.
-- **Learning loop**. Case-memory write-back and the self-closing reconcile step.
-- **Observability, the alert stream and the approval integrations**
-  (`observability.py`, `stream/`, `integrations/`), CI, and Docker.
+The rest of the team: Marian Garabana set up the initial project skeleton and wrote the
+case study and the architecture trade-off documents. David Carrillo built the first pass
+of the domain tools and their LangChain wrappers, the scenario datasets and the original
+agent scaffolding. Nuria Diaz reworked the system prompts across all five specialists.
+Ignacio Moreno prepared the presentation and the demo.
 
-**Built by teammates**
-
-- Marian Garabana: the initial project skeleton, the case study document, and the risk and
-  architecture trade-off write-ups.
-- David Carrillo: the first pass of the domain tools and their LangChain wrappers, the
-  simulated datasets, and the original agent and prompt scaffolding.
-- Nuria Diaz: the system-prompt overhaul across all five specialists.
-- Ignacio Moreno: presentation and demo preparation.
-
-`git log` backs this up, and the commit history is readable if you want to check.
+The commit history has the detail, if it is useful.
 
 ---
 
