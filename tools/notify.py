@@ -16,7 +16,9 @@ def notify(
 
     Tool catalog:
       Input:  recipient_role, subject, situation_summary, recommended_actions,
-              cost_of_inaction_eur, cost_of_recommended_plan_eur,
+              cost_of_inaction_eur (the recommended option's downtime_cost_avoided_eur
+              from expedite_cost, so both tools report the same ratio),
+              cost_of_recommended_plan_eur,
               decision_deadline_utc, work_order_id (optional)
       Output: draft notification dict — NOT sent until human reviews
       Use when: action plan requires human cost authority or schedule approval

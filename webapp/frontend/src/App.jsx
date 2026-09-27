@@ -11,7 +11,7 @@ const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
 const TICKER = [
   'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h',
-  'DOWNTIME €180,000 / day', 'RECOMMENDED ROI 79.7:1', '5 TMC CHALLENGES',
+  'DOWNTIME €180,000 / day', '€870k DOWNTIME AVOIDED', '5 TMC CHALLENGES',
   'HUMAN GATE > €500', 'RUNS ON FREE-TIER GEMINI',
 ]
 

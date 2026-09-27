@@ -74,8 +74,10 @@ Talk through it as each agent lights up. Go slow — let each one finish before 
 
 2. **The Parts agent picks it up.**
    > "It checks the shelf — the main part is **out of stock**. A supplier can rush it over
-   > in 18 hours for **€3,200.** It does the math: spending that €3,200 saves us roughly
-   > **€255,000** in avoided downtime — about **80 times the cost.** But €3,200 is above our
+   > in 18 hours for **€3,200.** It does the math: order it the normal way and it takes eight
+   > days, so the machine would sit dead for **at least 116 hours.** Rushing it avoids all of
+   > that. A cheaper transfer from Amsterdam would also make it, just barely, so the €3,200 is
+   > really insurance against that courier running late. But €3,200 is above our
    > **€500 spending limit**, so it can't just spend it. Remember that — it matters in a second."
 
 3. **The Production agent reshuffles the work.**

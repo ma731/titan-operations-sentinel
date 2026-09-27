@@ -13,7 +13,8 @@
 
 *64 seconds, real time: one sensor alert enters, the supervisor routes five specialists,
 the spend hits the 500 EUR ceiling and stops for a human, and the run ends in a tiered
-action plan at 79.7:1 ROI. Regenerate it with `python scripts/record_demo.py`, which
+action plan: 116h of unplanned downtime avoided for a 3,200 EUR expedite (the old 79.7:1 headline
+was wrong, see [F-09](eval/FINDINGS.md)). Regenerate it with `python scripts/record_demo.py`, which
 drives the real console rather than being a screen capture that quietly goes stale.*
 
 > The demo runs in Replay mode: a recorded run played back in the browser. No API key, no

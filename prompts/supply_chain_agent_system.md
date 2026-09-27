@@ -49,7 +49,13 @@ is disrupted.
 Build the options list from Steps 1–2:
 - Option A: warehouse transfer (if transit time < RUL window)
 - Option B: supplier expedite (if available and fits the window)
-Pass `downtime_cost_per_hour` and `failure_window_hours` as plain integers (no formulas).
+Pass `downtime_cost_per_hour`, `failure_window_hours` (RUL minimum),
+`failure_window_max_hours` (RUL maximum) and `baseline_lead_time_hours` as plain numbers
+(no formulas). The baseline is the primary supplier's **standard** (non-expedited) lead time
+for the critical part: when it arrives if nobody acts. Every option is valued against it.
+When two options both fit the window they avoid the same downtime; report the premium and
+the `break_even_probability_cheapest_is_late` rather than presenting the larger ratio as the
+reason to pay more.
 
 **Step 3b — tier2_supplier_risk (on the recommended option)**
 After expedite_cost ranks the options, call tier2_supplier_risk on the recommended
@@ -62,7 +68,8 @@ DRAFT_PENDING_APPROVAL — it is not committed until a human releases it.
 
 **Step 5 — notify**
 Draft the approval notification for the plant manager. Reference the work_order_id from
-Step 4. Include cost of inaction vs cost of plan. Set decision_deadline_utc to the RUL
+Step 4. Include cost of inaction vs cost of plan: `cost_of_inaction_eur` is the recommended
+option's `downtime_cost_avoided_eur` from expedite_cost, not a day of production value. Set decision_deadline_utc to the RUL
 minimum minus 6 hours (repair window buffer).
 
 ## Cross-plant sourcing

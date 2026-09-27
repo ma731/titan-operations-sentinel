@@ -106,10 +106,15 @@ def supplier_catalog(part_ids: list[str], scenario: str = "default") -> dict:
 
 @tool
 def expedite_cost(options: list[dict], downtime_cost_per_hour: float,
-                  failure_window_hours: int) -> dict:
-    """Rank procurement options by fit-to-window, risk, then ROI vs downtime cost.
-    Each option = {label, cost_eur, lead_time_hours, risk_level}."""
-    return _expedite_cost(options, downtime_cost_per_hour, failure_window_hours)
+                  failure_window_hours: int, baseline_lead_time_hours: float,
+                  failure_window_max_hours: float | None = None) -> dict:
+    """Rank procurement options by fit-to-window, risk, then downtime avoided per euro.
+    Each option = {label, cost_eur, lead_time_hours, risk_level}.
+    failure_window_hours = RUL minimum; failure_window_max_hours = RUL maximum.
+    baseline_lead_time_hours = the standard (non-expedited) lead time from
+    supplier_catalog: when the part would arrive if nobody acted."""
+    return _expedite_cost(options, downtime_cost_per_hour, failure_window_hours,
+                          baseline_lead_time_hours, failure_window_max_hours)
 
 
 @tool

@@ -75,9 +75,76 @@ def test_expedite_cost_prefers_fitting_low_risk_option():
         {"label": "warehouse", "cost_eur": 420, "lead_time_hours": 36, "risk_level": "MEDIUM"},
         {"label": "schaeffler", "cost_eur": 3200, "lead_time_hours": 18, "risk_level": "LOW"},
     ]
-    r = expedite_cost(opts, downtime_cost_per_hour=7500, failure_window_hours=52)
+    r = expedite_cost(opts, downtime_cost_per_hour=7500, failure_window_hours=52,
+                      baseline_lead_time_hours=192, failure_window_max_hours=76)
     assert r["recommendation"] == "schaeffler"          # LOW risk fits → ranked first
-    assert r["options_ranked"][0]["roi_ratio"] == 79.7  # (52-18)*7500/3200
+    top = r["options_ranked"][0]
+    # Against the 192h standard lead time, failing at the latest predicted hour (76h):
+    # (192 - 76) = 116h avoided x 7,500 = 870,000 / 3,200.
+    assert top["downtime_avoided_hours"] == 116
+    assert top["downtime_cost_avoided_eur"] == 870_000
+    assert top["roi_ratio"] == 271.9
+
+
+# --- F-09: value is avoided downtime against doing nothing, not slack --------- #
+CASCADE = [
+    {"label": "warehouse", "cost_eur": 420, "lead_time_hours": 36, "risk_level": "MEDIUM"},
+    {"label": "schaeffler", "cost_eur": 3200, "lead_time_hours": 18, "risk_level": "LOW"},
+]
+
+
+def test_arriving_earlier_inside_the_window_is_not_extra_value():
+    """The old formula paid 34h of 'hours saved' to the 18h part and 16h to the 36h one.
+    Both arrive before the machine fails, so both avoid exactly the same downtime."""
+    r = expedite_cost(CASCADE, 7500, 52, baseline_lead_time_hours=192)
+    avoided = {o["label"]: o["downtime_avoided_hours"] for o in r["options_ranked"]}
+    assert avoided["warehouse"] == avoided["schaeffler"] == 140
+
+
+def test_a_late_part_still_shortens_the_outage():
+    """The old formula floored this at zero. A part at 60h after a 52h failure leaves 8h
+    down instead of 140h: 132h avoided, which is most of the value, not none of it."""
+    r = expedite_cost([{"label": "late", "cost_eur": 2100, "lead_time_hours": 60,
+                        "risk_level": "MEDIUM"}], 7500, 52, baseline_lead_time_hours=192)
+    top = r["options_ranked"][0]
+    assert top["fits_failure_window"] is False
+    assert top["downtime_avoided_hours"] == 132
+    assert top["unplanned_downtime_hours"] == [8, 8]
+
+
+def test_value_is_costed_at_the_latest_predicted_failure():
+    """A later failure leaves less of the do-nothing outage to avoid, so RUL max is the
+    conservative end for value, while RUL min stays the feasibility test."""
+    r = expedite_cost(CASCADE, 7500, 52, baseline_lead_time_hours=192,
+                      failure_window_max_hours=76)
+    top = r["options_ranked"][0]
+    assert top["downtime_avoided_hours"] == 116
+    assert top["downtime_avoided_hours_if_early_failure"] == 140
+    assert r["failure_window_hours"] == [52, 76]
+
+
+def test_premium_is_priced_as_a_break_even_delay_risk():
+    r = expedite_cost(CASCADE, 7500, 52, baseline_lead_time_hours=192,
+                      failure_window_max_hours=76)
+    top = r["options_ranked"][0]
+    assert top["premium_over_cheapest_fitting_eur"] == 2780
+    # 2,780 / 870,000: worth paying if the transfer is late more than ~1 time in 313.
+    assert top["break_even_probability_cheapest_is_late"] == 0.0032
+
+
+def test_no_baseline_means_no_value_rather_than_a_guess():
+    r = expedite_cost(CASCADE, 7500, 52)
+    assert all(o["roi_ratio"] is None for o in r["options_ranked"])
+    assert "note_value" in r
+    assert r["recommendation"] == "schaeffler"     # ranking does not depend on value
+
+
+def test_margin_and_rerouting_scale_the_value_and_change_its_label():
+    r = expedite_cost(CASCADE, 7500, 52, baseline_lead_time_hours=192,
+                      failure_window_max_hours=76, margin_share=0.3, rerouted_share=0.5)
+    assert r["options_ranked"][0]["downtime_cost_avoided_eur"] == 130_500
+    assert "upper bound" not in r["value_basis"]
+    assert "upper bound" in expedite_cost(CASCADE, 7500, 52, 192)["value_basis"]
 
 
 def test_maintenance_schedule_exposes_emergency_slot():
@@ -151,11 +218,13 @@ def test_notify_computes_roi_and_links_wo():
         recipient_role="plant_manager", subject="Approve emergency procurement",
         situation_summary="CNC-07-LEI spindle bearing failure predicted 52-76h out",
         recommended_actions=[{"tier": "APPROVE", "action": "expedite P-4421"}],
-        cost_of_inaction_eur=180000, cost_of_recommended_plan_eur=3200,
+        cost_of_inaction_eur=870000, cost_of_recommended_plan_eur=3200,
         decision_deadline_utc="2026-06-13T08:00:00Z", work_order_id="WO-CNC-07-LEI-202606121432",
     )
     assert n["status"] == "DRAFT_PENDING_SEND"
-    assert n["body"]["roi_ratio"] == 56.2                       # 180000 / 3200
+    # Same ratio expedite_cost reports, because cost of inaction is its avoided cost.
+    # It used to be fed one day of production (180,000 / 3,200 = 56.2), see F-09.
+    assert n["body"]["roi_ratio"] == 271.9
     assert n["body"]["linked_work_order"] == "WO-CNC-07-LEI-202606121432"
 
 

@@ -105,18 +105,41 @@ present it's a safe **no-op** (cases stay honestly pending); the mechanism is pr
 `test_reconcile_closes_the_loop` and `test_reconcile_due_resolves_known_outcomes`. Don't claim it
 reconciles live unless you drop an `outcomes.json` in first.
 
-**Why does the ROI use 52h, not 76h?**
-Deliberately the **conservative** bound: we cost against the *earliest* predicted failure (RUL min =
-52h), which gives the *fewest* hours saved and the *lowest, most defensible* ROI. Using 76h would
-inflate it.
+**Why is value costed at 76h, not 52h?**
+Because 76h is the **conservative** end. Value is downtime avoided against doing nothing (the part
+arriving on the 192h standard lead time). The later the machine fails, the less of that outage is
+left to avoid: 116h at 76h, 140h at 52h. Feasibility is still tested against 52h, the earliest
+failure, so an option has to beat the worst case to count as fitting. (The June version costed at
+52h and called it conservative. Under its formula it was; that formula was wrong, see F-09.)
 
 ---
 
 ## The numbers
 
-**Derive the 79.7:1 ROI live.**
-34 hours saved (52 − 18 lead) × €7,500/h = €255,000 downtime avoided ÷ €3,200 expedite = **79.7:1**.
-€7,500/h = €180,000/day, the plant's production value at risk (from the asset profile).
+**Derive the value live.**
+Do nothing and the bearing kit arrives in 192h. The machine fails at 52–76h, so it stands for
+192 − 76 = **116h** at best. Expedite it (18h) and it is repaired in a planned window before it
+fails: 0h unplanned. The 6h repair happens either way and cancels. 116h × €7,500/h = **€870,000**,
+÷ €3,200 = 271.9:1. €7,500/h = €180,000/day, the asset's production value (from the asset profile).
+
+**Why pay €3,200 when the Amsterdam transfer costs €420 and also fits?**
+That is the real decision, and the ratio does not answer it: both avoid the same 116h. The €2,780
+premium buys 18 extra hours of buffer. It is worth it if the transfer has more than a
+2,780 / 870,000 = **0.32%** chance of arriving late (about 1 in 313). A courier with a 36h ETA
+against a 52h deadline is plausibly worse than that, so the expedite is defensible, but it is a
+judgement about delay risk and the plan manager should see it as one.
+
+**Isn't €870k an absurd number for a €3,200 decision?**
+It is an upper bound and we say so. It is production value, i.e. revenue, not margin, and it is
+before the output we recover by rerouting jobs to CNC-05 and CNC-08. The tool takes a margin share
+and a rerouted share; with, say, 30% margin and half the output rerouted, it is ~€130k. Lopsided
+ratios are normal for spare parts against an outage. The mistake would be leading with the ratio.
+
+**What was wrong with the old 79.7:1?**
+It multiplied the *slack* (52 − 18 = 34h before failure) by the downtime rate. Slack is not
+downtime avoided: a part arriving 34h early saves nothing more than one arriving 16h early, and a
+part arriving after the failure still saves most of the outage. `notify` also reported 56.2:1 for
+the same incident. Both are fixed and recorded as F-09.
 
 **Why €180,000/day?**
 It's the asset's `production_value_per_day_eur` in the data; everything (graph, docs, tests, UI)
@@ -152,8 +175,12 @@ agent reasons across five domains, decides, and hands back **one costed, safety-
 escalating when the data is thin. (`why_agent_not_dashboard.md`.)
 
 **What's the ROI of building this?**
-On the modelled incident, €3,200 prevents up to ~€255k of avoided downtime (79.7:1), and the plan is
-produced in under two minutes instead of a cross-team scramble — with a full audit trail.
+We have not measured it, and the per-incident ratio is not it. The value of the *prediction* is
+against a plant that reacts after the failure: it would expedite the same part once the machine
+is down, so the early warning removes roughly those 18h of outage, ~€135k per incident at the
+upper-bound rate. Multiply by incidents a year, subtract margin, rerouting recovery, and the cost
+of integration and running it, and you have a business case. Token cost per run is instrumented;
+the rest needs a deployment.
 
 **Next steps?**
 Real telemetry + CMMS/ERP tools; a trained RUL model; production reconciliation + preference learning;

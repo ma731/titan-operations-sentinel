@@ -82,9 +82,9 @@ Per-agent tool map (`tools/lc.py` groups):
 - **Do NOT use:** Before confirming the gap via `parts_inventory`. **Fallback:** stale caveat. **Auth:** READ.
 
 ### 7. `expedite_cost`
-- **What it does:** Ranks procurement options by fit-to-window, risk, then ROI vs downtime cost.
-- **Inputs:** `options: list`, `downtime_cost_per_hour: float`, `failure_window_hours: int`
-- **Outputs:** `options_ranked` (with `roi_ratio`, `fits_failure_window`), `recommendation`
+- **What it does:** Values each option by the unplanned downtime it avoids against doing nothing (the standard lead time), then ranks by fit-to-window, risk, and value per euro. See F-09.
+- **Inputs:** `options: list`, `downtime_cost_per_hour: float`, `failure_window_hours: int` (RUL min, feasibility), `baseline_lead_time_hours: float` (standard lead time, the counterfactual), `failure_window_max_hours: float` (RUL max, where value is costed); optional `margin_share`, `rerouted_share`
+- **Outputs:** `options_ranked` (with `fits_failure_window`, `buffer_hours`, `downtime_avoided_hours`, `downtime_cost_avoided_eur`, `roi_ratio`, `premium_over_cheapest_fitting_eur`, `break_even_probability_cheapest_is_late`), `recommendation`, `value_basis`, `roi_definition`
 - **Use when:** Parts gap and failure timeline are both known.
 - **Risk if misused:** Recommending an option that misses the window. **Fallback:** unranked + `data_missing`. **Auth:** READ.
 

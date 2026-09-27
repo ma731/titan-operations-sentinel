@@ -24,7 +24,7 @@ sequenceDiagram
 
     Sup->>Sup2: route
     Sup2->>Sup2: parts_inventory · supplier_catalog · expedite_cost · tier2_supplier_risk
-    Sup2-->>Sup: Schaeffler €3,200 / 18h · ROI 79.7:1 · >€500 → needs approval
+    Sup2-->>Sup: Schaeffler €3,200 / 18h · 116h downtime avoided · >€500 → needs approval
 
     Sup->>Prod: route
     Prod->>Prod: robot_cell_status · shift_conflict_check · job_reroute
@@ -41,7 +41,7 @@ sequenceDiagram
 
     Sup->>Human: ⏸ interrupt() — approve €3,200 + Saturday window?
     Human-->>Sup: APPROVED
-    Sup-->>Sensor: Action plan — [AUTO] throttle + reroute · [APPROVE] expedite + window · ROI 79.7:1
+    Sup-->>Sensor: Action plan — [AUTO] throttle + reroute · [APPROVE] expedite + window · 116h avoided
 ```
 
 **Reading it for the rubric:** steps 1–2 are *perception*; the `route` arrows are the supervisor's
