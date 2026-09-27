@@ -284,6 +284,74 @@ engines land nearer the target. This is reported rather than tuned away, because
 tuning available (raise the quantile until the number looks right on the test set) is
 precisely the thing that makes a calibration claim worthless.
 
+---
+
+## F-09 (fixed 2026-09-27) The headline ROI measured slack, not avoided downtime
+
+**Status:** fixed in `tools/expedite_cost.py`. Not caught by the suite: no scenario
+asserted a value, only a ranking, so this was found by reading the arithmetic.
+
+The demo's headline, **79.7:1**, was `(failure window - lead time) x downtime cost / option
+cost` = (52 - 18) x 7,500 / 3,200. The 34 hours in that product are the *slack* a part
+arrives with before the machine fails, not downtime the purchase prevents. Four things
+followed from that, each one an interview question with no good answer:
+
+1. **Arriving earlier looked like more value.** The 18h expedite scored 34 "hours saved"
+   and the 36h Amsterdam transfer 16. Both land before the 52h failure, so both prevent the
+   same outage. The ranking was right for the wrong reason: it sorts on window fit and risk
+   before ratio.
+2. **A late part scored zero.** `max(window - lead, 0)` floored a part at 60h to nothing,
+   although it cuts a 140h outage to 8h.
+3. **There was no counterfactual.** Value only exists against an alternative. Without
+   one, the formula could not say what "avoided" meant.
+4. **Two ratios for one incident.** `notify` was fed one day of production as the cost of
+   inaction and reported 180,000 / 3,200 = **56.2** in the same run that reported 79.7.
+
+The tool now values each option against doing nothing, which in this data is the primary
+supplier's standard lead time (192h):
+
+    avoided hours = max(baseline - failure, 0) - max(lead - failure, 0)
+
+The repair takes the same six hours either way and cancels. Value is costed at the latest
+predicted failure (RUL max, 76h), because a later failure leaves less of the do-nothing
+outage to avoid, which makes RUL max the conservative end. The earlier docs called 52h
+"conservative": for the old formula it was, for this one it is the optimistic end.
+Feasibility is still tested against RUL min.
+
+| Friday Cascade | before | after |
+|---|---|---|
+| Downtime avoided | "34h" | **116h** (140h if it fails at 52h) |
+| Value | €255,000 | **€870,000**, upper bound (see below) |
+| Ratio, Schaeffler €3,200 | 79.7:1 | 271.9:1 |
+| Ratio in `notify` | 56.2:1 | 271.9:1, same number by construction |
+
+**The ratio went up, and the ratio is the wrong thing to lead with.** Both fitting options
+avoid the same 116h, so the choice between them is not about value: it is whether €2,780 of
+premium buys enough certainty. The tool now reports that directly as
+`break_even_probability_cheapest_is_late` = 2,780 / 870,000 = **0.32%**. The expedite is
+worth paying if the Amsterdam courier has more than about a 1 in 313 chance of missing the
+window. That is a sentence a plant manager can act on. A four-digit ratio is not.
+
+**What the €870k still is not.** It is production value, the asset profile's
+`production_value_per_day_eur`, so it is revenue rather than margin, and it is before any
+output the Production agent recovers by rerouting jobs to CNC-05 and CNC-08. The tool
+takes `margin_share` and `rerouted_share` and labels the result an upper bound until they
+are set. The data carries neither number, so none is invented here.
+
+**Nor is it the return on the system.** It is one purchase decision in one incident. The
+value of the *prediction* is a different counterfactual: without an early warning the
+plant expedites after the failure, so the 18h expedite runs while the machine is down.
+Against that, the early warning is worth the 18h of outage it removes, about €135k at the
+same upper-bound rate. Neither figure includes the cost of building and running the
+system. `roi_definition` in the tool output says this, so an agent quoting the ratio has
+the caveat in front of it.
+
+Historical documents (`docs/Agentic_AI_Student_Handouts_DesignThinking.md`, the June
+entries in `docs/PROGRESS.md`) still show 79.7 because that is what was presented on
+24 June.
+
+---
+
 ## Known limits of the suite itself
 
 Worth stating plainly, because a scorecard that does not describe its own blind spots is

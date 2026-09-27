@@ -197,7 +197,7 @@ Every step emits to `stream_callback` — that's what the Streamlit UI renders l
 | Parts gap | P-4421: 0 on-site. P-7803: 1 on-site, need 2 |
 | Recommended option | Schaeffler expedite, 18h, €3,200 (LOW risk) |
 | Cost of inaction | €180,000/day = €7,500/hour |
-| ROI of recommended plan | 79.7:1 |
+| ROI of recommended plan | 79.7:1 as presented in June; the formula was wrong, see F-09 (now 116h / €870k avoided, upper bound) |
 | Emergency window | Saturday 06:00 (requires plant manager approval) |
 
 ---

@@ -10,12 +10,12 @@ import Logo from './Logo.jsx'
 const shot = (name) => `${import.meta.env.BASE_URL}shots/${name}.png`
 
 const HERO_STATE = { reliability: 'done', supply_chain: 'done', production: 'active', quality: 'idle', compliance_safety: 'idle' }
-const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€180,000 / day AT RISK', 'ROI 79.7:1', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
+const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€180,000 / day AT RISK', '€870k DOWNTIME AVOIDED', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
 
 const STATS = [
   { n: '6', l: 'Autonomous agents' },
   { n: '5', l: 'TMC challenges' },
-  { n: <>79.7<span className="g">:1</span></>, l: 'Action ROI' },
+  { n: <>€870<span className="g">k</span></>, l: 'Downtime avoided (upper bound)' },
   { n: <>€0<span className="g"></span></>, l: 'Runs on free tier' },
 ]
 
@@ -72,7 +72,7 @@ const STEPS = [
 
 // The 8 design-thinking pillars from the brief, answered for Titan Operations Sentinel.
 const PILLARS = [
-  { n: '01', t: 'Agent goals', d: 'Catch a failing machine early and hand the plant manager one costed, safety-gated plan. Value: €180,000/day of downtime avoided, 79.7:1 ROI.' },
+  { n: '01', t: 'Agent goals', d: 'Catch a failing machine early and hand the plant manager one costed, safety-gated plan. Value: at least 116h of unplanned downtime avoided, up to €870k at production value, for a €3,200 expedite.' },
   { n: '02', t: 'Input & context', d: 'Trigger: a sensor alert. Inputs: telemetry, inventory, suppliers, production, quality, compliance. Memory: shared transcript + run checkpoints.' },
   { n: '03', t: 'Tools & actions', d: '18 tools across the agents (read / write / execute). Spend over €500 or any safety action needs human approval.' },
   { n: '04', t: 'Lifecycle', d: 'Perceive the alert, reason across five domains, act on a plan, and learn: case memory, human feedback, self-critique, and outcome validation.' },

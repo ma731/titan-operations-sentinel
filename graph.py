@@ -213,7 +213,8 @@ def _instruction(name: str, state: OpsState) -> str:
                 f"Use sensor window '{window}'. Alert: {json.dumps(alert)}")
     if name == "supply_chain":
         downtime_hr = round(downtime_day / 24)
-        window_hours = (state.get("predicted_rul") or [52])[0]
+        rul = state.get("predicted_rul") or [52]
+        window_hours, window_max = rul[0], rul[-1]
         edge = ("\nNOTE: primary supply is DISRUPTED today — call supplier_catalog with "
                 "scenario='edge'. If nothing fits the RUL window, find a cross-plant transfer "
                 "via parts_inventory at sister plants AMS and MUC."
@@ -221,7 +222,12 @@ def _instruction(name: str, state: OpsState) -> str:
         return (f"Confirm parts availability for {mid} at {pid} (the parts are in the reliability "
                 f"report above), check the chosen supplier's Tier-2 risk, and recommend a sourcing "
                 f"option ranked by ROI. When you call expedite_cost use downtime_cost_per_hour="
-                f"{downtime_hr} and failure_window_hours={window_hours}.{edge}")
+                f"{downtime_hr}, failure_window_hours={window_hours}, "
+                f"failure_window_max_hours={window_max}, and baseline_lead_time_hours set to "
+                f"the primary supplier's standard (non-expedited) lead time for the critical "
+                f"part from supplier_catalog: that is when the part arrives if nobody acts. "
+                f"In notify, cost_of_inaction_eur is the recommended option's "
+                f"downtime_cost_avoided_eur, not a day of production.{edge}")
     if name == "production":
         return (f"{mid} needs an emergency window, so reroute its jobs {JOBS} to equivalent "
                 f"machines and ensure no human-robot or shift conflict at plant {pid}; adapt if "

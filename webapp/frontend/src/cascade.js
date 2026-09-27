@@ -33,9 +33,9 @@ const happy = [
   { t: 700, type: 'route', to: 'supply_chain', allowed: ['supply_chain', 'production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'parts_inventory', input: { parts: ['P-4421', 'P-7803'] }, result: { 'P-4421': '0 on-site', 'P-7803': '1/2 on-site' } },
   { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'supplier_catalog', input: { part: 'P-4421' }, result: { Schaeffler: '18h €3200' } },
-  { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'expedite_cost', input: { downtime_h: 7500, window_h: 52 }, result: { roi: '79.7:1' } },
+  { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'expedite_cost', input: { downtime_h: 7500, window_h: '52-76', baseline_h: 192 }, result: { avoided: '116h · €870k', roi: '271.9:1', break_even: '0.32%' } },
   { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'tier2_supplier_risk', input: { supplier: 'Schaeffler' }, result: { tier2: 'LOW' } },
-  { t: 900, type: 'agent_report', agent: 'supply_chain', report: 'Parts gap confirmed: P-4421 zero on-site, P-7803 short one unit. Best option: Schaeffler expedite, 18h, €3,200 (LOW Tier-2 risk), comfortably inside the 52h window. ROI 79.7:1 against €7,500/h downtime. Spend exceeds the €500 autonomy ceiling → flag for human approval.' },
+  { t: 900, type: 'agent_report', agent: 'supply_chain', report: 'Parts gap confirmed: P-4421 zero on-site, P-7803 short one unit. Best option: Schaeffler expedite, 18h, €3,200 (LOW Tier-2 risk), 34h of buffer inside the 52h window. Against the 192h standard lead time, acting now avoids at least 116h of unplanned downtime (€870k at production value, an upper bound). The €420 Amsterdam transfer avoids the same, so the €2,780 premium buys buffer: worth it if the transfer has more than a 0.32% chance of arriving late. Spend exceeds the €500 autonomy ceiling → flag for human approval.' },
 
   { t: 650, type: 'route', to: 'production', allowed: ['production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'production', tool: 'robot_cell_status', input: { plant: 'LEI' }, result: { 'CNC-08': 'idle' } },
@@ -60,7 +60,7 @@ const happy = [
 
 const HUMAN_APPROVED = [
   { t: 250, type: 'human_decision', decision: 'APPROVED', by: 'Plant Manager' },
-  { t: 700, type: 'plan', status: 'complete', roi: '79.7:1', lines: [
+  { t: 700, type: 'plan', status: 'complete', roi: '€870k avoided · 271.9:1', lines: [
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM safe limits (buys runway to the window).' },
     { tier: 'AUTO', txt: 'Reroute jobs J4421-J4425 to CNC-08-LEI; notify shift lead.' },
     { tier: 'APPROVE', txt: '✓ Authorized, Schaeffler P-4421 expedite, 18h, €3,200.' },
@@ -105,8 +105,8 @@ const edge = [
   { t: 700, type: 'route', to: 'supply_chain', allowed: ['supply_chain', 'production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'supplier_catalog', input: { scenario: 'edge' }, result: { primary: 'DISRUPTED' } },
   { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'parts_inventory', input: { sister_plants: ['AMS', 'MUC'] }, result: { MUC: 'P-4421 in stock' } },
-  { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'expedite_cost', input: { option: 'cross-plant MUC' }, result: { cost: 420, eta: '36h', roi: '323.1:1' } },
-  { t: 950, type: 'agent_report', agent: 'supply_chain', report: 'Primary supplier DISRUPTED today, no expedite fits the 52h window. Adapted: cross-plant transfer from sister plant MUC, P-4421 in stock, 36h, €420. That is UNDER the €500 autonomy ceiling, so no human approval is required. ROI 323.1:1.' },
+  { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'expedite_cost', input: { option: 'cross-plant MUC' }, result: { cost: 420, eta: '36h', avoided: '116h · €870k', roi: '2071.4:1' } },
+  { t: 950, type: 'agent_report', agent: 'supply_chain', report: 'Primary supplier DISRUPTED today, no expedite fits the 52h window. Adapted: cross-plant transfer from sister plant MUC, P-4421 in stock, 36h, €420. That is UNDER the €500 autonomy ceiling, so no human approval is required. Against the 192h standard lead time it avoids at least 116h of unplanned downtime (€870k at production value, an upper bound).' },
 
   { t: 650, type: 'route', to: 'production', allowed: ['production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'production', tool: 'job_reroute', input: { from: 'CNC-07', to: 'CNC-08' }, result: { rerouted: 5 } },
@@ -120,7 +120,7 @@ const edge = [
   { t: 600, type: 'tool_call', agent: 'compliance_safety', tool: 'safety_gate', input: { actions: 3 }, result: { verdict: 'SIGN-OFF' } },
   { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'All actions within OSHA/OEM limits and under the spend ceiling. VERDICT: SIGN-OFF. No human gate needed, the plan can execute autonomously.' },
 
-  { t: 800, type: 'plan', status: 'complete', roi: '323.1:1', lines: [
+  { t: 800, type: 'plan', status: 'complete', roi: '€870k avoided · €420 spent', lines: [
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM limits.' },
     { tier: 'AUTO', txt: 'Cross-plant transfer P-4421 from MUC, €420, 36h (under the €500 ceiling, no approval needed).' },
     { tier: 'AUTO', txt: 'Reroute jobs J4421-J4425 to CNC-08-LEI for the transfer window.' },

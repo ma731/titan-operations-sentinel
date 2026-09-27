@@ -10,7 +10,7 @@ field Q&A. Honest caveats are listed so no one over-claims.
 
 ### 1. Problem Framing, Agent Goals & Prompt — 15
 - **Proof:** `docs/agentic_assignment_brief.md`, `docs/appendix/why_agent_not_dashboard.md`, `data/assets/asset_profiles.json` (€180,000/day), prompt pack (`docs/appendix/prompt_pack.md`).
-- **Say:** "One plant manager, one alert, €180,000/day of downtime at risk; the agent hands back one costed, safety-gated plan. ROI 79.7:1."
+- **Say:** "One plant manager, one alert, €180,000/day of downtime at risk; the agent hands back one costed, safety-gated plan: 116h of downtime avoided for a €3,200 expedite."
 
 ### 2. Agentic System Architecture — 10
 - **Proof:** `graph.py` (LangGraph `StateGraph`, supervisor + 5 ReAct workers, conditional edges, `MemorySaver`), `docs/architecture.mmd`, `docs/appendix/sequence_diagram.md`.
@@ -38,7 +38,7 @@ field Q&A. Honest caveats are listed so no one over-claims.
 
 | # | Pillar | Evidence pointer | Slide |
 |---|--------|------------------|-------|
-| 1 | Agent goals | brief + why_agent_not_dashboard + €180k/79.7:1 | Problem |
+| 1 | Agent goals | brief + why_agent_not_dashboard + €180k/day, 116h avoided | Problem |
 | 2 | Input & context | `data/` (telemetry, inventory, suppliers, quality, compliance); memory = transcript + checkpointer + case library | Problem / Architecture |
 | 3 | Tools & actions | `docs/tool_catalog.md`, `tools/lc.py` | Architecture |
 | 4 | Lifecycle (Perceive→Reason→Act→Learn) | `graph.py` + Learning view + `tools/recall_cases.py` | Demo |
