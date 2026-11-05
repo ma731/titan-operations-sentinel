@@ -22,8 +22,9 @@ OpenRouter or a local Ollama model.
 
 The scenario. Titan Leipzig Plant 7. Machine CNC-07-LEI shows spindle vibration of 7.2 mm/s
 (limit 6.0), rising from 3.1 over 6 hours: a bearing about to fail, in 52 to 76 hours.
-The line is worth about €180,000 a day. A code-only triage gate filters roughly 22,000
-alerts a day down to the one worth waking the agents for.
+The line is worth about €180,000 a day. In the story the plant raises over 22,000 alerts
+a day; a code-only triage gate decides which ones wake the agents (measured only in a dry
+run: 192 readings, 1 wake).
 
 The agents. Reliability predicts the failure and remaining life. Supply chain checks parts
 and prices the options. Production reroutes jobs to other machines (CNC-05 had a shift
@@ -35,7 +36,8 @@ The human gate. Agents may spend up to €500 on their own. The €3,200 rush or
 bearing pauses the run for the plant manager to approve or reject. Safety actions go to a
 safety officer. These rules live in code (policy.py), not in prompts.
 
-Plan tiers. AUTO: agents act alone (slow the spindle, reroute jobs, draft work orders).
+Plan tiers. In this demo every action is a recommendation; nothing is sent to a real
+machine. AUTO: allowed without asking (slow the spindle, reroute jobs, draft work orders).
 APPROVE: a person signs off (spend over €500, maintenance windows). MONITOR: keep watching.
 ESCALATE: safety officer.
 
@@ -47,17 +49,19 @@ than a 0.32% chance of arriving late. This is one purchase decision, not the ret
 whole system, and it excludes build and run cost.
 
 Scenarios. Cascade: full team, €3,200 spend waits for a person. Edge: main supplier
-disrupted, a €420 cross-plant transfer from Munich, under the limit, no approval needed.
+disrupted, a cross-plant transfer from Munich under the €500 limit (priced at €420 in the
+recorded run only), no approval needed.
 Escalation: sensor data drops out, the system refuses to guess and hands over to a person.
 
 Modes. Replay plays a recorded run in the browser with no key and no cost (this is what the
 public GitHub Pages demo shows). Live runs the real agents: choose a provider in the top
 bar, paste an API key, press Connect; needs the backend running (docker compose up).
 
-Evidence. 208 offline checks across 34 labelled scenarios pass. The safety gate has 100%
+Evidence. The rules enforced in code are tested; what the model decides is not measured
+yet, because the live agent test suite has not been run. 208 offline checks across 34 labelled scenarios pass. The safety gate has 100%
 recall and precision on HALT cases. About 300 automated tests. Document retrieval: 100% recall@4 on direct
 questions, 41.7% on reworded ones. A remaining-life model trained on NASA C-MAPSS engine
-data scores RMSE 17.0 cycles on 707 unseen engines, against 41.8 for a mean baseline.
+data scores RMSE 17.0 cycles (MAE 12.2) on 707 unseen engines, against 41.8 for a mean baseline.
 CNC predictions use declared thresholds because no public CNC failure data exists, and
 every prediction is labelled with its source. A findings register lists known problems.
 
@@ -66,7 +70,8 @@ not benchmarked. Slack approval is untested against a real workspace. No real CN
 run-to-failure data.
 
 Memory. The reliability agent recalls similar past incidents; here INC-0288, a 93% match,
-failed at 58 hours and the same rush order worked. Finished runs are saved.
+failed at 58 hours and the same rush order worked. Finished live runs are saved. Learning
+from outcomes (reflection replay, signature down-weighting) is designed, not live.
 
 Origin. A team project for IE University's Agentic AI for IT course (five students), later
 extended with the fitted remaining-life model and provenance labels.

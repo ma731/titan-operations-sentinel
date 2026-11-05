@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { GUIDE, STARTERS, matchAnswer } from './guideKnowledge.js'
-import { parseCommand, stripWake, REPLIES, HELLO } from './titanCommands.js'
+import { parseCommand, stripWake, REPLIES, HELLO, CONFIRM } from './titanCommands.js'
 import { speak as say, stopSpeaking, canSpeak } from './titanVoice.js'
 import './guide.css'
 
 const BY_ID = Object.fromEntries(GUIDE.map((g) => [g.id, g]))
 const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null
 const CAN_SPEAK = canSpeak()
+const PRIVACY = 'Your browser turns speech into text (in Chrome, through Google). Nothing is recorded here.'
 const DO_CHIPS = ['Run the Cascade', 'Run the Edge scenario', 'Open the action plan']
 
 // Titan: the console's assistant. It explains the project and runs it on request.
@@ -27,13 +28,15 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
   const endRef = useRef(null)
   const inputRef = useRef(null)
   const recRef = useRef(null)
+  const askRef = useRef(null)      // latest ask(), so a voice result never acts on stale state
+  const pendingRef = useRef(null)  // a spoken approve/reject waiting for 'yes'
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }) }, [msgs, busy])
   useEffect(() => { if (open) inputRef.current?.focus() }, [open])
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('keydown', onKey)
-    return () => { document.removeEventListener('keydown', onKey); recRef.current?.abort?.(); stopSpeaking() }
+    return () => { document.removeEventListener('keydown', onKey); recRef.current?.abort?.() }
   }, [])
 
   const speak = (text, voice) => {
@@ -56,9 +59,25 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
     const history = msgs.slice(-6).map((m) => ({ role: m.who === 'me' ? 'user' : 'assistant', text: m.text }))
     setMsgs((m) => [...m, { who: 'me', text, voice }])
 
+    // A spoken approve/reject is only carried out after a clear "yes".
+    if (pendingRef.current) {
+      const pending = pendingRef.current
+      pendingRef.current = null
+      if (CONFIRM.test(stripWake(text).toLowerCase()) && onCommand) {
+        bot({ text: onCommand({ cmd: pending, via: 'Titan assistant (voice)' }), src: 'action' }, voice); return
+      }
+      bot({ text: REPLIES.cancelled, src: 'action' }, voice); return
+    }
+
     const cmd = parseCommand(text)
     if (cmd && onCommand) {
-      const reply = onCommand(cmd)
+      if (voice && (cmd.cmd === 'approve' || cmd.cmd === 'reject')) {
+        const check = onCommand({ cmd: 'pending' })
+        if (check) { bot({ text: check, src: 'action' }, voice); return }
+        pendingRef.current = cmd.cmd
+        bot({ text: cmd.cmd === 'approve' ? REPLIES.confirmApprove : REPLIES.confirmReject, src: 'action' }, voice); return
+      }
+      const reply = onCommand({ ...cmd, via: 'Titan assistant (typed)' })
       if (reply) { bot({ text: reply, src: 'action', follow: cmd.cmd === 'run' ? ['gate', 'value'] : null }, voice); return }
     }
 
@@ -84,6 +103,8 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
     }, voice)
   }
 
+  askRef.current = ask
+
   const toggleMic = () => {
     if (!SR) return
     if (listening) { recRef.current?.stop(); return }
@@ -102,9 +123,9 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
     rec.onerror = (e) => setMicNote(e.error === 'not-allowed' || e.error === 'service-not-allowed'
       ? 'Microphone is blocked for this site. Allow it in the browser, or type instead.'
       : e.error === 'no-speech' ? 'I did not catch that. Tap the mic and try again.' : 'Voice input stopped. You can type instead.')
-    rec.onend = () => { setListening(false); if (finalText.trim()) ask(finalText, true) }
+    rec.onend = () => { setListening(false); setMicNote((n) => (n === PRIVACY ? '' : n)); if (finalText.trim()) askRef.current(finalText, true) }
     recRef.current = rec
-    setMicNote(''); setListening(true)
+    setMicNote(PRIVACY); setListening(true)
     try { rec.start() } catch { setListening(false) }
   }
 

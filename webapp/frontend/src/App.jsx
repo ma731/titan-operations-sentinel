@@ -180,20 +180,28 @@ export default function App() {
     run(scen, text)
   }
 
-  const resolve = (choice) => {
+  // One decision per gate, whichever way it arrives (dialog, Titan, presenter mode).
+  // The record says how it was made, so a typed or spoken approval is never hidden.
+  const approvalRef = useRef(null)
+  approvalRef.current = approval
+  const resolve = (choice, via = 'approval dialog') => {
+    if (!approvalRef.current) return
+    approvalRef.current = null
+    setApproval(null)
     if (mode === 'live') {
-      setApproval(null)
+      pushItem({ kind: 'note', text: `Decision entered through the ${via}` })
       fetch('/api/decision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: choice }) }).catch(() => {})
       return
     }
-    queueRef.current = RESOLUTIONS[choice].map((e) => ({ ...e })); setApproval(null); pump()
+    queueRef.current = RESOLUTIONS[choice].map((e) => (e.type === 'human_decision' ? { ...e, by: `${e.by} · via ${via}` } : { ...e }))
+    pump()
   }
 
   // ---- presenter (hands-free) mode ----
   const present = (scen = scenario) => { setPresenting(true); run(scen) }
   useEffect(() => {                         // auto-approve the human gate while presenting
     if (!presenting || !approval) return
-    const id = setTimeout(() => resolve('approve'), 3800)
+    const id = setTimeout(() => resolve('approve', 'presenter mode (auto)'), 3800)
     return () => clearTimeout(id)
   }, [presenting, approval])               // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (completed) setPresenting(false) }, [completed])

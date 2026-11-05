@@ -1,5 +1,6 @@
-// Turns a typed or spoken request into a console action. Questions ("why did it
-// stop?") are left to the Q&A; only requests ("run the edge scenario") become actions.
+// Turns a typed or spoken request into a console action. Only short, direct orders
+// become actions ("run the edge scenario", "approve"). Anything phrased as a question
+// ("should I approve?", "can it run without a key?") goes to the Q&A instead.
 
 const PAGES = [
   [/\b(conversation|chat|transcript|talk)/, 'chat', 'the agent conversation'],
@@ -17,7 +18,18 @@ const PAGES = [
   [/\b(overview|home|dashboard|start page)\b/, 'dashboard', 'the overview'],
 ]
 
-const QUESTION = /^(why|what|how|is|are|does|do|who|when|where|which|explain|tell me about)\b/
+// The spend gate only moves on a short, unambiguous order.
+const APPROVE = /^(yes[,.! ]*)?(i )?(approve|approve it|approve (the|this) (spend|order|rush order|purchase|expedite)|approved|go ahead)[.! ]*$/
+const REJECT = /^(no[,.! ]*)?(i )?(reject|reject it|reject (the|this) (spend|order|rush order|purchase|expedite)|rejected|decline|decline it)[.! ]*$/
+const PRESENT = /^(present|present it|present the demo|start (the )?presentation|presentation mode|hands[- ]?free( mode)?)[.! ]*$/
+const STOP = /^(stop|cancel|abort)( the run| it| now| running)?[.! ]*$/
+const RUN = /^(run|start|play|launch|simulate|trigger|replay)\b/
+const NAV = /^(open|show( me)?|go to|take me to|see|view|display)\b/
+export const CONFIRM = /^(yes|yes please|yep|yeah|confirm|confirmed|do it|yes,? (approve|reject|do it))[.! ]*$/
+
+// "can you run...", "please open..." are orders; other can/should/would openings are questions.
+const POLITE = /^((can|could|would|will) you (please )?|please |let'?s |i want to |i'd like to )/
+const QUESTION = /(\?$)|^(why|what|how|is|are|does|do|did|who|when|where|which|explain|tell me|should|shall|will|would|could|can|may|might|if|i|i'm|im)\b/
 
 export const HELLO = "Hi, I'm Titan. I can explain what this project does, or run it for you."
 
@@ -27,15 +39,17 @@ export const SCENARIO_NAMES = { happy: 'Cascade', edge: 'Edge', escalation: 'Esc
 export const stripWake = (t) => t.replace(/^\s*(hey|hi|ok|okay)?[\s,]*titan[\s,.!:]*/i, '').trim()
 
 export function parseCommand(raw) {
-  const t = stripWake(raw).toLowerCase()
-  if (!t || QUESTION.test(t)) return null
+  let t = stripWake(raw).toLowerCase().trim()
+  if (!t) return null
+  if (POLITE.test(t)) t = t.replace(POLITE, '').replace(/\?+$/, '').trim()
+  else if (QUESTION.test(t)) return null
 
-  if (/\b(approve|accept|authori[sz]e|go ahead|sign off)\b/.test(t)) return { cmd: 'approve' }
-  if (/\b(reject|decline|deny|refuse)\b/.test(t)) return { cmd: 'reject' }
-  if (/\b(stop|cancel|abort)\b/.test(t)) return { cmd: 'stop' }
-  if (/\b(present|hands[- ]?free|presentation)\b/.test(t)) return { cmd: 'present' }
+  if (APPROVE.test(t)) return { cmd: 'approve' }
+  if (REJECT.test(t)) return { cmd: 'reject' }
+  if (STOP.test(t)) return { cmd: 'stop' }
+  if (PRESENT.test(t)) return { cmd: 'present' }
 
-  if (/\b(run|start|play|launch|simulate|trigger|demo)\b/.test(t)) {
+  if (RUN.test(t)) {
     const scenario = /\b(edge|supplier|disrupt|cross[- ]?plant|munich|transfer)/.test(t) ? 'edge'
       : /\b(escalat|dropout|drop out|sensor (is )?(down|out|lost)|bad data|no data)/.test(t) ? 'escalation'
       : /\b(cascade|friday|bearing|main|default|normal|happy)\b/.test(t) ? 'happy'
@@ -43,7 +57,7 @@ export function parseCommand(raw) {
     return { cmd: 'run', scenario }
   }
 
-  if (/\b(open|show|go to|take me|see|view|display)\b/.test(t)) {
+  if (NAV.test(t)) {
     for (const [re, nav, name] of PAGES) if (re.test(t)) return { cmd: 'nav', nav, name }
   }
   return null
@@ -58,9 +72,13 @@ export const REPLIES = {
   noApproval: 'Nothing is waiting for approval right now.',
   approved: 'Approved. The €3,200 rush order goes ahead and the agents finish the plan.',
   rejected: 'Rejected. The agents will escalate with the costed trade-off instead.',
+  confirmApprove: 'You said approve the €3,200 rush order. Say yes to confirm, or press Approve.',
+  confirmReject: 'You said reject the €3,200 rush order. Say yes to confirm, or press Reject.',
+  cancelled: 'Okay, I did nothing. The decision is still waiting for you.',
   notRunning: 'Nothing is running.',
   stopped: 'Stopped. What happened so far stays on screen.',
   presentBusy: 'A run is already going.',
+  presentLive: 'Presenting hands-free approves the gate automatically, so I only do that in Replay. Say "run the cascade" and decide yourself.',
   present: (sc) => `Presenting the ${LABEL[sc]} scenario hands-free. I will approve the gate automatically.`,
   open: (name) => `Opening ${name}.`,
   showcaseOpen: 'Opening the console. Press Run there, or ask me again from inside.',

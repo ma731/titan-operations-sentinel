@@ -33,7 +33,7 @@ import urllib.parse
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # Make the repo root importable (graph.py, llm.py, agents/, tools/ live there).
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -292,8 +292,8 @@ _GUIDE_PROMPT = Path(__file__).resolve().parents[2] / "prompts" / "guide.md"
 
 
 class GuideQuestion(BaseModel):
-    question: str
-    history: list[dict] = []
+    question: str = Field(max_length=2000)
+    history: list[dict] = Field(default_factory=list, max_length=20)
 
 
 @app.post("/api/guide")

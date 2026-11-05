@@ -56,7 +56,7 @@ const PROJECTS = [
 ]
 
 const DETAILS = {
-  console: ['Six agents reason live over one sensor alert', 'Supervisor routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
+  console: ['Six agents reason over one sensor alert', 'Supervisor routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
   agents: ['An LLM supervisor routes between 6 agents', 'Each specialist is a ReAct agent that picks its own tools', 'They converse through one shared transcript', 'FOLLOWUP lets an agent ask another directly'],
   approval: ['€500 autonomy ceiling on spend', 'Anything above pauses the whole plan', 'interrupt() gate → human approve / reject', 'Compliance can HALT independently of cost'],
   cascade: ['CNC-07-LEI bearing failure predicted 52-76h out', '€180,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each ends differently: human gate / under the ceiling / human review'],
@@ -65,7 +65,7 @@ const DETAILS = {
 }
 
 const STEPS = [
-  { n: '01', t: 'Perceive', d: 'A code-only triage gate filters 22k sensor signals down to the one alert worth waking the agents for.' },
+  { n: '01', t: 'Perceive', d: 'A plant raises over 22,000 alerts a day. A code-only gate decides which ones wake the agents.' },
   { n: '02', t: 'Route', d: 'A supervisor decides which specialist acts next, guided autonomy, not a fixed script.' },
   { n: '03', t: 'Reason', d: 'Each agent picks its own tools, reasons, and reports into a shared transcript.' },
   { n: '04', t: 'Converge', d: 'Findings combine into one costed, safety-gated plan across five domains.' },
@@ -131,7 +131,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         <div className="sc-nav-inner">
           <div className="sc-logo"><Logo size={24} accent="#0fbe85" /> Titan Operations Sentinel</div>
           <div className="links">
-            <a onClick={onLaunch}>Live demo</a>
+            <a onClick={onLaunch}>Demo</a>
             <a href="#work">Work</a>
             <a href="#contact">Approach</a>
             {user && <a onClick={onSignOut} title="Switch user">Sign out ({user.name.split(' ')[0]})</a>}
@@ -144,7 +144,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         <header className="sc-hero">
           <div className="sc-eyebrow">◈ Agentic AI · Manufacturing operations</div>
           <RevealHeadline />
-          <p>When a machine signals failure, six AI agents check reliability, supply, production, quality and safety, and hand the plant manager one costed plan. Anything over €500 waits for a person.</p>
+          <p>When a machine signals failure, five specialist agents, coordinated by an orchestrator, check reliability, supply, production, quality and safety, and hand the plant manager one costed plan. Anything over €500 waits for a person.</p>
           <div className="actions">
             <button className="sc-btn-primary" onClick={onLaunch}>Open the console →</button>
             <a className="sc-btn-ghost" href="#work">See the system</a>

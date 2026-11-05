@@ -9,7 +9,7 @@ export const GUIDE = [
   {
     id: 'what', q: 'What does this do?',
     k: ['purpose', 'explain', 'overview', 'project', 'sentinel', 'titan'],
-    a: 'It turns one machine alert into one costed plan. A sensor on CNC-07 shows a spindle bearing about to fail. Five AI agents each check one area (reliability, supply chain, production, quality, safety), an orchestrator decides who goes next, and the result is a plan the plant manager can act on. Anything that costs more than €500 waits for a person to approve it.',
+    a: 'It turns one machine alert into one costed plan. A sensor on CNC-07 shows a spindle bearing about to fail. Five specialist agents each check one area (reliability, supply chain, production, quality, safety), an orchestrator decides who goes next, and the result is a plan the plant manager can act on. Anything that costs more than €500 waits for a person to approve it.',
     show: { nav: 'dashboard' }, label: 'Open the overview',
   },
   {
@@ -31,31 +31,31 @@ export const GUIDE = [
   },
   {
     id: 'gate', q: 'Why did it stop and ask me?',
-    k: ['stop', 'stopped', 'ask', 'approve', 'approval', 'gate', 'human', 'person', '500', 'pause', 'wait', 'reject'],
+    k: ['stop', 'stopped', 'ask', 'approve', 'approval', 'gate', 'human', 'person', '500', 'pause', 'wait', 'reject', 'should', 'decide'],
     a: 'The agents may spend up to €500 on their own. The rush order for the bearing costs €3,200, so the run pauses until a person approves or rejects it. The limit is written in code, not in a prompt, so a model cannot talk its way past it.',
   },
   {
     id: 'value', q: 'Is it worth the money?',
     k: ['worth', 'value', 'money', 'cost', 'roi', 'save', 'saving', 'benefit', 'business', 'euro', 'price', '3200', '870'],
-    a: 'Doing nothing means waiting 192 hours for the standard delivery. Ordering now avoids at least 116 hours of downtime for a €3,200 rush order. At full production value that is up to €870k, but treat that as an upper bound: it is revenue, not margin, and some output is recovered by rerouting. A €420 transfer avoids the same hours, so the extra €2,780 only buys certainty.',
+    a: 'Doing nothing means waiting 192 hours for the standard delivery. Ordering now avoids at least 116 hours of downtime for a €3,200 rush order. At full production value that is up to €870k, but treat that as an upper bound: it is revenue, not margin, and some output is recovered by rerouting. A €420 transfer avoids the same hours, so the extra €2,780 only buys certainty. This is one purchase decision, not the return on the whole system, and it leaves out build and run cost.',
     show: { nav: 'cost' }, label: 'See cost and value',
   },
   {
     id: 'scenarios', q: 'What are the three scenarios?',
     k: ['scenario', 'scenarios', 'cascade', 'edge', 'escalation', 'three', 'paths', 'different'],
-    a: 'Cascade: the full team runs and the €3,200 spend waits for a person. Edge: the main supplier is disrupted, so the agents find a €420 transfer from a sister plant, which is under the limit and needs no approval. Escalation: the sensor data drops out, so the system refuses to guess and hands the case to a person.',
+    a: 'Cascade: the full team runs and the €3,200 spend waits for a person. Edge: the main supplier is disrupted, so the agents find a cross-plant transfer from Munich that costs under €500 and needs no approval. Escalation: the sensor data drops out, so the system refuses to guess and hands the case to a person.',
     show: { nav: 'scenarios' }, label: 'Pick a scenario',
   },
   {
     id: 'trust', q: 'How do I know it works?',
     k: ['work', 'works', 'trust', 'test', 'tests', 'tested', 'eval', 'evaluation', 'accurate', 'accuracy', 'proof', 'reliable'],
-    a: 'It is tested like software. 208 offline checks across 34 labelled scenarios all pass, the safety gate caught every case that should stop and none that should not, and about 300 tests run on every change. A findings register lists what is still wrong, instead of hiding it.',
+    a: 'The rules enforced in code are tested like software. 208 offline checks across 34 labelled scenarios pass, the safety gate stopped every case it should and none it should not, and over 300 tests run on every change. What the model itself decides is not measured yet: the live test suite has not been run. A findings register lists what is still wrong.',
     show: { nav: 'audit' }, label: 'Open the audit log',
   },
   {
     id: 'data', q: 'Is the data real?',
     k: ['data', 'real', 'fake', 'simulated', 'nasa', 'dataset', 'rul', 'predict', 'prediction', 'model'],
-    a: 'Mostly simulated, and labelled that way. The remaining-life model is trained on NASA engine data and tested on 707 engines it never saw (average error 17 cycles, against 41.8 for a simple baseline). For the CNC machines there is no public failure data, so those predictions come from declared limits, and every prediction says which kind it is.',
+    a: 'Mostly simulated, and labelled that way. The remaining-life model is trained on NASA engine data and tested on 707 engines it never saw (typical error, RMSE, of 17 cycles, against 41.8 for a simple baseline). For the CNC machines there is no public failure data, so those predictions come from declared limits, and every prediction says which kind it is.',
   },
   {
     id: 'safety', q: 'Can it do something dangerous?',
@@ -65,7 +65,7 @@ export const GUIDE = [
   {
     id: 'tiers', q: 'What do AUTO, APPROVE and MONITOR mean?',
     k: ['auto', 'approve', 'monitor', 'escalate', 'tier', 'tiers', 'plan', 'action', 'lines'],
-    a: 'AUTO: the agents do it themselves, like slowing the machine or moving jobs. APPROVE: a person must sign off, like any spend over €500. MONITOR: keep watching and trigger again if things get worse. ESCALATE: hand it to a safety officer.',
+    a: 'AUTO: allowed without asking, like slowing the machine or moving jobs. In this demo these are recommendations, not commands sent to a real machine. APPROVE: a person must sign off, like any spend over €500. MONITOR: keep watching and trigger again if things get worse. ESCALATE: hand it to a safety officer.',
     show: { nav: 'plan' }, label: 'Open the action plan',
   },
   {
@@ -76,7 +76,7 @@ export const GUIDE = [
   {
     id: 'memory', q: 'Does it learn from past incidents?',
     k: ['learn', 'learning', 'memory', 'past', 'history', 'similar', 'incident', 'precedent'],
-    a: 'Yes. The reliability agent looks up similar past incidents. In this run it finds INC-0288, a 93% match that failed at 58 hours and where the same rush order worked. Each finished run is saved so the next one can use it.',
+    a: 'It remembers, but it does not learn yet. The reliability agent looks up similar past incidents: here INC-0288, a 93% match that failed at 58 hours, where the same rush order worked. Each finished live run is saved so the next one can use it. Learning from outcomes is designed but not built.',
     show: { nav: 'learning' }, label: 'Open learning',
   },
   {

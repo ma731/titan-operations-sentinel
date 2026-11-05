@@ -57,3 +57,10 @@ def test_model_failure_is_not_a_crash(client, monkeypatch):
     monkeypatch.setattr(llm, "get_llm", lambda: _Broken())
     r = client.post("/api/guide", json={"question": "hello"}).json()
     assert r == {"ok": False, "reason": "model-error"}
+
+
+def test_oversized_requests_are_refused(client, monkeypatch):
+    monkeypatch.setattr(llm, "get_llm", lambda: _FakeModel())
+    assert client.post("/api/guide", json={"question": "x" * 5000}).status_code == 422
+    big = [{"role": "user", "text": "hi"}] * 500
+    assert client.post("/api/guide", json={"question": "hi", "history": big}).status_code == 422

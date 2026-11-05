@@ -24,8 +24,10 @@ export function speak(text) {
   stopSpeaking()
   const file = MANIFEST[text]
   if (file) {
-    current = new Audio(`${import.meta.env.BASE_URL}voice/${file}`)
-    current.play().catch(() => fallback(text))
+    const a = new Audio(`${import.meta.env.BASE_URL}voice/${file}`)
+    current = a
+    // A pause() from stopSpeaking or mute rejects play() with AbortError: stay quiet then.
+    a.play().catch((e) => { if (current === a && e?.name !== 'AbortError') fallback(text) })
     return
   }
   fallback(text)

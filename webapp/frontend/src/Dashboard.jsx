@@ -275,13 +275,14 @@ export default function Dashboard(props) {
             setScenario(sc); setNav('dashboard'); onRun(sc)
             return REPLIES.run(sc)
           }
+          if (c.cmd === 'pending') return approvalPending ? null : REPLIES.noApproval
           if (c.cmd === 'approve' || c.cmd === 'reject') {
             if (!approvalPending) return REPLIES.noApproval
-            onDecide(c.cmd)
+            onDecide(c.cmd, c.via)
             return c.cmd === 'approve' ? REPLIES.approved : REPLIES.rejected
           }
           if (c.cmd === 'stop') { if (!running) return REPLIES.notRunning; onStop(); return REPLIES.stopped }
-          if (c.cmd === 'present') { if (running) return REPLIES.presentBusy; setNav('dashboard'); onPresent(); return REPLIES.present(scenario) }
+          if (c.cmd === 'present') { if (mode === 'live') return REPLIES.presentLive; if (running) return REPLIES.presentBusy; setNav('dashboard'); onPresent(); return REPLIES.present(scenario) }
           if (c.cmd === 'nav') { setNav(c.nav); return REPLIES.open(c.name) }
           return null
         }} />
@@ -301,7 +302,7 @@ function Coachmark({ onClose }) {
   }, [onClose])
   const steps = [
     { ic: '◉', t: 'An alert just fired', d: 'A sensor on CNC-07-LEI crossed its vibration limit. This console is the team of agents that responds.' },
-    { ic: '▶', t: 'Press Run', d: 'Six AI agents are dispatched. Watch the graph: the orchestrator routes them and they reason live, one domain at a time.' },
+    { ic: '▶', t: 'Press Run', d: 'Six AI agents are dispatched. Watch the graph: the orchestrator routes them and they reason one domain at a time.' },
     { ic: '◈', t: 'They converge on a plan', d: 'Findings combine into one costed, safety-gated action plan. Anything over €500, or any safety risk, pauses for a human.' },
     { ic: '€', t: 'It runs free', d: 'Replay mode plays the recorded run with no API key and zero cost. Live mode uses a real model when you add a key.' },
   ]
@@ -384,7 +385,7 @@ function NominalAssetModal({ machine: m, plant, onClose }) {
               <div><span>Criticality</span>B · standard</div>
               <div><span>Utilisation</span>{m.util}</div>
             </div>
-            <div className="asset-sec">Live sensors</div>
+            <div className="asset-sec">Sensors (simulated)</div>
             <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Vibration (RMS)</div><div className="asset-sensor-n">within OEM limit (6.0)</div></div><span className="asset-sensor-v ok">{m.vib} mm/s</span></div>
             <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Bearing temp</div><div className="asset-sensor-n">nominal vs baseline</div></div><span className="asset-sensor-v ok">{m.temp} °C</span></div>
             <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Spindle load</div><div className="asset-sensor-n">within envelope</div></div><span className="asset-sensor-v ok">nominal</span></div>
@@ -442,7 +443,7 @@ function AssetModal({ machine, alert: ALERT, risk, onClose }) {
               <div><span>Next window</span>{ASSET_SPEC.nextWindow}</div>
             </div>
 
-            <div className="asset-sec">Live sensors</div>
+            <div className="asset-sec">Sensors (simulated)</div>
             {ASSET_SENSORS.map((s, i) => (
               <div className="asset-sensor" key={i}>
                 <span className={`asset-dot ${s.s}`} />
@@ -560,7 +561,7 @@ function ScenariosView({ scenario, setScenario, onRun, running }) {
   return (
     <>
       <div className="dash-h">Demo Scenarios</div>
-      <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '60ch' }}>Three paths, each exercising the system differently. Pick one and run it live.</p>
+      <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '60ch' }}>Three paths, each exercising the system differently. Pick one and run it.</p>
       {SCENARIOS.map((s) => (
         <div className="panel" key={s.id} style={{ borderColor: scenario === s.id ? 'var(--accent)' : undefined }}>
           <div className="panel-h">
@@ -969,23 +970,27 @@ function CostView({ mode = 'replay' }) {
 // Four-step progress strip: the story of a run, readable at a glance.
 function StoryStrip({ timeline, running, doneCount, runStatus, plan }) {
   const started = running || timeline.length > 0
-  const humanDone = timeline.some((t) => t.kind === 'human' && t.text.startsWith('Human decision'))
+  const decision = timeline.find((t) => t.kind === 'human' && t.text.startsWith('Human decision'))
+  const humanDone = !!decision
+  const rejected = humanDone && /REJECT/i.test(decision.text)
   const waiting = runStatus === 'Awaiting human approval'
-  const gateText = humanDone ? 'A person approved the spend'
+  const stopped = runStatus === 'Stopped'
+  const gateText = humanDone ? (rejected ? 'A person rejected the spend' : 'A person approved the spend')
     : waiting ? 'Waiting for a person: over €500'
     : plan ? (plan.status === 'complete' ? 'Not needed: under €500' : 'Not reached')
     : 'Anything over €500 stops here'
   const steps = [
-    { t: 'Alert', s: started ? '1 of 22k alerts woke the agents' : 'A sensor crosses its limit', st: started ? 'done' : 'todo' },
-    { t: 'Agents', s: `${doneCount} of 5 domains checked`, st: plan || doneCount === 5 ? 'done' : started && !waiting ? 'now' : started ? 'done' : 'todo' },
-    { t: 'Human gate', s: gateText, st: humanDone || plan ? 'done' : waiting ? 'now' : 'todo' },
-    { t: 'Plan', s: plan ? (plan.status === 'complete' ? 'Costed plan ready' : plan.status === 'halted' ? 'Stopped by safety' : 'Handed to a person') : 'One costed, safety-checked plan', st: plan ? 'done' : 'todo' },
+    { t: 'Alert', s: started ? 'One alert woke the agents' : 'A sensor crosses its limit', st: started ? 'done' : 'todo' },
+    { t: 'Agents', s: stopped && !plan ? `Stopped after ${doneCount} of 5` : `${doneCount} of 5 domains checked`,
+      st: doneCount === 5 ? 'done' : plan || stopped ? 'skip' : waiting ? 'done' : started ? 'now' : 'todo' },
+    { t: 'Human gate', s: gateText, st: humanDone ? 'done' : waiting ? 'now' : plan ? 'skip' : 'todo' },
+    { t: 'Plan', s: plan ? (plan.status === 'complete' ? 'Costed plan ready' : plan.status === 'halted' ? 'Stopped by safety' : 'Handed to a person') : stopped ? 'Run stopped' : 'One costed, safety-checked plan', st: plan ? 'done' : 'todo' },
   ]
   return (
     <ol className="story-strip" aria-label="Run progress">
       {steps.map((x, i) => (
         <li key={x.t} className={`story-step ${x.st}`}>
-          <span className="story-n">{x.st === 'done' ? '✓' : i + 1}</span>
+          <span className="story-n">{x.st === 'done' ? '✓' : x.st === 'skip' ? '–' : i + 1}</span>
           <span className="story-t">{x.t}</span>
           <span className="story-s">{x.s}</span>
         </li>
