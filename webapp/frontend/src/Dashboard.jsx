@@ -6,6 +6,7 @@ import Logo from './Logo.jsx'
 import AnimatedNumber from './AnimatedNumber.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import Guide from './Guide.jsx'
+import { REPLIES } from './titanCommands.js'
 import { TEAM, GUEST } from './team.js'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
@@ -49,7 +50,7 @@ export default function Dashboard(props) {
   const {
     scenario, setScenario, mode, setMode, running, completed, timeline, agentStatus, runStatus, risk,
     plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT, user, onSignOut, onSwitchUser, onCommand,
-    history = [], onClearHistory, presenting, onPresent,
+    history = [], onClearHistory, presenting, onPresent, approvalPending = false, onDecide = () => {},
   } = props
   const [nav, setNav] = useState('dashboard')
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -262,10 +263,28 @@ export default function Dashboard(props) {
         me={me} onSwitchUser={onSwitchUser} onSignOut={onSignOut}
       />
 
-      <Guide mode={mode} onAction={(a) => {
-        if (a.run) { setNav('dashboard'); if (!running) onRun(scenario) }
-        else if (a.nav) setNav(a.nav)
-      }} />
+      <Guide mode={mode}
+        onAction={(a) => {
+          if (a.run) { setNav('dashboard'); if (!running) onRun(scenario) }
+          else if (a.nav) setNav(a.nav)
+        }}
+        onCommand={(c) => {
+          if (c.cmd === 'run') {
+            if (running) return REPLIES.runBusy
+            const sc = c.scenario || scenario
+            setScenario(sc); setNav('dashboard'); onRun(sc)
+            return REPLIES.run(sc)
+          }
+          if (c.cmd === 'approve' || c.cmd === 'reject') {
+            if (!approvalPending) return REPLIES.noApproval
+            onDecide(c.cmd)
+            return c.cmd === 'approve' ? REPLIES.approved : REPLIES.rejected
+          }
+          if (c.cmd === 'stop') { if (!running) return REPLIES.notRunning; onStop(); return REPLIES.stopped }
+          if (c.cmd === 'present') { if (running) return REPLIES.presentBusy; setNav('dashboard'); onPresent(); return REPLIES.present(scenario) }
+          if (c.cmd === 'nav') { setNav(c.nav); return REPLIES.open(c.name) }
+          return null
+        }} />
 
       {assetOpen && <AssetModal machine={selectedMachine} alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
       {coach && <Coachmark onClose={closeCoach} />}

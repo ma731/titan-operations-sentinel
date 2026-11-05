@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { animate, stagger } from 'animejs'
 import Guide from './Guide.jsx'
+import { REPLIES } from './titanCommands.js'
 import AgentGraph from './AgentGraph.jsx'
 import Logo from './Logo.jsx'
 
@@ -228,7 +229,11 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         </footer>
 
         {detail && <DetailModal p={detail} onClose={() => setDetail(null)} onLaunch={onLaunch} />}
-        <Guide onAction={onLaunch} actionLabel="Open the console" />
+        <Guide onAction={onLaunch} actionLabel="Open the console"
+          onCommand={(c) => {
+            if (c.cmd === 'run' || c.cmd === 'present' || c.cmd === 'nav') { setTimeout(onLaunch, 900); return REPLIES.showcaseOpen }
+            return REPLIES.showcaseFirst
+          }} />
       </div>
     </div>
   )

@@ -255,6 +255,7 @@ export default function App() {
         onCommand={submitCommand}
         history={history} onClearHistory={clearHistory}
         presenting={presenting} onPresent={() => present(scenario)}
+        approvalPending={!!approval} onDecide={resolve}
       />
       {approval && <ApprovalModal req={approval} onApprove={() => resolve('approve')} onReject={() => resolve('reject')} />}
     </>

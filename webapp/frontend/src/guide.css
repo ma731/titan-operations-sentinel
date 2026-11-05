@@ -19,7 +19,7 @@
   box-shadow: 0 34px 90px -24px rgba(10, 20, 15, 0.45); animation: guide-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes guide-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
-.guide-h { padding: 16px 18px 12px; border-bottom: 1px solid var(--g-line); }
+.guide-h { display: flex; align-items: center; gap: 12px; padding: 14px 14px 12px 16px; border-bottom: 1px solid var(--g-line); }
 .guide-t { font-weight: 800; font-size: 17px; }
 .guide-s { font-size: 12px; color: var(--g-ink-2); margin-top: 2px; }
 .guide-body { flex: 1; overflow-y: auto; padding: 14px 14px 6px; display: flex; flex-direction: column; gap: 12px; }
@@ -45,3 +45,19 @@
 .guide-in button { width: 42px; border: 0; border-radius: 12px; background: var(--g-ink); color: #fff; font-size: 17px; cursor: pointer; }
 .guide-in button:disabled { opacity: 0.35; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .guide { animation: none; } .guide-typing i { animation: none; opacity: 0.6; } }
+
+.guide-orb { width: 34px; height: 34px; flex: none; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d9fff0, var(--g-accent) 55%, #077a55); box-shadow: 0 0 0 0 rgba(15, 190, 133, 0.5); }
+.guide-orb.on { animation: guide-listen 1.1s ease-out infinite; }
+.guide-orb.busy { animation: guide-think 1.2s ease-in-out infinite; }
+@keyframes guide-listen { 0% { box-shadow: 0 0 0 0 rgba(15, 190, 133, 0.55); } 100% { box-shadow: 0 0 0 14px rgba(15, 190, 133, 0); } }
+@keyframes guide-think { 50% { transform: scale(0.88); opacity: 0.75; } }
+.guide-mute { width: 36px; height: 36px; border: 1px solid var(--g-line); background: var(--g-card); border-radius: 10px; cursor: pointer; font-size: 15px; }
+.guide-mic { width: 42px; flex: none; border: 1px solid var(--g-line) !important; background: var(--g-card) !important; color: var(--g-ink) !important; display: grid; place-items: center; }
+.guide-mic.on { background: #e5484d !important; border-color: #e5484d !important; color: #fff !important; animation: guide-listen 1.1s ease-out infinite; }
+.guide-bubble.act { background: #e3f7ee; }
+.guide-said { opacity: 0.7; }
+.guide-chips-l { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--g-ink-2); margin-top: 2px; }
+.guide-chip.do { border-color: color-mix(in srgb, var(--g-accent) 55%, var(--g-line)); background: #f2fbf7; }
+.guide-note { margin: 0 12px; padding: 8px 10px; border-radius: 10px; background: #fff4e5; font-size: 12.5px; color: #6b4a12; }
+@media (prefers-reduced-motion: reduce) { .guide-orb.on, .guide-orb.busy, .guide-mic.on { animation: none; } }
+.guide-play { width: 24px; height: 24px; border: 1px solid var(--g-line); background: var(--g-card); border-radius: 50%; cursor: pointer; font-size: 9px; color: var(--g-ink-2); display: grid; place-items: center; padding: 0; }
