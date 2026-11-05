@@ -103,3 +103,14 @@ Titan says it is an AI assistant and labels model answers). Partial: accuracy an
 plant data). AI literacy (Art. 4) applies to both the provider and the company using it. A separate project, ai-act-readiness, does a full
 readiness assessment. Do not give dates for when obligations apply; say to check the current
 official timeline.
+
+Agent patterns (Anthropic, Building Effective Agents). Routing: a code-only triage gate, then
+the supervisor picks the next specialist from what policy allows. Orchestrator-workers: one
+supervisor, five ReAct specialists with their own tools, document search and case memory.
+Evaluator-optimizer: policy.check_plan (code) scores the final plan against the tier rules;
+a failing plan gets one model revision, then is corrected in code; every step is logged.
+Parallelisation: supply chain and production can run in the same step (TOS_PARALLEL=1, off
+by default, because in sequence production can read supply chain's report). Tool design:
+numeric arguments accept arithmetic strings instead of failing. Guarantees in code,
+judgement in the model. Building the plan check exposed a word-matching bug in the tier
+rules ("buys" read as "buy"), now fixed (FINDINGS F-10).

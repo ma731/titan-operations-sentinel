@@ -10,6 +10,7 @@ graph.py is the only caller. Change a rule and re-run the eval to see what moved
 from __future__ import annotations
 
 import math
+import re
 from collections import Counter
 
 COST_CEILING_EUR = 500
@@ -164,11 +165,73 @@ def action_tier(action_description: str) -> str:
     touches a hazard control escalates even when it also mentions money.
     """
     text = (action_description or "").lower()
-    if any(m in text for m in _ESCALATE_MARKERS):
+    # Whole words only. Plain substring matching tiered "buys runway" as a purchase
+    # ("buy") and would tier "brush" as "rush"; found when the plan check was added.
+    if any(_has(text, m) for m in _ESCALATE_MARKERS):
         return "ESCALATE"
-    if any(m in text for m in _APPROVE_MARKERS):
+    if any(_has(text, m) for m in _APPROVE_MARKERS):
         return "APPROVE"
     return "AUTO"
+
+
+def _has(text: str, marker: str) -> bool:
+    return re.search(r"(?<![a-z])" + re.escape(marker) + r"(?![a-z])", text) is not None
+
+
+# --------------------------------------------------------------------------- #
+# 6. Plan check (the evaluator in an evaluator-optimizer loop)
+# --------------------------------------------------------------------------- #
+_TIER_RANK = {"AUTO": 0, "MONITOR": 0, "APPROVE": 1, "ESCALATE": 2}
+_TAG = re.compile(r"^\s*(?:[-*\d.)]+\s*)?\[(AUTO|APPROVE|MONITOR|ESCALATE)\]\s*(.*)$", re.IGNORECASE)
+_EUR = re.compile(r"(?:€|eur\s*)\s*([\d][\d,.]*)\s*(k)?", re.IGNORECASE)
+
+
+def _amounts(text: str) -> list[float]:
+    out = []
+    for num, k in _EUR.findall(text):
+        try:
+            v = float(num.replace(",", ""))
+        except ValueError:
+            continue
+        out.append(v * 1000 if k else v)
+    return out
+
+
+def check_plan(plan: str, risk: str | None = None, ceiling_eur: int = COST_CEILING_EUR) -> list[dict]:
+    """Check a written plan against the tier rules. Returns the violations (empty = pass).
+
+    Under-tiering is the failure that matters: an action tagged [AUTO] that the rules say
+    needs a person, or [APPROVE] for something that touches a safety system. Tagging an
+    action more cautiously than required is allowed.
+    """
+    lines = [(m.group(1).upper(), m.group(2).strip(), raw) for raw in (plan or "").splitlines()
+             if (m := _TAG.match(raw))]
+    if not lines:
+        return [{"rule": "format", "line": "", "fix": "write the plan as tagged [AUTO]/[APPROVE]/[MONITOR]/[ESCALATE] lines"}]
+    out = []
+    for tag, text, raw in lines:
+        need = action_tier(text)
+        if tag in ("AUTO", "MONITOR") and any(a > ceiling_eur for a in _amounts(text)) and need == "AUTO":
+            need = "APPROVE"
+        if _TIER_RANK[tag] < _TIER_RANK[need] and not (tag == "MONITOR" and need == "AUTO"):
+            out.append({"rule": "tier", "line": raw.strip(), "tagged": tag, "required": need,
+                        "fix": f"this action must be [{need}], not [{tag}]"})
+    if risk == "HIGH" and not any(tag == "MONITOR" for tag, _, _ in lines):
+        out.append({"rule": "monitor", "line": "", "fix": "a HIGH-risk plan needs a [MONITOR] line until the repair is done"})
+    return out
+
+
+def enforce_plan(plan: str, violations: list[dict]) -> str:
+    """Last resort after a failed revision: correct the tiers in code and say so."""
+    fixed = plan
+    for v in violations:
+        if v["rule"] == "tier":
+            fixed = fixed.replace(v["line"], v["line"].replace(f"[{v['tagged']}]", f"[{v['required']}]", 1), 1)
+    if any(v["rule"] == "monitor" for v in violations):
+        fixed += "\n[MONITOR] Watch the failing machine hourly until the repair is done; re-trigger if it worsens."
+    if any(v["rule"] == "format" for v in violations):
+        fixed = "[ESCALATE] The plan could not be put in the required format; a person must review it.\n\n" + fixed
+    return fixed
 
 
 def summary() -> dict:

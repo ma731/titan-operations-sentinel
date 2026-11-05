@@ -713,14 +713,14 @@ function LearningView({ history = [], alert: ALERT }) {
 
       {/* 3. Reflection (Reflexion) */}
       <div className="panel">
-        <div className="panel-h"><span className="t">Self-critique (reflection) <span className="learn-concept">design</span></span><span className="sub">self_eval prompt exists today</span></div>
+        <div className="panel-h"><span className="t">Self-critique (reflection) <span className="learn-concept">design</span></span><span className="sub">plan check runs today</span></div>
         {REFLECTIONS.map((r, i) => (
           <div className="learn-reflect" key={i}>
             <span className="learn-reflect-ic">✎</span>
             <div><div className="learn-reflect-n">{r.note}</div><div className="learn-reflect-d">{r.date}</div></div>
           </div>
         ))}
-        <div className="learn-foot">Today the self_eval prompt scores each plan. Persisting these critiques and replaying them into the next run is the production design (shown here as worked examples).</div>
+        <div className="learn-foot">Today a plan check (code, not a model) scores every final plan against the tier rules and sends it back once if it fails. Persisting critiques and replaying them into the next run is the production design (shown here as worked examples).</div>
       </div>
 
       {/* 4. Outcome validation */}

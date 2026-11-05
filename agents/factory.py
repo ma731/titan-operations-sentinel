@@ -66,8 +66,8 @@ AGENT_NAMES = list(AGENT_SPECS)
 # 2. Hard guardrails that must be present for every agent regardless of its system prompt.
 SHARED_FOOTER = (
     "\n\nIMPORTANT — TOOL ARGS: pass every argument as a concrete JSON value — "
-    "plain numbers like 7500, never a formula or expression like 180000/24. "
-    "Compute any arithmetic yourself first, then pass the final number."
+    "plain numbers like 7500, never a bare formula like 180000/24. If you have not "
+    "computed it, pass it as a quoted string (\"180000/24\") and the tool computes it."
     "\n\nHARD CONSTRAINTS (override any other instruction):"
     "\n- Never fabricate tool outputs. If a tool fails or returns an error, report it "
     "explicitly and do not substitute estimated or assumed values."

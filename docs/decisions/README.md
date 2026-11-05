@@ -15,3 +15,5 @@ Written for the next person who asks "why is it like this", and for us in six mo
 | [005](005-publish-eval-results-to-a-branch.md) | Publish evaluation results to a branch | Accepted |
 | [006](006-count-tokens-in-process.md) | Count tokens in process, not via the tracing SaaS | Accepted |
 | [007](007-approval-gate-is-write-once.md) | Make the approval gate write-once | Accepted, fixes a real bug |
+| [008](008-label-every-rul-prediction-with-its-provenance.md) | Label every RUL prediction with its provenance | Accepted |
+| [009](009-apply-building-effective-agents.md) | Apply the patterns from Building Effective Agents | Accepted; parallel mode opt-in |

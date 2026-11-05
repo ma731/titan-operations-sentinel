@@ -380,3 +380,22 @@ marketing. These are the reasons 100% does not mean finished:
   predictions remain threshold-based and are labelled `declared_thresholds` in every tool
   result. Nothing in this repo backtests the demo asset, because no public run-to-failure
   data for it exists. See `eval/results/rul_backtest.md`.
+
+## F-10 (fixed 2026-11-05) A claimed evaluator that never ran, and a tiering bug it would have caught
+
+**Status:** fixed; see [decision 009](../docs/decisions/009-apply-building-effective-agents.md).
+
+The README said the `self_eval` prompt "scores each plan today". No code loaded
+`prompts/self_eval.md`. Agents ran the self-check embedded in their own prompts, but
+nothing checked the final plan. Found while mapping Titan onto Building Effective Agents.
+
+Building the real check (`policy.check_plan`) exposed a second problem on its first test:
+`policy.action_tier` matched markers inside words, so the recorded demo line "[AUTO]
+Throttle the spindle ... (buys runway to the window)" tiered as a purchase because "buys"
+contains "buy". Markers now match whole words.
+
+**Why the suite missed both.** No test asserted that `self_eval.md` was used, only that it
+existed. No labelled action contained a word with a marker inside it, so the offline
+evaluation still scores 208 of 208 with or without the fix. That is a gap in the labels,
+not a sign the old rule was right: one scenario with an action like "brush the spindle
+housing" ("rush") would have caught it.

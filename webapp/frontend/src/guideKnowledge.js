@@ -92,6 +92,11 @@ export const GUIDE = [
     a: 'Python and LangGraph for the agents, FastAPI for the backend, React for this console. Each specialist is a ReAct agent that picks its own tools. It works with Gemini, Groq, OpenAI, Anthropic, Azure, Mistral or a local Ollama model.',
   },
   {
+    id: 'patterns', q: 'What agent patterns does it use?',
+    k: ['pattern', 'patterns', 'architecture', 'design', 'anthropic', 'evaluator', 'parallel', 'orchestrator-workers', 'workflow'],
+    a: 'It follows Anthropic\'s Building Effective Agents. Routing: a code-only gate decides which alerts wake the agents, then the orchestrator picks who goes next. Orchestrator-workers: one orchestrator, five specialists with their own tools and document search. Evaluator-optimizer: a check in code scores the final plan against the rules and sends it back once if it fails. Parallelisation: supply chain and production can run side by side, off by default. Guarantees stay in code, judgement in the model.',
+  },
+  {
     id: 'aiact', q: 'Is this compliant with the EU AI Act?',
     k: ['act', 'regulation', 'regulated', 'legal', 'law', 'compliant', 'gdpr', 'eu', 'governance', 'responsible'],
     a: 'My reading, not legal advice: as decision support that recommends maintenance actions, Titan most likely falls outside the AI Act high-risk list. That would change if it directly controlled machine safety functions, or allocated work to people based on their behaviour. It is built as if it were high-risk anyway: a person must approve spend over €500, safety-system actions are flagged for a safety officer, every step of a live run is logged, I tell you I am an AI assistant, and each prediction says where it came from.',
@@ -114,6 +119,7 @@ const norm = (s) => s.toLowerCase().replace(/[^a-z0-9€ ]/g, ' ').split(/\s+/).
 
 // Everyday phrasings people actually use, checked before the keywords.
 const PHRASES = [
+  [/\b(agent |design )?patterns?\b|building effective agents|evaluator|optimi[sz]er|parallel|orchestrator[- ]workers?|how (is|was) it (built|designed)|architecture/, 'patterns'],
   [/\bai act\b|\beu (ai )?(act|law|regulation)|\b(legal|lawful|regulat\w*|gdpr)\b|compliant with|high[- ]risk/, 'aiact'],
   [/how much|what('?s| is) it worth|does it (pay|save)|business case|return on/, 'value'],
   [/\breliability\b/, 'ag_reliability'],
