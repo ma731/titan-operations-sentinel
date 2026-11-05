@@ -17,8 +17,10 @@ action plan: 116h of unplanned downtime avoided for a 3,200 EUR expedite (the ol
 was wrong, see [F-09](eval/FINDINGS.md)). Regenerate it with `python scripts/record_demo.py`, which
 drives the real console rather than being a screen capture that quietly goes stale.*
 
-> Lost? Press **Guide** (bottom right) for plain-English answers and "show me" shortcuts. In Replay it uses
-> written answers; connected live, your own model answers from [`prompts/guide.md`](prompts/guide.md).
+> Lost? Press **Ask Titan** (bottom right), the console's AI assistant. It explains the project, runs
+> scenarios, approves or rejects at the gate, and opens any page, by text or push-to-talk voice.
+> In Replay it uses written answers; connected live, your own model answers from
+> [`prompts/guide.md`](prompts/guide.md).
 >
 > The demo runs in Replay mode: a recorded run played back in the browser. No API key, no
 > cost, nothing to install. The console labels it as a recording rather than passing it off
@@ -396,8 +398,26 @@ the audit log, run history with Markdown export, presenter auto-play, a command 
 Replay/Live toggle, an in-app provider picker, and the slide deck at `/deck.html`. Details
 in [`webapp/README.md`](webapp/README.md).
 
+- **Overview as a story:** a Run button, the scenario picker and a four-step strip (alert,
+  agents, human gate, plan) with a one-line result.
+- **Every agent page explains itself:** what the agent is for, the tools it can call, the
+  rule it cannot break, and what it concluded in this run.
+- **Titan, the assistant:** written answers that work on the static demo; with a model
+  connected, `/api/guide` answers from `prompts/guide.md`. Push-to-talk voice and replies
+  pre-recorded with a neural voice (`scripts/build_titan_voice.py`). Requests become
+  actions only when they are short, direct orders; a spoken approval needs a spoken "yes";
+  questions never trigger actions and model output never reaches one.
+- **EU AI Act page:** the likely risk class, what would change it, and where oversight,
+  record-keeping, transparency, accuracy and data quality live in the console. A reading,
+  not legal advice; the companion project
+  [ai-act-readiness](https://github.com/ma731/ai-act-readiness) does the full assessment.
+- **Honest machine checks:** asking about another machine reports its readings and that the
+  triage gate raises no alert, instead of replaying the CNC-07 incident.
+
 The backend exposes `/api/run` (SSE), `/api/decision`, `/api/decision/link`,
-`/api/slack/interactions`, `/api/providers`, `/api/config` and `/api/health`. The health
+`/api/slack/interactions`, `/api/providers`, `/api/config`, `/api/guide` and `/api/health`.
+Every approval decision is logged with how it arrived (console, Titan, Slack, email, or a
+timeout with no human decision). The health
 endpoint reports what is actually wired up: the active provider, the approval channel, the
 retrieval mode, the corpus size and the policy constants.
 
