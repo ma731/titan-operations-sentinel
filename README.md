@@ -195,7 +195,7 @@ They never make a decision or commit anything irreversible.
 Every agent is a LangGraph `create_react_agent`: its own model picks which of its tools to
 call and loops until it is done. Agents communicate by appending their full report to one
 shared transcript that every later agent reads, and an agent may end with
-`FOLLOWUP: <agent> — <question>` to put a direct question to another specialist.
+`FOLLOWUP: <agent> - <question>` to put a direct question to another specialist.
 
 ---
 
@@ -522,11 +522,11 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
 
 ## Docs
 
-- [Decision records](docs/decisions/) — why it is built this way, including the change we
+- [Decision records](docs/decisions/): why it is built this way, including the change we
   measured and rejected, and the two guarantees the evaluation caught us breaking.
-- [What carries to the next problem](docs/REUSABILITY.md) — what is domain-specific, what
+- [What carries to the next problem](docs/REUSABILITY.md): what is domain-specific, what
   is scaffolding, and what it would actually take to move this somewhere else.
-- [Evaluation findings](eval/FINDINGS.md) — every miss the suite has surfaced.
+- [Evaluation findings](eval/FINDINGS.md): every miss the suite has surfaced.
 
 [`docs/`](docs/) and [`docs/appendix/`](docs/appendix/): the prompt pack, the tool catalog,
 the risk matrix and FMEA, the confidence policy, the sequence diagram and audit log schema,
