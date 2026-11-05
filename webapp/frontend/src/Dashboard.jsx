@@ -30,6 +30,7 @@ const NAV_GROUPS = [
     { id: 'audit', ic: '≣', label: 'Audit log' },
     { id: 'report', ic: '▤', label: 'Run history' },
     { id: 'learning', ic: '✦', label: 'Learning' },
+    { id: 'aiact', ic: '§', label: 'EU AI Act' },
   ] },
 ]
 const ALL_NAV = NAV_GROUPS.flatMap((g) => g.items)
@@ -134,6 +135,8 @@ export default function Dashboard(props) {
             <AuditView timeline={timeline} />
           ) : nav === 'plan' ? (
             <PlanView plan={plan} />
+          ) : nav === 'aiact' ? (
+            <AiActView />
           ) : nav === 'learning' ? (
             <LearningView history={history} alert={ALERT} />
           ) : nav === 'report' ? (
@@ -167,6 +170,7 @@ export default function Dashboard(props) {
               )}
 
               {!focusAgent && <AgentGraph agentStatus={agentStatus} running={running} risk={risk} />}
+              {focusAgent && <AgentCard agent={AGENT_MAP[focusAgent]} block={shownBlocks[shownBlocks.length - 1]} status={agentStatus[focusAgent]} />}
 
               <div className="stat-row">
                 <Stat lbl="Active Alert" chip="blue" ic="◉" val={<AnimatedNumber value={1} format={(n) => Math.round(n)} />} sub="ALT-22847 · CNC-07-LEI" />
@@ -575,15 +579,18 @@ function ScenariosView({ scenario, setScenario, onRun, running }) {
   )
 }
 
+const AUDIT_KIND = { system: 'alert', block: 'agent', note: 'handoff', human: 'decision' }
+
 function AuditView({ timeline }) {
   return (
     <>
       <div className="dash-h">Audit Log</div>
+      <p className="page-intro">Every step of the last run, in order: the alert, what each agent concluded, the questions they passed to each other, and every human decision with how it was made. This is the record you would show an auditor, or a plant manager asking why it did that. In a live run the same events also go to a log file.</p>
       <div className="panel">
-        {timeline.length === 0 ? <div className="empty-note">No events yet, run a scenario.</div>
+        {timeline.length === 0 ? <div className="empty-note">No events yet. Run a scenario and every step appears here.</div>
           : timeline.map((t, i) => (
             <div className="pl" key={i}>
-              <span className="tier MONITOR">{t.kind}</span>
+              <span className="tier MONITOR">{AUDIT_KIND[t.kind] || t.kind}</span>
               <span className="tx">{t.kind === 'block' ? `${t.agent}: ${(t.report || '…').slice(0, 120)}` : t.text}</span>
             </div>
           ))}
@@ -645,10 +652,11 @@ function LearningView({ history = [], alert: ALERT }) {
     <>
       <div className="dash-h">Learning <span className="learn-badge">experience + feedback</span></div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '66ch' }}>
-        The system improves over time without retraining the model. Two mechanisms run today: it
-        recalls precedent (case memory) and adapts to the operator's decisions (human feedback). Two
-        more are built into the loop's design: self-critique (reflection) and prediction validation
-        (outcome), marked "design" below.
+        How the system gets better with experience, without retraining a model. One mechanism runs
+        today: it recalls similar past incidents (case memory), and each finished live run is added to
+        that memory. Three more are designed and shown here as worked examples, marked "design":
+        adapting to the plant manager's decisions, self-critique, and checking predictions against
+        what actually happened.
       </p>
 
       {/* 1. Case memory / precedent recall */}
@@ -669,15 +677,15 @@ function LearningView({ history = [], alert: ALERT }) {
 
       {/* 2. Human-feedback / preference learning */}
       <div className="panel">
-        <div className="panel-h"><span className="t">Learned from decisions</span><span className="sub">{totalRuns} run{totalRuns === 1 ? '' : 's'} on record</span></div>
+        <div className="panel-h"><span className="t">Learned from decisions <span className="learn-concept">design</span></span><span className="sub">{totalRuns} run{totalRuns === 1 ? '' : 's'} on record</span></div>
         <div className="stat-row" style={{ marginBottom: 14 }}>
           <Stat lbl="Gate approvals" chip="green" ic="✓" val={`${approvals}`} sub="expedites cleared on record" deltaUp />
           <Stat lbl="Gate rejections" chip="red" ic="✕" val={`${rejections}`} sub="paths declined" />
           <Stat lbl="Runs logged" chip="blue" ic="≣" val={`${totalRuns}`} sub="library + this session" />
-          <Stat lbl="Recommendation" chip="purple" ic="◈" val={approvals >= rejections ? 'EXPEDITE' : 'HOLD'} sub="biased by the record" />
+          <Stat lbl="Recommendation" chip="purple" ic="◈" val={approvals >= rejections ? 'EXPEDITE' : 'HOLD'} sub="what the record would suggest" />
         </div>
         <div className="pl"><span className="tier APPROVE">PATTERN</span><span className="tx">Emergency expedite has been approved {approvals} of {approvals + rejections} times on record. This informs the recommended path shown above (still gated).</span></div>
-        <div className="learn-foot">Each closed run is appended to the case library (append_case); the approve/reject tally above biases the recommended path toward how this plant manager actually decides.</div>
+        <div className="learn-foot">Each closed live run is appended to the case library (append_case). Using the approve/reject tally to steer the recommendation is the design; today the agents do not read it.</div>
       </div>
 
       {/* 3. Reflection (Reflexion) */}
@@ -931,9 +939,9 @@ function CostView({ mode = 'replay' }) {
       <div className="dash-h">Cost & Feasibility</div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
         {live ? (
-          <>A full 6-agent run is roughly <b>~18k tokens</b> — about <b>~€0.005</b> on a paid model, or <b>free quota</b> on a free tier (it still uses your daily allowance, so it isn't truly €0).</>
+          <>An estimated full 6-agent run is roughly <b>~18k tokens</b>, about <b>~€0.005</b> on a paid model, or <b>free quota</b> on a free tier (it still uses your daily allowance, so it isn't truly €0).</>
         ) : (
-          <>A full 6-agent run is roughly <b>~18k tokens</b> (after a ~62% transcript trim). This is a <b>recorded replay</b>, so it makes <b>no API calls and costs €0</b>.</>
+          <>An estimated full 6-agent run is roughly <b>~18k tokens</b> (after a ~62% transcript trim; not yet benchmarked against a provider). This is a <b>recorded replay</b>, so it makes <b>no API calls and costs €0</b>.</>
         )}
       </p>
       <div className="stat-row" style={{ marginBottom: 16 }}>
@@ -996,5 +1004,66 @@ function StoryStrip({ timeline, running, doneCount, runStatus, plan }) {
         </li>
       ))}
     </ol>
+  )
+}
+
+// What one agent is for, the tools it can call, the rule it cannot break, and what it
+// concluded in this run. Same text Titan uses, from agentsMeta.js.
+function AgentCard({ agent, block, status }) {
+  return (
+    <div className="agent-card">
+      <p className="agent-card-what">{agent.what}</p>
+      <div className="agent-card-grid">
+        <div>
+          <div className="agent-card-h">Tools it can call</div>
+          <ul className="agent-card-tools">
+            {agent.tools.map(([n, d]) => <li key={n}><code>{n}</code><span>{d}</span></li>)}
+          </ul>
+        </div>
+        <div>
+          <div className="agent-card-h">The rule it cannot break</div>
+          <p className="agent-card-limit">{agent.limit}</p>
+          <div className="agent-card-h">In this run</div>
+          <p className="agent-card-run">{block?.report ? block.report : status === 'active' ? 'Working on it now.' : 'Not run yet. Press Run on the Overview, or tell Titan "run the cascade".'}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// How Titan lines up with the EU AI Act. A reading for discussion, not legal advice.
+const AI_ACT_ROWS = [
+  ['Human oversight', 'Art. 14', 'A person approves any spend over €500 and any safety action; the compliance agent can stop the plan; every run can be stopped.', 'Built'],
+  ['Record-keeping', 'Art. 12', 'Every alert, agent report, handoff and decision is logged, including how a decision was made (dialog, Titan typed or voice).', 'Built'],
+  ['Transparency to users', 'Art. 13', 'Each remaining-life prediction says whether it comes from the fitted model or from declared limits; Titan labels written and model answers.', 'Built'],
+  ['Telling people it is AI', 'Art. 50', 'Titan introduces itself as an assistant and labels which answers come from a model.', 'Built'],
+  ['Accuracy and robustness', 'Art. 15', 'The rules in code are tested (208 checks, 34 scenarios). What the model itself decides is not measured yet.', 'Partial'],
+  ['Data quality', 'Art. 10', 'The remaining-life model is trained on NASA engine data with leak-free features; the plant data is simulated.', 'Partial'],
+  ['AI literacy', 'Art. 4', 'A duty of the company that uses it: planners need training on what the agents can and cannot do.', 'For the deployer'],
+]
+
+function AiActView() {
+  return (
+    <>
+      <div className="dash-h">EU AI Act</div>
+      <p className="page-intro">How Titan lines up with the EU AI Act. This is a reading for discussion, not legal advice.</p>
+      <div className="panel aiact-class">
+        <div className="panel-h"><span className="t">Risk class: most likely not high-risk</span><span className="sub">Art. 6, Annexes I and III</span></div>
+        <p>Titan is decision support: it recommends maintenance actions and a person approves anything that costs money or touches safety. That most likely keeps it outside the high-risk list.</p>
+        <p><b>It would change if</b> Titan directly controlled machine safety functions (then the machinery rules in Annex I apply), or allocated work to people based on their behaviour or traits (employment, Annex III).</p>
+        <p>Most duties below are only required for high-risk systems. Titan is built as if it were one, so it is ready if its role grows.</p>
+      </div>
+      <div className="panel">
+        <div className="panel-h"><span className="t">What the Act asks, and where it is in Titan</span></div>
+        {AI_ACT_ROWS.map(([req, art, where, st]) => (
+          <div className="aiact-row" key={req}>
+            <div className="aiact-req"><b>{req}</b><span>{art}</span></div>
+            <div className="aiact-where">{where}</div>
+            <span className={`aiact-st ${st === 'Built' ? 'ok' : st === 'Partial' ? 'part' : 'dep'}`}>{st}</span>
+          </div>
+        ))}
+      </div>
+      <p className="page-intro">For a full readiness assessment of an AI system under the Act, see the companion project <a href="https://github.com/ma731/ai-act-readiness" target="_blank" rel="noreferrer">ai-act-readiness</a>.</p>
+    </>
   )
 }

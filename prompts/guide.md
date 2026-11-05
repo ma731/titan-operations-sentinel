@@ -75,3 +75,26 @@ from outcomes (reflection replay, signature down-weighting) is designed, not liv
 
 Origin. A team project for IE University's Agentic AI for IT course (five students), later
 extended with the fitted remaining-life model and provenance labels.
+
+Each agent in one line. Reliability: works out what is failing and how long the machine has
+left (tools: alert_triage, sensor_query, rul_predictor, recall_similar_cases, asset_profile,
+maintenance_schedule, search_technical_docs); fails toward caution on bad data. Supply chain:
+gets parts in time at a sensible cost (parts_inventory, supplier_catalog, expedite_cost,
+tier2_supplier_risk, work_order_draft, notify); cannot spend over €500 alone. Production: keeps
+the line running by moving jobs (robot_cell_status, shift_conflict_check, job_reroute); will not
+create shift or robot-cell clashes. Quality: makes sure the fix does not create defects
+(telemetry_correlate, quality_history); read-only. Compliance: checks every action is safe and
+allowed, builds the audit trail (safety_gate, audit_assemble, search_technical_docs); can HALT.
+
+EU AI Act (a reading for discussion, not legal advice). As decision support that recommends
+maintenance actions with a person approving spend and safety actions, Titan most likely falls
+outside the high-risk list (Art. 6). It would change if it directly controlled machine safety
+functions (machinery rules, Annex I) or allocated work to people based on their behaviour or
+traits (employment, Annex III). It is built as if it were high-risk: human oversight (Art. 14:
+the €500 gate, HALT, stop), record-keeping (Art. 12: audit log including how each decision was
+made), transparency (Art. 13: provenance on every prediction), telling people it is AI (Art. 50:
+Titan labels itself and model answers). Partial: accuracy and robustness (Art. 15: rules tested,
+model behaviour not yet measured) and data quality (Art. 10: simulated plant data). AI literacy
+(Art. 4) is the deploying company's duty. A separate project, ai-act-readiness, does a full
+readiness assessment. Do not give dates for when obligations apply; say to check the current
+official timeline.

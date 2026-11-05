@@ -5,6 +5,8 @@
 // show: what the "Show me" button does. { nav: '<page>' } opens a console page,
 // { run: true } starts the selected scenario.
 
+import { AGENTS } from './agentsMeta.js'
+
 export const GUIDE = [
   {
     id: 'what', q: 'What does this do?',
@@ -25,7 +27,7 @@ export const GUIDE = [
   },
   {
     id: 'agents', q: 'What does each agent do?',
-    k: ['agent', 'agents', 'reliability', 'supply', 'production', 'quality', 'compliance', 'orchestrator', 'supervisor'],
+    k: ['agent', 'agents', 'orchestrator', 'supervisor', 'team', 'specialists'],
     a: 'Reliability predicts the failure and how long the machine has left. Supply chain finds the parts and prices the options. Production moves jobs to other machines. Quality checks that the backup machine is safe to use. Compliance checks every action against safety limits and can stop the whole plan. The orchestrator decides which agent goes next.',
     show: { nav: 'chat' }, label: 'Read their conversation',
   },
@@ -89,7 +91,22 @@ export const GUIDE = [
     k: ['built', 'stack', 'tech', 'langgraph', 'react', 'python', 'fastapi', 'framework', 'code'],
     a: 'Python and LangGraph for the agents, FastAPI for the backend, React for this console. Each specialist is a ReAct agent that picks its own tools. It works with Gemini, Groq, OpenAI, Anthropic, Azure, Mistral or a local Ollama model.',
   },
+  {
+    id: 'aiact', q: 'Is this compliant with the EU AI Act?',
+    k: ['act', 'regulation', 'regulated', 'legal', 'law', 'compliant', 'gdpr', 'eu', 'governance', 'responsible'],
+    a: 'My reading, not legal advice: as decision support that recommends maintenance actions, Titan most likely falls outside the AI Act high-risk list. That would change if it directly controlled machine safety functions, or allocated work to people based on their behaviour. It is built as if it were high-risk anyway: a person approves spend and safety actions, every step is logged, you are told when you talk to AI, and each prediction says where it came from.',
+    show: { nav: 'aiact' }, label: 'Open the AI Act page',
+  },
 ]
+
+// One answer per agent, built from the same text as the agent pages.
+for (const a of AGENTS) {
+  GUIDE.push({
+    id: `ag_${a.id}`, q: `What does the ${a.name.toLowerCase()} agent do?`, k: [],
+    a: `${a.what} ${a.limit}`,
+    show: { nav: a.id }, label: `Open the ${a.name.toLowerCase()} page`,
+  })
+}
 
 export const STARTERS = ['what', 'run', 'gate', 'value', 'data']
 
@@ -97,6 +114,12 @@ const norm = (s) => s.toLowerCase().replace(/[^a-z0-9€ ]/g, ' ').split(/\s+/).
 
 // Everyday phrasings people actually use, checked before the keywords.
 const PHRASES = [
+  [/\bai act\b|\beu (ai )?(act|law|regulation)|\b(legal|lawful|regulat\w*|gdpr)\b|compliant with|high[- ]risk/, 'aiact'],
+  [/\breliability\b/, 'ag_reliability'],
+  [/\bsupply( chain)?\b|\bparts?\b|\bsupplier/, 'ag_supply_chain'],
+  [/\bproduction\b|\breroute|\bshift/, 'ag_production'],
+  [/\bquality\b|\bdefect/, 'ag_quality'],
+  [/\bcompliance\b/, 'ag_compliance_safety'],
   [/what('?s| is| are)? (going on|happening|this|that|all this)|what am i (looking at|seeing)|what is (this|it|here)|what('?s| is) (the )?(idea|point)|tell me (about|more)|(give me|quick|short) (a )?(tour|overview|summary|intro)|show me around|explain (this|it|everything)|in (a )?(nutshell|few words)|^(and )?(so|ok so)?\s*what now/, 'what'],
   [/where (do|should) i (start|begin)|how (do|can|should) i (use|start|try|begin|run)|get(ting)? started|what (do|should|can) i (do|click|press)|first step/, 'run'],
   [/is (it|this) (real|live|recorded)|is this a (recording|video|replay)|are (the )?agents (real|live)|use my (own )?(key|model)/, 'live'],
