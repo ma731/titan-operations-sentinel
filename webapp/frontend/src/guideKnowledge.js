@@ -8,7 +8,7 @@
 export const GUIDE = [
   {
     id: 'what', q: 'What does this do?',
-    k: ['purpose', 'explain', 'overview', 'project', 'sentinel', 'titan'],
+    k: ['purpose', 'explain', 'overview', 'project'],
     a: 'It turns one machine alert into one costed plan. A sensor on CNC-07 shows a spindle bearing about to fail. Five specialist agents each check one area (reliability, supply chain, production, quality, safety), an orchestrator decides who goes next, and the result is a plan the plant manager can act on. Anything that costs more than €500 waits for a person to approve it.',
     show: { nav: 'dashboard' }, label: 'Open the overview',
   },

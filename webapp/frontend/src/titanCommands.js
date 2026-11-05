@@ -36,7 +36,17 @@ export const HELLO = "Hi, I'm Titan. I can explain what this project does, or ru
 export const SCENARIO_NAMES = { happy: 'Cascade', edge: 'Edge', escalation: 'Escalation' }
 
 // Strip "hey titan," / "titan" so the request reads the same with or without it.
-export const stripWake = (t) => t.replace(/^\s*(hey|hi|ok|okay)?[\s,]*titan[\s,.!:]*/i, '').trim()
+export const stripWake = (t) => t.replace(/^\s*(hey|hi|hello|hola|ok|okay)?[\s,]*titan[\s,.!:?]*/i, '').trim()
+
+// Greetings and small talk get a short, friendly reply instead of a fact sheet.
+export function smallTalk(raw) {
+  const full = raw.toLowerCase().trim()
+  const t = stripWake(raw).toLowerCase().replace(/[!.?, ]+$/g, '').trim()
+  if (!t || /^(hi|hello|hey|hola|hiya|yo|good (morning|afternoon|evening)|hey there|hi there)( titan)?$/.test(t)) return 'greet'
+  if (/^(thanks|thank you|thanks a lot|cheers|great|perfect|nice|cool|awesome|ok|okay|got it)( titan)?$/.test(t)) return 'thanks'
+  if (/^(who|what) are you\b|^what can you do\b|^help$|^what can i (ask|say)\b/.test(t) || /^(who|what) is titan\b/.test(full)) return 'whoami'
+  return null
+}
 
 export function parseCommand(raw) {
   let t = stripWake(raw).toLowerCase().trim()
@@ -67,6 +77,9 @@ export function parseCommand(raw) {
 // can pre-record exactly these lines with a natural neural voice.
 const LABEL = SCENARIO_NAMES
 export const REPLIES = {
+  greet: "Hi! I'm Titan. I can give you a quick tour, run the demo for you, or answer your questions. Where would you like to start?",
+  thanks: 'You are welcome. Ask me anything else, or say "run the demo".',
+  whoami: 'I am Titan, the assistant for this console. I explain what the project does and I can run it for you. Try "run the cascade", or ask "is it worth the money?".',
   runBusy: 'A run is already going. Say "stop" first if you want to start another.',
   run: (sc) => `Running the ${LABEL[sc]} scenario. Watch the four steps above the graph.${sc === 'happy' ? ' It will stop at the €500 gate: tell me "approve" or "reject".' : ''}`,
   noApproval: 'Nothing is waiting for approval right now.',

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GUIDE, STARTERS, matchAnswer } from './guideKnowledge.js'
-import { parseCommand, stripWake, REPLIES, HELLO, CONFIRM } from './titanCommands.js'
+import { parseCommand, stripWake, smallTalk, REPLIES, HELLO, CONFIRM } from './titanCommands.js'
 import { speak as say, stopSpeaking, canSpeak } from './titanVoice.js'
 import './guide.css'
 
@@ -67,6 +67,11 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
         bot({ text: onCommand({ cmd: pending, via: 'Titan assistant (voice)' }), src: 'action' }, voice); return
       }
       bot({ text: REPLIES.cancelled, src: 'action' }, voice); return
+    }
+
+    const chat = smallTalk(text)
+    if (chat) {
+      bot({ text: REPLIES[chat], src: 'action', follow: chat === 'thanks' ? null : ['what', 'run', 'value'] }, voice); return
     }
 
     const cmd = parseCommand(text)
@@ -163,7 +168,7 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
                 {m.who === 'bot' && (
                   <div className="guide-meta">
                     {CAN_SPEAK && <button className="guide-play" onClick={() => say(m.text)} title="Read aloud" aria-label="Read aloud">▶</button>}
-                    <span className="guide-src">{m.src === 'model' ? `Answered by ${m.model || 'your model'}` : m.src === 'action' ? 'Done by Titan' : 'Written answer'}</span>
+                    <span className="guide-src">{m.src === 'model' ? `Answered by ${m.model || 'your model'}` : m.src === 'action' ? 'Titan' : 'Written answer'}</span>
                     {m.show && onAction && (
                       <button className="guide-show" onClick={() => { onAction(m.show); if (m.show.run) setOpen(false) }}>
                         {actionLabel || m.label || 'Show me'} →
