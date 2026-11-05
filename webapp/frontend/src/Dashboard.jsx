@@ -6,7 +6,8 @@ import Logo from './Logo.jsx'
 import AnimatedNumber from './AnimatedNumber.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import Guide from './Guide.jsx'
-import { REPLIES } from './titanCommands.js'
+import { REPLIES, PAGE_HELP } from './titanCommands.js'
+import { FLEET, machineReport } from './fleet.js'
 import { TEAM, GUEST } from './team.js'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
@@ -34,13 +35,6 @@ const NAV_GROUPS = [
   ] },
 ]
 const ALL_NAV = NAV_GROUPS.flatMap((g) => g.items)
-const FLEET = [
-  { id: 'CNC-07-LEI', name: 'CNC Machining Center #7', status: 'critical' },
-  { id: 'CNC-08-LEI', name: 'CNC Machining Center #8', status: 'idle', vib: '2.1', temp: '+1', util: '0% (idle)', note: 'Available as reroute target for CNC-07.' },
-  { id: 'CNC-05-LEI', name: 'CNC Machining Center #5', status: 'ok', vib: '3.4', temp: '+3', util: '82%', note: 'Operating within all OEM limits.' },
-  { id: 'CNC-03-LEI', name: 'CNC Machining Center #3', status: 'ok', vib: '2.9', temp: '+2', util: '76%', note: 'Bearing replaced Sept 2025 (INC-0312).' },
-  { id: 'ROB-02-LEI', name: 'Robot Cell #2', status: 'ok', vib: '1.8', temp: '+1', util: '68%', note: 'Pick-and-place cell, nominal.' },
-]
 const SCENARIOS = [
   { id: 'happy', label: 'Cascade', desc: 'Full team → costed plan → human approval' },
   { id: 'edge', label: 'Edge', desc: 'Cross-plant adaptation when local supply is disrupted' },
@@ -267,7 +261,7 @@ export default function Dashboard(props) {
         me={me} onSwitchUser={onSwitchUser} onSignOut={onSignOut}
       />
 
-      <Guide mode={mode}
+      <Guide mode={mode} pendingDecision={approvalPending}
         onAction={(a) => {
           if (a.run) { setNav('dashboard'); if (!running) onRun(scenario) }
           else if (a.nav) setNav(a.nav)
@@ -288,6 +282,35 @@ export default function Dashboard(props) {
           if (c.cmd === 'stop') { if (!running) return REPLIES.notRunning; onStop(); return REPLIES.stopped }
           if (c.cmd === 'present') { if (mode === 'live') return REPLIES.presentLive; if (running) return REPLIES.presentBusy; setNav('dashboard'); onPresent(); return REPLIES.present(scenario) }
           if (c.cmd === 'nav') { setNav(c.nav); return REPLIES.open(c.name) }
+          if (c.cmd === 'context') {
+            const started = running || timeline.length > 0
+            const label = SCENARIOS.find((x) => x.id === scenario)?.label
+            if (c.ctx === 'page') return PAGE_HELP[nav] || null
+            if (c.ctx === 'machine') return machineReport(c.id, ALERT.machine_id, ALERT.threshold)
+            if (c.ctx === 'status') {
+              if (!started) return REPLIES.notStarted
+              if (approvalPending) return REPLIES.gateReached
+              if (running) {
+                const next = runStatus.match(/^Routing → ([^·]+)/)
+                return `The ${label} scenario is running: ${doneCount} of 5 agents have reported so far.${next ? ` Next up: ${next[1].trim()}.` : ''}`
+              }
+              if (plan) return `The ${label} run has finished. ${plan.status === 'complete' ? 'The plan is ready' : plan.status === 'halted' ? 'Safety stopped the plan' : 'It was handed to a person'}${plan.roi ? `: ${plan.roi}` : '.'}`
+              return `The run stopped after ${doneCount} of 5 agents reported.`
+            }
+            if (c.ctx === 'result') {
+              if (!plan) return running ? `No result yet: ${doneCount} of 5 agents have reported.` : REPLIES.noResult
+              const lines = plan.lines || []
+              const count = (t) => lines.filter((l) => l.tier === t).length
+              const parts = [['AUTO', 'done without asking'], ['APPROVE', 'approved by a person'], ['MONITOR', 'to keep watching'], ['ESCALATE', 'escalated']]
+                .filter(([t]) => count(t)).map(([t, d]) => `${count(t)} ${d}`)
+              return `${plan.roi ? plan.roi + '. ' : ''}${lines.length ? `The plan has ${lines.length} steps: ${parts.join(', ')}.` : ''} Open the action plan for the details.`.trim()
+            }
+            if (c.ctx === 'finding') {
+              const b = [...timeline].reverse().find((t) => t.kind === 'block' && t.agent === c.agent && t.report)
+              return b ? `${AGENT_MAP[c.agent].name}: ${b.report}` : REPLIES.noFinding
+            }
+            return null
+          }
           return null
         }} />
 
@@ -1033,13 +1056,13 @@ function AgentCard({ agent, block, status }) {
 
 // How Titan lines up with the EU AI Act. A reading for discussion, not legal advice.
 const AI_ACT_ROWS = [
-  ['Human oversight', 'Art. 14', 'A person approves any spend over €500 and any safety action; the compliance agent can stop the plan; every run can be stopped.', 'Built'],
-  ['Record-keeping', 'Art. 12', 'Every alert, agent report, handoff and decision is logged, including how a decision was made (dialog, Titan typed or voice).', 'Built'],
-  ['Transparency to users', 'Art. 13', 'Each remaining-life prediction says whether it comes from the fitted model or from declared limits; Titan labels written and model answers.', 'Built'],
-  ['Telling people it is AI', 'Art. 50', 'Titan introduces itself as an assistant and labels which answers come from a model.', 'Built'],
+  ['Human oversight', 'Art. 14', 'A person must approve any spend over €500; actions that touch a safety system are flagged for a safety officer; the compliance agent can stop the plan; every run can be stopped.', 'Built'],
+  ['Record-keeping', 'Art. 12', 'In live runs every step goes to the audit file, including how each decision arrived (dialog, Titan, Slack, email, or a timeout with no decision). Replay shows the same on the Audit log page.', 'Built'],
+  ['Information for the company using it', 'Art. 13', 'Each remaining-life prediction says whether it comes from the fitted model or from declared limits; the README and findings register say what is and is not measured.', 'Built'],
+  ['Telling people it is AI', 'Art. 50', 'Titan introduces itself as an AI assistant and labels which answers are written and which come from a model.', 'Built'],
   ['Accuracy and robustness', 'Art. 15', 'The rules in code are tested (208 checks, 34 scenarios). What the model itself decides is not measured yet.', 'Partial'],
   ['Data quality', 'Art. 10', 'The remaining-life model is trained on NASA engine data with leak-free features; the plant data is simulated.', 'Partial'],
-  ['AI literacy', 'Art. 4', 'A duty of the company that uses it: planners need training on what the agents can and cannot do.', 'For the deployer'],
+  ['AI literacy', 'Art. 4', 'Both the builder and the company using it must make sure people are trained: planners need to know what the agents can and cannot do.', 'Provider and deployer'],
 ]
 
 function AiActView() {
@@ -1049,7 +1072,7 @@ function AiActView() {
       <p className="page-intro">How Titan lines up with the EU AI Act. This is a reading for discussion, not legal advice.</p>
       <div className="panel aiact-class">
         <div className="panel-h"><span className="t">Risk class: most likely not high-risk</span><span className="sub">Art. 6, Annexes I and III</span></div>
-        <p>Titan is decision support: it recommends maintenance actions and a person approves anything that costs money or touches safety. That most likely keeps it outside the high-risk list.</p>
+        <p>Titan is decision support: it recommends maintenance actions, a person must approve spend over €500, and actions that touch a safety system are flagged for a safety officer. That most likely keeps it outside the high-risk list.</p>
         <p><b>It would change if</b> Titan directly controlled machine safety functions (then the machinery rules in Annex I apply), or allocated work to people based on their behaviour or traits (employment, Annex III).</p>
         <p>Most duties below are only required for high-risk systems. Titan is built as if it were one, so it is ready if its role grows.</p>
       </div>

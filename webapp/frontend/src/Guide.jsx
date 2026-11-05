@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GUIDE, STARTERS, matchAnswer } from './guideKnowledge.js'
-import { parseCommand, stripWake, smallTalk, REPLIES, HELLO, CONFIRM } from './titanCommands.js'
+import { parseCommand, parseContext, parseLocal, stripWake, smallTalk, REPLIES, HELLO, CONFIRM } from './titanCommands.js'
 import { speak as say, stopSpeaking, canSpeak } from './titanVoice.js'
 import './guide.css'
 
@@ -17,7 +17,7 @@ const DO_CHIPS = ['Run the Cascade', 'Run the Edge scenario', 'Open the action p
 //    model answers via /api/guide, grounded in prompts/guide.md.
 //  - Voice is push-to-talk (browser speech recognition, where supported). Replies are
 //    read aloud when you asked by voice.
-export default function Guide({ mode = 'replay', onCommand, onAction, actionLabel }) {
+export default function Guide({ mode = 'replay', onCommand, onAction, actionLabel, pendingDecision = false }) {
   const [open, setOpen] = useState(false)
   const [msgs, setMsgs] = useState([])
   const [val, setVal] = useState('')
@@ -30,6 +30,14 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
   const recRef = useRef(null)
   const askRef = useRef(null)      // latest ask(), so a voice result never acts on stale state
   const pendingRef = useRef(null)  // a spoken approve/reject waiting for 'yes'
+  const voiceRef = useRef(false)   // was the last message spoken? then announcements speak too
+
+  // When a run reaches the €500 gate, say so (and speak it if the visitor is using voice).
+  useEffect(() => {
+    if (!pendingDecision || !open) return
+    setMsgs((x) => [...x, { who: 'bot', text: REPLIES.gateReached, src: 'action' }])
+    if (voiceRef.current && !muted && CAN_SPEAK) say(REPLIES.gateReached)
+  }, [pendingDecision])            // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }) }, [msgs, busy])
   useEffect(() => { if (open) inputRef.current?.focus() }, [open])
@@ -58,6 +66,7 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
     setVal('')
     const history = msgs.slice(-6).map((m) => ({ role: m.who === 'me' ? 'user' : 'assistant', text: m.text }))
     setMsgs((m) => [...m, { who: 'me', text, voice }])
+    voiceRef.current = voice
 
     // A spoken approve/reject is only carried out after a clear "yes".
     if (pendingRef.current) {
@@ -72,6 +81,22 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
     const chat = smallTalk(text)
     if (chat) {
       bot({ text: REPLIES[chat], src: 'action', follow: chat === 'thanks' ? null : ['what', 'run', 'value'] }, voice); return
+    }
+
+    const local = parseLocal(text)
+    if (local === 'repeat') {
+      const last = [...msgs].reverse().find((m) => m.who === 'bot')
+      if (!last) { bot({ text: REPLIES.nothingToRepeat, src: 'action' }, voice); return }
+      setMsgs((x) => [...x, { ...last }]); speak(last.text, voice)
+      return
+    }
+    if (local === 'quiet') { stopSpeaking(); setMsgs((x) => [...x, { who: 'bot', text: REPLIES.quiet, src: 'action' }]); return }
+    if (local === 'howLive') { bot({ text: REPLIES.howLive, src: 'action', follow: ['live'] }, voice); return }
+
+    const ctx = parseContext(text)
+    if (ctx && onCommand) {
+      const reply = onCommand({ cmd: 'context', ...ctx })
+      if (reply) { bot({ text: reply, src: 'action' }, voice); return }
     }
 
     const cmd = parseCommand(text)
@@ -110,6 +135,15 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
 
   askRef.current = ask
 
+  // The Approve / Reject buttons on the decision bar: a click is a deliberate decision,
+  // so it goes straight to the gate (and clears any spoken approval waiting for "yes").
+  const decide = (choice) => {
+    if (!onCommand) return
+    pendingRef.current = null
+    const reply = onCommand({ cmd: choice, via: 'Titan panel button' })
+    setMsgs((x) => [...x, { who: 'me', text: choice === 'approve' ? 'Approve' : 'Reject' }, { who: 'bot', text: reply, src: 'action' }])
+  }
+
   const toggleMic = () => {
     if (!SR) return
     if (listening) { recRef.current?.stop(); return }
@@ -136,8 +170,8 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
 
   return (
     <>
-      <button className={`guide-fab ${open ? 'on' : ''}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="guide-panel">
-        <span className="guide-fab-ic">{open ? '✕' : 'T'}</span>{open ? 'Close' : 'Ask Titan'}
+      <button className={`guide-fab ${open ? 'on' : ''} ${pendingDecision && !open ? 'alert' : ''}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="guide-panel">
+        <span className="guide-fab-ic">{open ? '✕' : 'T'}</span>{open ? 'Close' : pendingDecision ? 'Decision waiting' : 'Ask Titan'}
       </button>
 
       {open && (
@@ -155,11 +189,19 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
             )}
           </div>
 
+          {pendingDecision && (
+            <div className="guide-decide" role="group" aria-label="Decision waiting">
+              <span>€3,200 rush order waiting for you</span>
+              <button onClick={() => decide('approve')}>Approve</button>
+              <button className="no" onClick={() => decide('reject')}>Reject</button>
+            </div>
+          )}
+
           <div className="guide-body">
             {msgs.length === 0 && (
               <div className="guide-hello">
-                <b>Hi, I'm Titan.</b>
-                <span>{HELLO.replace("Hi, I'm Titan. ", '')} {SR ? 'Tap the mic and say "Run the edge scenario", or type.' : 'Try "Run the edge scenario", or pick a question.'}</span>
+                <b>{HELLO.split('. ')[0]}.</b>
+                <span>{HELLO.split('. ').slice(1).join('. ')} {SR ? 'Tap the mic and say "Run the edge scenario", or type.' : 'Try "Run the edge scenario", or pick a question.'}</span>
               </div>
             )}
             {msgs.map((m, i) => (

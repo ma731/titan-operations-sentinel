@@ -5,6 +5,7 @@ import Showcase from './Showcase.jsx'
 import Dashboard from './Dashboard.jsx'
 import SignIn from './SignIn.jsx'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
+import { machineReport } from './fleet.js'
 
 const RATE_PER_S = 180000 / 86400
 const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
@@ -175,6 +176,20 @@ export default function App() {
   }
 
   const submitCommand = (text) => {
+    // Asking about another machine does not replay the CNC-07 incident as if it were
+    // that machine: report what the triage gate sees there instead.
+    const m = (text || '').toLowerCase().match(/\b(cnc)[- ]?0?(\d)\b|\brob(?:ot)?[- ]?(?:cell[- ]?)?0?(\d)\b/)
+    if (m) {
+      const id = m[1] ? `CNC-0${m[2]}-LEI` : `ROB-0${m[3]}-LEI`
+      const note = machineReport(id, ALERT.machine_id, ALERT.threshold)
+      if (note) {
+        reset()
+        pushItem({ kind: 'human', text: `Operator, ${text}` })
+        pushItem({ kind: 'system', text: note })
+        setRunStatus(`Checked ${id}: no alert`)
+        return
+      }
+    }
     const scen = scenarioFor(text)
     setScenario(scen)
     run(scen, text)
@@ -190,7 +205,7 @@ export default function App() {
     setApproval(null)
     if (mode === 'live') {
       pushItem({ kind: 'note', text: `Decision entered through the ${via}` })
-      fetch('/api/decision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: choice }) }).catch(() => {})
+      fetch('/api/decision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: choice, via }) }).catch(() => {})
       return
     }
     queueRef.current = RESOLUTIONS[choice].map((e) => (e.type === 'human_decision' ? { ...e, by: `${e.by} · via ${via}` } : { ...e }))

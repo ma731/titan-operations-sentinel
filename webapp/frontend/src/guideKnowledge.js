@@ -34,7 +34,7 @@ export const GUIDE = [
   {
     id: 'gate', q: 'Why did it stop and ask me?',
     k: ['stop', 'stopped', 'ask', 'approve', 'approval', 'gate', 'human', 'person', '500', 'pause', 'wait', 'reject', 'should', 'decide'],
-    a: 'The agents may spend up to €500 on their own. The rush order for the bearing costs €3,200, so the run pauses until a person approves or rejects it. The limit is written in code, not in a prompt, so a model cannot talk its way past it.',
+    a: 'The agents may spend up to €500 on their own. The rush order for the bearing costs €3,200, so the run pauses until a person approves or rejects it. The limit is written in code, not in a prompt, so a model cannot talk its way past it. In a live run, if nobody decides within five minutes, it counts as a rejection and the log says no person decided.',
   },
   {
     id: 'value', q: 'Is it worth the money?',
@@ -62,7 +62,7 @@ export const GUIDE = [
   {
     id: 'safety', q: 'Can it do something dangerous?',
     k: ['danger', 'dangerous', 'safe', 'safety', 'halt', 'risk', 'harm', 'wrong', 'mistake', 'osha'],
-    a: 'Every action is checked against safety and machine limits, and the compliance agent can stop the whole plan. Anything that touches a safety system goes to a safety officer. The agents call tools that fetch, calculate and draft, but the rules that matter are enforced in code.',
+    a: 'Every action is checked against safety and machine limits, and the compliance agent can stop the whole plan. Anything that touches a safety system is flagged for a safety officer instead of being done automatically. The agents call tools that fetch, calculate and draft, but the rules that matter are enforced in code.',
   },
   {
     id: 'tiers', q: 'What do AUTO, APPROVE and MONITOR mean?',
@@ -94,7 +94,7 @@ export const GUIDE = [
   {
     id: 'aiact', q: 'Is this compliant with the EU AI Act?',
     k: ['act', 'regulation', 'regulated', 'legal', 'law', 'compliant', 'gdpr', 'eu', 'governance', 'responsible'],
-    a: 'My reading, not legal advice: as decision support that recommends maintenance actions, Titan most likely falls outside the AI Act high-risk list. That would change if it directly controlled machine safety functions, or allocated work to people based on their behaviour. It is built as if it were high-risk anyway: a person approves spend and safety actions, every step is logged, you are told when you talk to AI, and each prediction says where it came from.',
+    a: 'My reading, not legal advice: as decision support that recommends maintenance actions, Titan most likely falls outside the AI Act high-risk list. That would change if it directly controlled machine safety functions, or allocated work to people based on their behaviour. It is built as if it were high-risk anyway: a person must approve spend over €500, safety-system actions are flagged for a safety officer, every step of a live run is logged, I tell you I am an AI assistant, and each prediction says where it came from.',
     show: { nav: 'aiact' }, label: 'Open the AI Act page',
   },
 ]
@@ -115,17 +115,17 @@ const norm = (s) => s.toLowerCase().replace(/[^a-z0-9€ ]/g, ' ').split(/\s+/).
 // Everyday phrasings people actually use, checked before the keywords.
 const PHRASES = [
   [/\bai act\b|\beu (ai )?(act|law|regulation)|\b(legal|lawful|regulat\w*|gdpr)\b|compliant with|high[- ]risk/, 'aiact'],
+  [/how much|what('?s| is) it worth|does it (pay|save)|business case|return on/, 'value'],
   [/\breliability\b/, 'ag_reliability'],
   [/\bsupply( chain)?\b|\bparts?\b|\bsupplier/, 'ag_supply_chain'],
   [/\bproduction\b|\breroute|\bshift/, 'ag_production'],
-  [/\bquality\b|\bdefect/, 'ag_quality'],
+  [/(?<!data )\bquality\b|\bdefect/, 'ag_quality'],
   [/\bcompliance\b/, 'ag_compliance_safety'],
   [/what('?s| is| are)? (going on|happening|this|that|all this)|what am i (looking at|seeing)|what is (this|it|here)|what('?s| is) (the )?(idea|point)|tell me (about|more)|(give me|quick|short) (a )?(tour|overview|summary|intro)|show me around|explain (this|it|everything)|in (a )?(nutshell|few words)|^(and )?(so|ok so)?\s*what now/, 'what'],
   [/where (do|should) i (start|begin)|how (do|can|should) i (use|start|try|begin|run)|get(ting)? started|what (do|should|can) i (do|click|press)|first step/, 'run'],
   [/is (it|this) (real|live|recorded)|is this a (recording|video|replay)|are (the )?agents (real|live)|use my (own )?(key|model)/, 'live'],
   [/who (does|do) what|what do (the|these|those) agents|which agents/, 'agents'],
-  [/why (did|does) it (stop|pause|wait|ask)|what('?s| is) the (gate|limit)|who (approves|decides)/, 'gate'],
-  [/how much|what('?s| is) it worth|does it (pay|save)|business case|return on/, 'value'],
+  [/why (did|does) it (stop|pause|wait|ask)|what('?s| is) the (gate|limit|decision rule|rule)|who (approves|decides)|(nobody|no one) (approves|decides|answers)/, 'gate'],
   [/can (i|you) trust|does it (work|actually work)|how (good|accurate|reliable)/, 'trust'],
   [/what('?s| is) (missing|wrong|weak)|what (can'?t|doesn'?t) it do|limitations?/, 'limits'],
 ]

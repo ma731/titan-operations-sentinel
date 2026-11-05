@@ -33,8 +33,11 @@ checks every action against OSHA and machine-maker limits and can HALT the whole
 Agents talk through a shared transcript and can ask each other follow-up questions.
 
 The human gate. Agents may spend up to €500 on their own. The €3,200 rush order for the
-bearing pauses the run for the plant manager to approve or reject. Safety actions go to a
-safety officer. These rules live in code (policy.py), not in prompts.
+bearing pauses the run for the plant manager to approve or reject. Actions that touch a
+safety system are flagged ESCALATE for a safety officer in the plan (they do not pause the
+run), and the compliance agent can HALT the plan. These rules live in code (policy.py), not
+in prompts. If nobody decides within 5 minutes, a live run treats it as a rejection and logs
+that no human decided.
 
 Plan tiers. In this demo every action is a recommendation; nothing is sent to a real
 machine. AUTO: allowed without asking (slow the spindle, reroute jobs, draft work orders).
@@ -87,14 +90,16 @@ create shift or robot-cell clashes. Quality: makes sure the fix does not create 
 allowed, builds the audit trail (safety_gate, audit_assemble, search_technical_docs); can HALT.
 
 EU AI Act (a reading for discussion, not legal advice). As decision support that recommends
-maintenance actions with a person approving spend and safety actions, Titan most likely falls
-outside the high-risk list (Art. 6). It would change if it directly controlled machine safety
-functions (machinery rules, Annex I) or allocated work to people based on their behaviour or
-traits (employment, Annex III). It is built as if it were high-risk: human oversight (Art. 14:
-the €500 gate, HALT, stop), record-keeping (Art. 12: audit log including how each decision was
-made), transparency (Art. 13: provenance on every prediction), telling people it is AI (Art. 50:
-Titan labels itself and model answers). Partial: accuracy and robustness (Art. 15: rules tested,
-model behaviour not yet measured) and data quality (Art. 10: simulated plant data). AI literacy
-(Art. 4) is the deploying company's duty. A separate project, ai-act-readiness, does a full
+maintenance actions, with a person approving spend over €500 and safety-system actions
+flagged for a safety officer, Titan most likely falls outside the high-risk list (Art. 6). It
+would change if it directly controlled machine safety functions (machinery rules, Annex I) or
+allocated work to people based on their behaviour or traits (employment, Annex III). It is
+built as if it were high-risk: human oversight (Art. 14: the €500 gate, HALT, stop),
+record-keeping (Art. 12: in live runs the audit file records every step and how each decision
+arrived; replay shows it on the Audit log page), information for the company using it
+(Art. 13: provenance on every prediction, documented gaps), telling people it is AI (Art. 50:
+Titan says it is an AI assistant and labels model answers). Partial: accuracy and robustness
+(Art. 15: rules tested, model behaviour not yet measured) and data quality (Art. 10: simulated
+plant data). AI literacy (Art. 4) applies to both the provider and the company using it. A separate project, ai-act-readiness, does a full
 readiness assessment. Do not give dates for when obligations apply; say to check the current
 official timeline.

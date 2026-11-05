@@ -64,3 +64,19 @@ def test_oversized_requests_are_refused(client, monkeypatch):
     assert client.post("/api/guide", json={"question": "x" * 5000}).status_code == 422
     big = [{"role": "user", "text": "hi"}] * 500
     assert client.post("/api/guide", json={"question": "hi", "history": big}).status_code == 422
+
+
+def test_decision_channel_is_written_to_the_audit_file(client, monkeypatch):
+    import threading
+    written = []
+    import audit_log
+    monkeypatch.setattr(audit_log, "write_event", lambda rid, typ, detail, agent="": written.append((rid, typ, detail, agent)))
+    main._decision_ready["RUN-VIA-1"] = threading.Event()
+    try:
+        r = client.post("/api/decision", json={"decision": "approve", "run_id": "RUN-VIA-1",
+                                               "via": "Titan assistant (voice)"}).json()
+    finally:
+        main._decision_ready.pop("RUN-VIA-1", None)
+        main._decision_value.pop("RUN-VIA-1", None)
+    assert r["ok"] is True
+    assert ("RUN-VIA-1", "decision_channel", {"decision": "approve", "via": "Titan assistant (voice)"}, "human") in written

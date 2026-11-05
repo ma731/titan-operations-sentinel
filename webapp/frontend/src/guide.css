@@ -61,3 +61,9 @@
 .guide-note { margin: 0 12px; padding: 8px 10px; border-radius: 10px; background: #fff4e5; font-size: 12.5px; color: #6b4a12; }
 @media (prefers-reduced-motion: reduce) { .guide-orb.on, .guide-orb.busy, .guide-mic.on { animation: none; } }
 .guide-play { width: 24px; height: 24px; border: 1px solid var(--g-line); background: var(--g-card); border-radius: 50%; cursor: pointer; font-size: 9px; color: var(--g-ink-2); display: grid; place-items: center; padding: 0; }
+.guide-fab.alert { background: #b45309; animation: guide-listen 1.4s ease-out infinite; }
+.guide-decide { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; background: #fff7e6; border-bottom: 1px solid #f3dfb5; font-size: 13px; font-weight: 600; color: #6b4a12; }
+.guide-decide span { flex: 1 1 160px; }
+.guide-decide button { border: 0; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; background: var(--g-accent); color: var(--g-accent-ink); }
+.guide-decide button.no { background: #fff; color: #9b1c1c; border: 1px solid #f1c4c4; }
+@media (prefers-reduced-motion: reduce) { .guide-fab.alert { animation: none; } }

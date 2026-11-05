@@ -78,7 +78,7 @@ def health():
     return out
 
 
-def _resolve(run_id: str | None, choice: str) -> dict:
+def _resolve(run_id: str | None, choice: str, via: str = "console") -> dict:
     """The single place a paused run is resumed. The console, a Slack button and an email
     link all land here, so a decision is recorded identically however it arrived.
 
@@ -101,18 +101,26 @@ def _resolve(run_id: str | None, choice: str) -> dict:
                     "decision": _decision_value[rid]}
         _decision_value[rid] = choice
         _decision_ready[rid].set()
-        return {"ok": True, "run_id": rid, "decision": _decision_value[rid]}
+    # Record how the decision arrived (dialog, assistant, Slack, email), so a typed or
+    # spoken approval is as visible in the audit file as a click.
+    try:
+        from audit_log import write_event
+        write_event(rid, "decision_channel", {"decision": choice, "via": via}, agent="human")
+    except Exception:  # noqa: BLE001 - logging must never block a decision
+        pass
+    return {"ok": True, "run_id": rid, "decision": choice}
 
 
 class Decision(BaseModel):
     decision: str            # "approve" | "reject"
     run_id: str | None = None
+    via: str = Field(default="console", max_length=60)   # how it was made, for the audit
 
 
 @app.post("/api/decision")
 def decision(d: Decision):
     """Resolve the human-in-the-loop approval gate for a paused run."""
-    return _resolve(d.run_id, d.decision)
+    return _resolve(d.run_id, d.decision, d.via)
 
 
 @app.get("/api/decision/link", response_class=HTMLResponse)
@@ -125,7 +133,7 @@ def decision_link(run_id: str, decision: str):
     run is no longer pending. The security boundary is the mailbox, which is the same
     boundary the plant already uses for a purchase approval by email. For anything
     stronger, use the Slack channel, which is signed."""
-    result = _resolve(run_id, decision)
+    result = _resolve(run_id, decision, via="email link")
     if result["ok"]:
         body = (f"<h2>Recorded: {result['decision']}</h2>"
                 f"<p>Run <code>{result['run_id']}</code> has been resumed and your "
@@ -188,7 +196,7 @@ async def slack_interactions(request: Request):
     except (ValueError, TypeError, IndexError):
         return {"text": "Could not read that action."}
 
-    result = _resolve(run_id or None, choice or "reject")
+    result = _resolve(run_id or None, choice or "reject", via=f"slack:{user}")
     if not result["ok"]:
         if result.get("error") == "already decided":
             return {"replace_original": False,
@@ -363,7 +371,17 @@ def run(scenario: str = "happy"):
                 req["type"] = "approval_request"
                 req["run_id"] = rid
                 yield _sse(req)
-                ready.wait(timeout=300)
+                if not ready.wait(timeout=300):
+                    # Nobody decided. Close the gate as a rejection, and say so in the audit
+                    # file, so a timeout is never mistaken for a person's decision.
+                    with _decision_lock:
+                        timed_out = rid not in _decision_value
+                        if timed_out:
+                            _decision_value[rid] = "reject"
+                    if timed_out:
+                        from audit_log import write_event
+                        write_event(rid, "decision_channel",
+                                    {"decision": "reject", "via": "timeout, no human decision"}, agent="system")
                 choice = _decision_value.get(rid, "reject")
                 for kind, payload in drain(graph.stream(Command(resume={"decision": choice}), cfg)):
                     if kind == "event":
