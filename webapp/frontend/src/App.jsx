@@ -11,7 +11,7 @@ const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
 const TICKER = [
   'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h',
-  'DOWNTIME €180,000 / day', '€870k DOWNTIME AVOIDED', '5 TMC CHALLENGES',
+  'DOWNTIME €180,000 / day', '116h DOWNTIME AVOIDED FOR €3,200', '5 DOMAINS',
   'HUMAN GATE > €500', 'RUNS ON FREE-TIER GEMINI',
 ]
 
@@ -279,7 +279,7 @@ function Topbar({ scenario, setScenario, mode, setMode, running, onRun, clock, o
         <div className="mark" onClick={onBack} title="Back to showcase" style={{ cursor: 'pointer' }}>T</div>
         <div>
           <div className="title">Titan Operations Sentinel</div>
-          <div className="sub">Multi-agent operations brain</div>
+          <div className="sub">Multi-agent operations console</div>
         </div>
       </div>
       <div className="spacer" />
@@ -357,7 +357,7 @@ function IdleHero() {
     <div className="console-hero">
       <div className="eyebrow">◈ Standing by · Titan Leipzig Plant 7</div>
       <h1>One alert. Five domains. <em>One costed plan.</em></h1>
-      <p className="lead">Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents perceive, reason across every domain, and converge on a safety-gated action plan, with a human in the loop on every euro.</p>
+      <p className="lead">When a machine signals failure, six AI agents perceive, reason across every domain, and converge on a safety-gated action plan, with a human in the loop on every euro.</p>
       <div className="alert-card">
         <span className="pulse" />
         <div className="ac-body">
@@ -377,9 +377,9 @@ function ApprovalModal({ req, onApprove, onReject }) {
         <div className="body">
           <div className="kicker">◈ Human-in-the-loop · approval required</div>
           <h2>{req.question}</h2>
-          <p>This spend exceeds the agent's autonomous authority. It cannot self-approve, a human must decide.</p>
+          <p>This spend is over the agents' €500 limit. They cannot approve it themselves: a person must decide.</p>
           <div className="figure">€{(req.amount_eur ?? 0).toLocaleString()}</div>
-          <div className="ceiling">€{req.ceiling_eur} autonomous ceiling · routed to Plant Manager</div>
+          <div className="ceiling">€{req.ceiling_eur} agent spending limit · routed to Plant Manager</div>
           <div className="actions">
             <button className="btn approve" onClick={onApprove}>✓ Approve</button>
             <button className="btn reject" onClick={onReject}>✕ Reject</button>

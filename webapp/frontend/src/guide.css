@@ -1,0 +1,47 @@
+/* Guide: floating help chat. Own tokens so it looks the same on the showcase and in the console. */
+.guide-fab, .guide {
+  --g-card: #ffffff; --g-bg: #f3f5f8; --g-ink: #14171c; --g-ink-2: #555e6b; --g-line: #e4e7ec;
+  --g-accent: #0fbe85; --g-accent-ink: #04130d;
+  font-family: 'Fira Sans', system-ui, sans-serif;
+}
+.guide-fab {
+  position: fixed; z-index: 70; right: max(20px, env(safe-area-inset-right, 0px)); bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 9px; height: 48px; padding: 0 18px 0 8px; border: 0; border-radius: 999px;
+  background: var(--g-ink); color: #fff; font-weight: 700; font-size: 14.5px; cursor: pointer;
+  box-shadow: 0 14px 34px -12px rgba(10, 20, 15, 0.55); transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.guide-fab:active { transform: scale(0.96); }
+.guide-fab-ic { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--g-accent); color: var(--g-accent-ink); font-size: 15px; font-weight: 800; }
+.guide {
+  position: fixed; z-index: 71; right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 60px);
+  width: min(400px, calc(100vw - 32px)); height: min(580px, calc(100vh - 120px)); display: flex; flex-direction: column;
+  background: var(--g-card); color: var(--g-ink); border: 1px solid var(--g-line); border-radius: 20px; overflow: hidden;
+  box-shadow: 0 34px 90px -24px rgba(10, 20, 15, 0.45); animation: guide-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes guide-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+.guide-h { padding: 16px 18px 12px; border-bottom: 1px solid var(--g-line); }
+.guide-t { font-weight: 800; font-size: 17px; }
+.guide-s { font-size: 12px; color: var(--g-ink-2); margin-top: 2px; }
+.guide-body { flex: 1; overflow-y: auto; padding: 14px 14px 6px; display: flex; flex-direction: column; gap: 12px; }
+.guide-hello { display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.5; }
+.guide-hello span { color: var(--g-ink-2); }
+.guide-msg { display: flex; flex-direction: column; gap: 6px; max-width: 92%; }
+.guide-msg.me { align-self: flex-end; }
+.guide-bubble { padding: 10px 13px; border-radius: 14px 14px 14px 4px; background: var(--g-bg); font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+.guide-msg.me .guide-bubble { background: var(--g-ink); color: #fff; border-radius: 14px 14px 4px 14px; }
+.guide-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.guide-src { font-size: 11px; color: var(--g-ink-2); }
+.guide-show { border: 0; background: var(--g-accent); color: var(--g-accent-ink); font-weight: 700; font-size: 12.5px; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.guide-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.guide-chip { border: 1px solid var(--g-line); background: var(--g-card); color: var(--g-ink); font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 999px; cursor: pointer; text-align: left; transition: border-color 0.15s; }
+.guide-chip:hover { border-color: var(--g-accent); }
+.guide-typing { display: inline-flex; gap: 5px; padding: 13px 14px; }
+.guide-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--g-ink-2); animation: guide-dot 1s infinite ease-in-out; }
+.guide-typing i:nth-child(2) { animation-delay: 0.15s; } .guide-typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes guide-dot { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+.guide-in { display: flex; gap: 8px; padding: 10px 12px 12px; border-top: 1px solid var(--g-line); }
+.guide-in input { flex: 1; min-width: 0; border: 1px solid var(--g-line); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; color: var(--g-ink); background: var(--g-card); outline: none; }
+.guide-in input:focus { border-color: var(--g-accent); }
+.guide-in button { width: 42px; border: 0; border-radius: 12px; background: var(--g-ink); color: #fff; font-size: 17px; cursor: pointer; }
+.guide-in button:disabled { opacity: 0.35; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .guide { animation: none; } .guide-typing i { animation: none; opacity: 0.6; } }

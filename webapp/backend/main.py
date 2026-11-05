@@ -288,6 +288,40 @@ def configure(c: Config):
     return {"ok": True, "active": llm.active_provider(), "model": llm.resolve_model(), "persisted": persisted}
 
 
+_GUIDE_PROMPT = Path(__file__).resolve().parents[2] / "prompts" / "guide.md"
+
+
+class GuideQuestion(BaseModel):
+    question: str
+    history: list[dict] = []
+
+
+@app.post("/api/guide")
+def guide(g: GuideQuestion):
+    """Help chat for the console. Answers from prompts/guide.md with whatever model is
+    configured. With no model it returns ok=False and the console uses its written answers."""
+    import llm
+
+    model = llm.get_llm()
+    if not getattr(model, "available", False):
+        return {"ok": False, "reason": "no-model"}
+    question = g.question.strip()[:500]
+    if not question:
+        return {"ok": False, "reason": "empty"}
+    turns = []
+    for t in g.history[-6:]:
+        role = "Visitor" if t.get("role") == "user" else "Guide"
+        turns.append(f"{role}: {str(t.get('text', ''))[:600]}")
+    user = ("Conversation so far:\n" + "\n".join(turns) + "\n\n" if turns else "") + f"Visitor: {question}"
+    try:
+        answer = model.complete(_GUIDE_PROMPT.read_text(encoding="utf-8"), user, agent="guide")
+    except Exception:  # noqa: BLE001 - a failed help answer must never break the console
+        return {"ok": False, "reason": "model-error"}
+    if isinstance(answer, list):  # some providers return content parts
+        answer = "".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in answer)
+    return {"ok": True, "answer": str(answer).strip(), "model": llm.resolve_model()}
+
+
 @app.get("/api/run")
 def run(scenario: str = "happy"):
     def gen():

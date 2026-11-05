@@ -17,6 +17,9 @@ action plan: 116h of unplanned downtime avoided for a 3,200 EUR expedite (the ol
 was wrong, see [F-09](eval/FINDINGS.md)). Regenerate it with `python scripts/record_demo.py`, which
 drives the real console rather than being a screen capture that quietly goes stale.*
 
+> Lost? Press **Guide** (bottom right) for plain-English answers and "show me" shortcuts. In Replay it uses
+> written answers; connected live, your own model answers from [`prompts/guide.md`](prompts/guide.md).
+>
 > The demo runs in Replay mode: a recorded run played back in the browser. No API key, no
 > cost, nothing to install. The console labels it as a recording rather than passing it off
 > as live.

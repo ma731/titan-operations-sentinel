@@ -60,7 +60,7 @@ const happy = [
 
 const HUMAN_APPROVED = [
   { t: 250, type: 'human_decision', decision: 'APPROVED', by: 'Plant Manager' },
-  { t: 700, type: 'plan', status: 'complete', roi: '€870k avoided · 271.9:1', lines: [
+  { t: 700, type: 'plan', status: 'complete', roi: '116h of downtime avoided for €3,200 (€870k at production value, an upper bound)', lines: [
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM safe limits (buys runway to the window).' },
     { tier: 'AUTO', txt: 'Reroute jobs J4421-J4425 to CNC-08-LEI; notify shift lead.' },
     { tier: 'APPROVE', txt: '✓ Authorized, Schaeffler P-4421 expedite, 18h, €3,200.' },
@@ -120,7 +120,7 @@ const edge = [
   { t: 600, type: 'tool_call', agent: 'compliance_safety', tool: 'safety_gate', input: { actions: 3 }, result: { verdict: 'SIGN-OFF' } },
   { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'All actions within OSHA/OEM limits and under the spend ceiling. VERDICT: SIGN-OFF. No human gate needed, the plan can execute autonomously.' },
 
-  { t: 800, type: 'plan', status: 'complete', roi: '€870k avoided · €420 spent', lines: [
+  { t: 800, type: 'plan', status: 'complete', roi: '116h of downtime avoided for €420, under the €500 ceiling, so no human gate', lines: [
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM limits.' },
     { tier: 'AUTO', txt: 'Cross-plant transfer P-4421 from MUC, €420, 36h (under the €500 ceiling, no approval needed).' },
     { tier: 'AUTO', txt: 'Reroute jobs J4421-J4425 to CNC-08-LEI for the transfer window.' },

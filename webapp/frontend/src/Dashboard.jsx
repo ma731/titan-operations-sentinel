@@ -5,26 +5,33 @@ import ProviderBar from './ProviderBar.jsx'
 import Logo from './Logo.jsx'
 import AnimatedNumber from './AnimatedNumber.jsx'
 import CommandPalette from './CommandPalette.jsx'
+import Guide from './Guide.jsx'
 import { TEAM, GUEST } from './team.js'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
-const NAV = [
-  { id: 'dashboard', ic: '▦', label: 'Dashboard' },
-  { id: 'reliability', ic: '◔', label: 'Reliability' },
-  { id: 'supply_chain', ic: '⇄', label: 'Supply Chain' },
-  { id: 'production', ic: '⚙', label: 'Production' },
-  { id: 'quality', ic: '✓', label: 'Quality' },
-  { id: 'compliance_safety', ic: '⚠', label: 'Compliance' },
+// Sidebar in story order: watch the run, read what the agents said, check the proof.
+const NAV_GROUPS = [
+  { label: null, items: [{ id: 'dashboard', ic: '▦', label: 'Overview' }] },
+  { label: 'The run', items: [
+    { id: 'chat', ic: '⇆', label: 'Agent conversation' },
+    { id: 'plan', ic: '◈', label: 'Action plan' },
+    { id: 'cost', ic: '€', label: 'Cost and value' },
+    { id: 'scenarios', ic: '◇', label: 'Scenarios' },
+  ] },
+  { label: 'Each agent', items: [
+    { id: 'reliability', ic: '◔', label: 'Reliability' },
+    { id: 'supply_chain', ic: '⇄', label: 'Supply chain' },
+    { id: 'production', ic: '⚙', label: 'Production' },
+    { id: 'quality', ic: '✓', label: 'Quality' },
+    { id: 'compliance_safety', ic: '⚠', label: 'Compliance' },
+  ] },
+  { label: 'Proof', items: [
+    { id: 'audit', ic: '≣', label: 'Audit log' },
+    { id: 'report', ic: '▤', label: 'Run history' },
+    { id: 'learning', ic: '✦', label: 'Learning' },
+  ] },
 ]
-const WORKFLOW_NAV = [
-  { id: 'scenarios', ic: '◇', label: 'Scenarios' },
-  { id: 'chat', ic: '⇆', label: 'Agent Chat' },
-  { id: 'cost', ic: '€', label: 'Cost & Feasibility' },
-  { id: 'audit', ic: '≣', label: 'Audit Log' },
-  { id: 'plan', ic: '◈', label: 'Action Plan' },
-  { id: 'learning', ic: '✦', label: 'Learning' },
-  { id: 'report', ic: '▤', label: 'Run History' },
-]
+const ALL_NAV = NAV_GROUPS.flatMap((g) => g.items)
 const FLEET = [
   { id: 'CNC-07-LEI', name: 'CNC Machining Center #7', status: 'critical' },
   { id: 'CNC-08-LEI', name: 'CNC Machining Center #8', status: 'idle', vib: '2.1', temp: '+1', util: '0% (idle)', note: 'Available as reroute target for CNC-07.' },
@@ -85,18 +92,17 @@ export default function Dashboard(props) {
       <div className="dash-body">
         {/* ---------------- sidebar ---------------- */}
         <aside className="dash-side">
-          {NAV.map((n) => (
-            <button key={n.id} className={`nav-item ${nav === n.id ? 'on' : ''}`} onClick={() => setNav(n.id)}>
-              <span className="ic">{n.ic}</span>{n.label}
-              {AGENT_MAP[n.id] && agentStatus[n.id] === 'done' && <span style={{ marginLeft: 'auto', color: '#16b364' }}>●</span>}
-              {AGENT_MAP[n.id] && agentStatus[n.id] === 'active' && <span style={{ marginLeft: 'auto', color: '#f59e0b' }}>●</span>}
-            </button>
-          ))}
-          <div className="nav-label">Workflow</div>
-          {WORKFLOW_NAV.map((n) => (
-            <button key={n.id} className={`nav-item ${nav === n.id ? 'on' : ''}`} onClick={() => setNav(n.id)}>
-              <span className="ic">{n.ic}</span>{n.label}
-            </button>
+          {NAV_GROUPS.map((g, gi) => (
+            <div key={gi}>
+              {g.label && <div className="nav-label">{g.label}</div>}
+              {g.items.map((n) => (
+                <button key={n.id} className={`nav-item ${nav === n.id ? 'on' : ''}`} onClick={() => setNav(n.id)}>
+                  <span className="ic">{n.ic}</span>{n.label}
+                  {AGENT_MAP[n.id] && agentStatus[n.id] === 'done' && <span style={{ marginLeft: 'auto', color: '#16b364' }}>●</span>}
+                  {AGENT_MAP[n.id] && agentStatus[n.id] === 'active' && <span style={{ marginLeft: 'auto', color: '#f59e0b' }}>●</span>}
+                </button>
+              ))}
+            </div>
           ))}
 
           <div className="side-foot">
@@ -133,25 +139,38 @@ export default function Dashboard(props) {
             <ReportView history={history} onClearHistory={onClearHistory} alert={ALERT} />
           ) : (
             <>
-              <div className="dash-h">{focusAgent ? `${AGENT_MAP[focusAgent].name} · ${AGENT_MAP[focusAgent].chal}` : 'Operations Dashboard'}</div>
+              <div className="dash-h">{focusAgent ? `${AGENT_MAP[focusAgent].name} · ${AGENT_MAP[focusAgent].chal}` : 'Overview'}</div>
               {!focusAgent && (
-                <p className="dash-explain">
-                  A sensor on <b>CNC-07-LEI</b> just crossed its limit. Press <b>Run</b> to watch six AI agents diagnose it across five domains and converge on one <b>costed, safety-gated action plan</b>, with a human approving anything over €500.
-                </p>
+                <div className="story-head">
+                  <p className="dash-explain">
+                    A sensor on <b>CNC-07-LEI</b> just crossed its vibration limit. Press run and watch five AI agents check it, one domain at a time, and agree on <b>one costed plan</b>. Anything over <b>€500</b> stops for a person.
+                  </p>
+                  {running
+                    ? <button className="story-run stop" onClick={onStop}>■ Stop</button>
+                    : <button className="story-run" onClick={() => onRun(scenario)}>▶ {completed ? 'Run again' : `Run ${SCENARIOS.find((s) => s.id === scenario)?.label}`}</button>}
+                </div>
+              )}
+              {!focusAgent && (
+                <div className="dash-tabs" role="group" aria-label="Scenario">
+                  {SCENARIOS.map((s) => (
+                    <button key={s.id} className={`dash-tab ${scenario === s.id ? 'on' : ''}`} disabled={running} onClick={() => setScenario(s.id)} title={s.desc}>{s.label}</button>
+                  ))}
+                </div>
+              )}
+              {!focusAgent && <StoryStrip timeline={timeline} running={running} doneCount={doneCount} runStatus={runStatus} plan={plan} />}
+              {!focusAgent && plan?.roi && (
+                <div className={`story-result ${plan.status}`}>
+                  <span className="story-result-k">{plan.status === 'complete' ? 'Result' : plan.status === 'halted' ? 'Halted' : 'Handed to a person'}</span>
+                  <span className="story-result-v">{plan.roi}</span>
+                </div>
               )}
 
               {!focusAgent && <AgentGraph agentStatus={agentStatus} running={running} risk={risk} />}
 
-              <div className="dash-tabs">
-                {SCENARIOS.map((s) => (
-                  <button key={s.id} className={`dash-tab ${scenario === s.id ? 'on' : ''}`} disabled={running} onClick={() => setScenario(s.id)}>{s.label}</button>
-                ))}
-              </div>
-
               <div className="stat-row">
                 <Stat lbl="Active Alert" chip="blue" ic="◉" val={<AnimatedNumber value={1} format={(n) => Math.round(n)} />} sub="ALT-22847 · CNC-07-LEI" />
                 <Stat lbl="Failure Risk" chip="red" ic="⚠" val={risk} valClass={`risk-${risk}`} sub="from reliability triage" />
-                <Stat lbl="Challenge Coverage" chip="green" ic="✓" val={<AnimatedNumber value={doneCount} format={(n) => `${Math.round(n)}/5`} />} sub="TMC challenges addressed" deltaUp />
+                <Stat lbl="Domains checked" chip="green" ic="✓" val={<AnimatedNumber value={doneCount} format={(n) => `${Math.round(n)}/5`} />} sub="agents that reported" deltaUp />
                 <Stat lbl="Downtime Exposure" chip="orange" ic="€" val={<AnimatedNumber value={exposure || 0} format={(n) => `€${Math.round(n).toLocaleString()}`} />} sub="€7,500 / h accruing" />
               </div>
 
@@ -169,7 +188,7 @@ export default function Dashboard(props) {
                     <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>
                   ))}
                   {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
-                  {plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
+                  {plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
                   <TierLegend />
                 </div>
               )}
@@ -238,10 +257,15 @@ export default function Dashboard(props) {
 
       <CommandPalette
         open={paletteOpen} setOpen={setPaletteOpen}
-        navItems={[...NAV, ...WORKFLOW_NAV]} setNav={setNav}
+        navItems={ALL_NAV} setNav={setNav}
         scenarios={SCENARIOS} onRun={onRun}
         me={me} onSwitchUser={onSwitchUser} onSignOut={onSignOut}
       />
+
+      <Guide mode={mode} onAction={(a) => {
+        if (a.run) { setNav('dashboard'); if (!running) onRun(scenario) }
+        else if (a.nav) setNav(a.nav)
+      }} />
 
       {assetOpen && <AssetModal machine={selectedMachine} alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
       {coach && <Coachmark onClose={closeCoach} />}
@@ -257,7 +281,7 @@ function Coachmark({ onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
   const steps = [
-    { ic: '◉', t: 'An alert just fired', d: 'A sensor on CNC-07-LEI crossed its vibration limit. This console is the operations brain that responds.' },
+    { ic: '◉', t: 'An alert just fired', d: 'A sensor on CNC-07-LEI crossed its vibration limit. This console is the team of agents that responds.' },
     { ic: '▶', t: 'Press Run', d: 'Six AI agents are dispatched. Watch the graph: the orchestrator routes them and they reason live, one domain at a time.' },
     { ic: '◈', t: 'They converge on a plan', d: 'Findings combine into one costed, safety-gated action plan. Anything over €500, or any safety risk, pauses for a human.' },
     { ic: '€', t: 'It runs free', d: 'Replay mode plays the recorded run with no API key and zero cost. Live mode uses a real model when you add a key.' },
@@ -557,7 +581,7 @@ function PlanView({ plan }) {
             <div className="panel-h"><span className="t">Final Plan</span><span className="sub">{plan.status}</span></div>
             {(plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
             {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
-            {plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
+            {plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
             <TierLegend />
           </div>}
     </>
@@ -770,7 +794,7 @@ function ReportView({ history, onClearHistory, alert: ALERT }) {
                 <div className="panel-h"><span className="t">Final action plan</span><span className="sub">{run.plan.status}</span></div>
                 {(run.plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
                 {run.plan.text && !run.plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{run.plan.text}</div>}
-                {run.plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{run.plan.roi}</span></div>}
+                {run.plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{run.plan.roi}</span></div>}
               </div>
             </div>
           )}
@@ -920,5 +944,33 @@ function CostView({ mode = 'replay' }) {
         <div className="pl"><span className="tier AUTO">REPLAY</span><span className="tx">Demo day uses the recorded replay, zero API calls, can't fail.</span></div>
       </div>
     </>
+  )
+}
+
+// Four-step progress strip: the story of a run, readable at a glance.
+function StoryStrip({ timeline, running, doneCount, runStatus, plan }) {
+  const started = running || timeline.length > 0
+  const humanDone = timeline.some((t) => t.kind === 'human' && t.text.startsWith('Human decision'))
+  const waiting = runStatus === 'Awaiting human approval'
+  const gateText = humanDone ? 'A person approved the spend'
+    : waiting ? 'Waiting for a person: over €500'
+    : plan ? (plan.status === 'complete' ? 'Not needed: under €500' : 'Not reached')
+    : 'Anything over €500 stops here'
+  const steps = [
+    { t: 'Alert', s: started ? '1 of 22k alerts woke the agents' : 'A sensor crosses its limit', st: started ? 'done' : 'todo' },
+    { t: 'Agents', s: `${doneCount} of 5 domains checked`, st: plan || doneCount === 5 ? 'done' : started && !waiting ? 'now' : started ? 'done' : 'todo' },
+    { t: 'Human gate', s: gateText, st: humanDone || plan ? 'done' : waiting ? 'now' : 'todo' },
+    { t: 'Plan', s: plan ? (plan.status === 'complete' ? 'Costed plan ready' : plan.status === 'halted' ? 'Stopped by safety' : 'Handed to a person') : 'One costed, safety-checked plan', st: plan ? 'done' : 'todo' },
+  ]
+  return (
+    <ol className="story-strip" aria-label="Run progress">
+      {steps.map((x, i) => (
+        <li key={x.t} className={`story-step ${x.st}`}>
+          <span className="story-n">{x.st === 'done' ? '✓' : i + 1}</span>
+          <span className="story-t">{x.t}</span>
+          <span className="story-s">{x.s}</span>
+        </li>
+      ))}
+    </ol>
   )
 }
