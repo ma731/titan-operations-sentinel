@@ -95,10 +95,28 @@ export const STARTERS = ['what', 'run', 'gate', 'value', 'data']
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9€ ]/g, ' ').split(/\s+/).filter(Boolean)
 
-// Best written answer for free text, or null. Simple keyword overlap is enough for a
-// fixed set of fifteen answers, and it can never invent anything.
+// Everyday phrasings people actually use, checked before the keywords.
+const PHRASES = [
+  [/what('?s| is| are)? (going on|happening|this|that|all this)|what am i (looking at|seeing)|what is (this|it|here)|what('?s| is) (the )?(idea|point)|tell me (about|more)|(give me|quick|short) (a )?(tour|overview|summary|intro)|show me around|explain (this|it|everything)|in (a )?(nutshell|few words)|^(and )?(so|ok so)?\s*what now/, 'what'],
+  [/where (do|should) i (start|begin)|how (do|can|should) i (use|start|try|begin|run)|get(ting)? started|what (do|should|can) i (do|click|press)|first step/, 'run'],
+  [/is (it|this) (real|live|recorded)|is this a (recording|video|replay)|are (the )?agents (real|live)|use my (own )?(key|model)/, 'live'],
+  [/who (does|do) what|what do (the|these|those) agents|which agents/, 'agents'],
+  [/why (did|does) it (stop|pause|wait|ask)|what('?s| is) the (gate|limit)|who (approves|decides)/, 'gate'],
+  [/how much|what('?s| is) it worth|does it (pay|save)|business case|return on/, 'value'],
+  [/can (i|you) trust|does it (work|actually work)|how (good|accurate|reliable)/, 'trust'],
+  [/what('?s| is) (missing|wrong|weak)|what (can'?t|doesn'?t) it do|limitations?/, 'limits'],
+]
+
+// The project words a vague question tends to contain. If one is there and nothing
+// else matched, the overview is the most useful answer.
+const ABOUT_PROJECT = /\b(this|here|it|project|demo|system|console|thing|titan|sentinel|page|app)\b/
+
+// Best written answer for free text, or null. Phrases first, then keyword overlap.
+// It picks from fifteen fixed answers, so it can never invent anything.
 export function matchAnswer(text) {
-  const words = new Set(norm(text))
+  const t = text.toLowerCase().replace(/[’`]/g, "'")
+  for (const [re, id] of PHRASES) if (re.test(t)) return GUIDE.find((g) => g.id === id)
+  const words = new Set(norm(t))
   let best = null, score = 0
   for (const item of GUIDE) {
     let s = 0
@@ -106,5 +124,6 @@ export function matchAnswer(text) {
     for (const w of norm(item.q)) if (w.length > 3 && words.has(w)) s += 1
     if (s > score) { score = s; best = item }
   }
-  return score >= 2 ? best : null
+  if (score >= 2) return best
+  return ABOUT_PROJECT.test(t) ? GUIDE.find((g) => g.id === 'what') : null
 }

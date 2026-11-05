@@ -97,7 +97,7 @@ export const REPLIES = {
   showcaseOpen: 'Opening the console. Press Run there, or ask me again from inside.',
   showcaseFirst: 'Open the console first. That is where runs and approvals happen.',
   fallbackLive: 'The model could not answer just now, and I have no written answer for that. Try one of these:',
-  fallbackReplay: 'I only have written answers in Replay mode, and none fits that. Try one of these, ask me to run a scenario, or connect a model in the top bar to ask anything.',
+  fallbackReplay: 'I am not sure about that one, but I know this project well. Try one of these, or ask me to run a scenario. With a model connected in the top bar, I can answer anything.',
 }
 export const PAGE_NAMES = PAGES.map((p) => p[2])
 
