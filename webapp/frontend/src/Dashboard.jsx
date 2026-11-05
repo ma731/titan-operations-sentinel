@@ -5,33 +5,36 @@ import ProviderBar from './ProviderBar.jsx'
 import Logo from './Logo.jsx'
 import AnimatedNumber from './AnimatedNumber.jsx'
 import CommandPalette from './CommandPalette.jsx'
+import Guide from './Guide.jsx'
+import { REPLIES, PAGE_HELP } from './titanCommands.js'
+import { FLEET, machineReport } from './fleet.js'
 import { TEAM, GUEST } from './team.js'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
-const NAV = [
-  { id: 'dashboard', ic: '▦', label: 'Dashboard' },
-  { id: 'reliability', ic: '◔', label: 'Reliability' },
-  { id: 'supply_chain', ic: '⇄', label: 'Supply Chain' },
-  { id: 'production', ic: '⚙', label: 'Production' },
-  { id: 'quality', ic: '✓', label: 'Quality' },
-  { id: 'compliance_safety', ic: '⚠', label: 'Compliance' },
+// Sidebar in story order: watch the run, read what the agents said, check the proof.
+const NAV_GROUPS = [
+  { label: null, items: [{ id: 'dashboard', ic: '▦', label: 'Overview' }] },
+  { label: 'The run', items: [
+    { id: 'chat', ic: '⇆', label: 'Agent conversation' },
+    { id: 'plan', ic: '◈', label: 'Action plan' },
+    { id: 'cost', ic: '€', label: 'Cost and value' },
+    { id: 'scenarios', ic: '◇', label: 'Scenarios' },
+  ] },
+  { label: 'Each agent', items: [
+    { id: 'reliability', ic: '◔', label: 'Reliability' },
+    { id: 'supply_chain', ic: '⇄', label: 'Supply chain' },
+    { id: 'production', ic: '⚙', label: 'Production' },
+    { id: 'quality', ic: '✓', label: 'Quality' },
+    { id: 'compliance_safety', ic: '⚠', label: 'Compliance' },
+  ] },
+  { label: 'Proof', items: [
+    { id: 'audit', ic: '≣', label: 'Audit log' },
+    { id: 'report', ic: '▤', label: 'Run history' },
+    { id: 'learning', ic: '✦', label: 'Learning' },
+    { id: 'aiact', ic: '§', label: 'EU AI Act' },
+  ] },
 ]
-const WORKFLOW_NAV = [
-  { id: 'scenarios', ic: '◇', label: 'Scenarios' },
-  { id: 'chat', ic: '⇆', label: 'Agent Chat' },
-  { id: 'cost', ic: '€', label: 'Cost & Feasibility' },
-  { id: 'audit', ic: '≣', label: 'Audit Log' },
-  { id: 'plan', ic: '◈', label: 'Action Plan' },
-  { id: 'learning', ic: '✦', label: 'Learning' },
-  { id: 'report', ic: '▤', label: 'Run History' },
-]
-const FLEET = [
-  { id: 'CNC-07-LEI', name: 'CNC Machining Center #7', status: 'critical' },
-  { id: 'CNC-08-LEI', name: 'CNC Machining Center #8', status: 'idle', vib: '2.1', temp: '+1', util: '0% (idle)', note: 'Available as reroute target for CNC-07.' },
-  { id: 'CNC-05-LEI', name: 'CNC Machining Center #5', status: 'ok', vib: '3.4', temp: '+3', util: '82%', note: 'Operating within all OEM limits.' },
-  { id: 'CNC-03-LEI', name: 'CNC Machining Center #3', status: 'ok', vib: '2.9', temp: '+2', util: '76%', note: 'Bearing replaced Sept 2025 (INC-0312).' },
-  { id: 'ROB-02-LEI', name: 'Robot Cell #2', status: 'ok', vib: '1.8', temp: '+1', util: '68%', note: 'Pick-and-place cell, nominal.' },
-]
+const ALL_NAV = NAV_GROUPS.flatMap((g) => g.items)
 const SCENARIOS = [
   { id: 'happy', label: 'Cascade', desc: 'Full team → costed plan → human approval' },
   { id: 'edge', label: 'Edge', desc: 'Cross-plant adaptation when local supply is disrupted' },
@@ -42,7 +45,7 @@ export default function Dashboard(props) {
   const {
     scenario, setScenario, mode, setMode, running, completed, timeline, agentStatus, runStatus, risk,
     plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT, user, onSignOut, onSwitchUser, onCommand,
-    history = [], onClearHistory, presenting, onPresent,
+    history = [], onClearHistory, presenting, onPresent, approvalPending = false, onDecide = () => {},
   } = props
   const [nav, setNav] = useState('dashboard')
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -85,18 +88,17 @@ export default function Dashboard(props) {
       <div className="dash-body">
         {/* ---------------- sidebar ---------------- */}
         <aside className="dash-side">
-          {NAV.map((n) => (
-            <button key={n.id} className={`nav-item ${nav === n.id ? 'on' : ''}`} onClick={() => setNav(n.id)}>
-              <span className="ic">{n.ic}</span>{n.label}
-              {AGENT_MAP[n.id] && agentStatus[n.id] === 'done' && <span style={{ marginLeft: 'auto', color: '#16b364' }}>●</span>}
-              {AGENT_MAP[n.id] && agentStatus[n.id] === 'active' && <span style={{ marginLeft: 'auto', color: '#f59e0b' }}>●</span>}
-            </button>
-          ))}
-          <div className="nav-label">Workflow</div>
-          {WORKFLOW_NAV.map((n) => (
-            <button key={n.id} className={`nav-item ${nav === n.id ? 'on' : ''}`} onClick={() => setNav(n.id)}>
-              <span className="ic">{n.ic}</span>{n.label}
-            </button>
+          {NAV_GROUPS.map((g, gi) => (
+            <div key={gi}>
+              {g.label && <div className="nav-label">{g.label}</div>}
+              {g.items.map((n) => (
+                <button key={n.id} className={`nav-item ${nav === n.id ? 'on' : ''}`} onClick={() => setNav(n.id)}>
+                  <span className="ic">{n.ic}</span>{n.label}
+                  {AGENT_MAP[n.id] && agentStatus[n.id] === 'done' && <span style={{ marginLeft: 'auto', color: '#16b364' }}>●</span>}
+                  {AGENT_MAP[n.id] && agentStatus[n.id] === 'active' && <span style={{ marginLeft: 'auto', color: '#f59e0b' }}>●</span>}
+                </button>
+              ))}
+            </div>
           ))}
 
           <div className="side-foot">
@@ -127,31 +129,47 @@ export default function Dashboard(props) {
             <AuditView timeline={timeline} />
           ) : nav === 'plan' ? (
             <PlanView plan={plan} />
+          ) : nav === 'aiact' ? (
+            <AiActView />
           ) : nav === 'learning' ? (
             <LearningView history={history} alert={ALERT} />
           ) : nav === 'report' ? (
             <ReportView history={history} onClearHistory={onClearHistory} alert={ALERT} />
           ) : (
             <>
-              <div className="dash-h">{focusAgent ? `${AGENT_MAP[focusAgent].name} · ${AGENT_MAP[focusAgent].chal}` : 'Operations Dashboard'}</div>
+              <div className="dash-h">{focusAgent ? `${AGENT_MAP[focusAgent].name} · ${AGENT_MAP[focusAgent].chal}` : 'Overview'}</div>
               {!focusAgent && (
-                <p className="dash-explain">
-                  A sensor on <b>CNC-07-LEI</b> just crossed its limit. Press <b>Run</b> to watch six AI agents diagnose it across five domains and converge on one <b>costed, safety-gated action plan</b>, with a human approving anything over €500.
-                </p>
+                <div className="story-head">
+                  <p className="dash-explain">
+                    A sensor on <b>CNC-07-LEI</b> just crossed its vibration limit. Press run and watch five AI agents check it, one domain at a time, and agree on <b>one costed plan</b>. Anything over <b>€500</b> stops for a person.
+                  </p>
+                  {running
+                    ? <button className="story-run stop" onClick={onStop}>■ Stop</button>
+                    : <button className="story-run" onClick={() => onRun(scenario)}>▶ {completed ? 'Run again' : `Run ${SCENARIOS.find((s) => s.id === scenario)?.label}`}</button>}
+                </div>
+              )}
+              {!focusAgent && (
+                <div className="dash-tabs" role="group" aria-label="Scenario">
+                  {SCENARIOS.map((s) => (
+                    <button key={s.id} className={`dash-tab ${scenario === s.id ? 'on' : ''}`} disabled={running} onClick={() => setScenario(s.id)} title={s.desc}>{s.label}</button>
+                  ))}
+                </div>
+              )}
+              {!focusAgent && <StoryStrip timeline={timeline} running={running} doneCount={doneCount} runStatus={runStatus} plan={plan} />}
+              {!focusAgent && plan?.roi && (
+                <div className={`story-result ${plan.status}`}>
+                  <span className="story-result-k">{plan.status === 'complete' ? 'Result' : plan.status === 'halted' ? 'Halted' : 'Handed to a person'}</span>
+                  <span className="story-result-v">{plan.roi}</span>
+                </div>
               )}
 
               {!focusAgent && <AgentGraph agentStatus={agentStatus} running={running} risk={risk} />}
-
-              <div className="dash-tabs">
-                {SCENARIOS.map((s) => (
-                  <button key={s.id} className={`dash-tab ${scenario === s.id ? 'on' : ''}`} disabled={running} onClick={() => setScenario(s.id)}>{s.label}</button>
-                ))}
-              </div>
+              {focusAgent && <AgentCard agent={AGENT_MAP[focusAgent]} block={shownBlocks[shownBlocks.length - 1]} status={agentStatus[focusAgent]} />}
 
               <div className="stat-row">
                 <Stat lbl="Active Alert" chip="blue" ic="◉" val={<AnimatedNumber value={1} format={(n) => Math.round(n)} />} sub="ALT-22847 · CNC-07-LEI" />
                 <Stat lbl="Failure Risk" chip="red" ic="⚠" val={risk} valClass={`risk-${risk}`} sub="from reliability triage" />
-                <Stat lbl="Challenge Coverage" chip="green" ic="✓" val={<AnimatedNumber value={doneCount} format={(n) => `${Math.round(n)}/5`} />} sub="TMC challenges addressed" deltaUp />
+                <Stat lbl="Domains checked" chip="green" ic="✓" val={<AnimatedNumber value={doneCount} format={(n) => `${Math.round(n)}/5`} />} sub="agents that reported" deltaUp />
                 <Stat lbl="Downtime Exposure" chip="orange" ic="€" val={<AnimatedNumber value={exposure || 0} format={(n) => `€${Math.round(n).toLocaleString()}`} />} sub="€7,500 / h accruing" />
               </div>
 
@@ -169,7 +187,7 @@ export default function Dashboard(props) {
                     <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>
                   ))}
                   {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
-                  {plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
+                  {plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
                   <TierLegend />
                 </div>
               )}
@@ -238,10 +256,63 @@ export default function Dashboard(props) {
 
       <CommandPalette
         open={paletteOpen} setOpen={setPaletteOpen}
-        navItems={[...NAV, ...WORKFLOW_NAV]} setNav={setNav}
+        navItems={ALL_NAV} setNav={setNav}
         scenarios={SCENARIOS} onRun={onRun}
         me={me} onSwitchUser={onSwitchUser} onSignOut={onSignOut}
       />
+
+      <Guide mode={mode} pendingDecision={approvalPending}
+        onAction={(a) => {
+          if (a.run) { setNav('dashboard'); if (!running) onRun(scenario) }
+          else if (a.nav) setNav(a.nav)
+        }}
+        onCommand={(c) => {
+          if (c.cmd === 'run') {
+            if (running) return REPLIES.runBusy
+            const sc = c.scenario || scenario
+            setScenario(sc); setNav('dashboard'); onRun(sc)
+            return REPLIES.run(sc)
+          }
+          if (c.cmd === 'pending') return approvalPending ? null : REPLIES.noApproval
+          if (c.cmd === 'approve' || c.cmd === 'reject') {
+            if (!approvalPending) return REPLIES.noApproval
+            onDecide(c.cmd, c.via)
+            return c.cmd === 'approve' ? REPLIES.approved : REPLIES.rejected
+          }
+          if (c.cmd === 'stop') { if (!running) return REPLIES.notRunning; onStop(); return REPLIES.stopped }
+          if (c.cmd === 'present') { if (mode === 'live') return REPLIES.presentLive; if (running) return REPLIES.presentBusy; setNav('dashboard'); onPresent(); return REPLIES.present(scenario) }
+          if (c.cmd === 'nav') { setNav(c.nav); return REPLIES.open(c.name) }
+          if (c.cmd === 'context') {
+            const started = running || timeline.length > 0
+            const label = SCENARIOS.find((x) => x.id === scenario)?.label
+            if (c.ctx === 'page') return PAGE_HELP[nav] || null
+            if (c.ctx === 'machine') return machineReport(c.id, ALERT.machine_id, ALERT.threshold)
+            if (c.ctx === 'status') {
+              if (!started) return REPLIES.notStarted
+              if (approvalPending) return REPLIES.gateReached
+              if (running) {
+                const next = runStatus.match(/^Routing → ([^·]+)/)
+                return `The ${label} scenario is running: ${doneCount} of 5 agents have reported so far.${next ? ` Next up: ${next[1].trim()}.` : ''}`
+              }
+              if (plan) return `The ${label} run has finished. ${plan.status === 'complete' ? 'The plan is ready' : plan.status === 'halted' ? 'Safety stopped the plan' : 'It was handed to a person'}${plan.roi ? `: ${plan.roi}` : '.'}`
+              return `The run stopped after ${doneCount} of 5 agents reported.`
+            }
+            if (c.ctx === 'result') {
+              if (!plan) return running ? `No result yet: ${doneCount} of 5 agents have reported.` : REPLIES.noResult
+              const lines = plan.lines || []
+              const count = (t) => lines.filter((l) => l.tier === t).length
+              const parts = [['AUTO', 'done without asking'], ['APPROVE', 'approved by a person'], ['MONITOR', 'to keep watching'], ['ESCALATE', 'escalated']]
+                .filter(([t]) => count(t)).map(([t, d]) => `${count(t)} ${d}`)
+              return `${plan.roi ? plan.roi + '. ' : ''}${lines.length ? `The plan has ${lines.length} steps: ${parts.join(', ')}.` : ''} Open the action plan for the details.`.trim()
+            }
+            if (c.ctx === 'finding') {
+              const b = [...timeline].reverse().find((t) => t.kind === 'block' && t.agent === c.agent && t.report)
+              return b ? `${AGENT_MAP[c.agent].name}: ${b.report}` : REPLIES.noFinding
+            }
+            return null
+          }
+          return null
+        }} />
 
       {assetOpen && <AssetModal machine={selectedMachine} alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
       {coach && <Coachmark onClose={closeCoach} />}
@@ -257,8 +328,8 @@ function Coachmark({ onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
   const steps = [
-    { ic: '◉', t: 'An alert just fired', d: 'A sensor on CNC-07-LEI crossed its vibration limit. This console is the operations brain that responds.' },
-    { ic: '▶', t: 'Press Run', d: 'Six AI agents are dispatched. Watch the graph: the orchestrator routes them and they reason live, one domain at a time.' },
+    { ic: '◉', t: 'An alert just fired', d: 'A sensor on CNC-07-LEI crossed its vibration limit. This console is the team of agents that responds.' },
+    { ic: '▶', t: 'Press Run', d: 'Six AI agents are dispatched. Watch the graph: the orchestrator routes them and they reason one domain at a time.' },
     { ic: '◈', t: 'They converge on a plan', d: 'Findings combine into one costed, safety-gated action plan. Anything over €500, or any safety risk, pauses for a human.' },
     { ic: '€', t: 'It runs free', d: 'Replay mode plays the recorded run with no API key and zero cost. Live mode uses a real model when you add a key.' },
   ]
@@ -341,7 +412,7 @@ function NominalAssetModal({ machine: m, plant, onClose }) {
               <div><span>Criticality</span>B · standard</div>
               <div><span>Utilisation</span>{m.util}</div>
             </div>
-            <div className="asset-sec">Live sensors</div>
+            <div className="asset-sec">Sensors (simulated)</div>
             <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Vibration (RMS)</div><div className="asset-sensor-n">within OEM limit (6.0)</div></div><span className="asset-sensor-v ok">{m.vib} mm/s</span></div>
             <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Bearing temp</div><div className="asset-sensor-n">nominal vs baseline</div></div><span className="asset-sensor-v ok">{m.temp} °C</span></div>
             <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Spindle load</div><div className="asset-sensor-n">within envelope</div></div><span className="asset-sensor-v ok">nominal</span></div>
@@ -399,7 +470,7 @@ function AssetModal({ machine, alert: ALERT, risk, onClose }) {
               <div><span>Next window</span>{ASSET_SPEC.nextWindow}</div>
             </div>
 
-            <div className="asset-sec">Live sensors</div>
+            <div className="asset-sec">Sensors (simulated)</div>
             {ASSET_SENSORS.map((s, i) => (
               <div className="asset-sensor" key={i}>
                 <span className={`asset-dot ${s.s}`} />
@@ -517,7 +588,7 @@ function ScenariosView({ scenario, setScenario, onRun, running }) {
   return (
     <>
       <div className="dash-h">Demo Scenarios</div>
-      <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '60ch' }}>Three paths, each exercising the system differently. Pick one and run it live.</p>
+      <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '60ch' }}>Three paths, each exercising the system differently. Pick one and run it.</p>
       {SCENARIOS.map((s) => (
         <div className="panel" key={s.id} style={{ borderColor: scenario === s.id ? 'var(--accent)' : undefined }}>
           <div className="panel-h">
@@ -531,15 +602,18 @@ function ScenariosView({ scenario, setScenario, onRun, running }) {
   )
 }
 
+const AUDIT_KIND = { system: 'alert', block: 'agent', note: 'handoff', human: 'decision' }
+
 function AuditView({ timeline }) {
   return (
     <>
       <div className="dash-h">Audit Log</div>
+      <p className="page-intro">Every step of the last run, in order: the alert, what each agent concluded, the questions they passed to each other, and every human decision with how it was made. This is the record you would show an auditor, or a plant manager asking why it did that. In a live run the same events also go to a log file.</p>
       <div className="panel">
-        {timeline.length === 0 ? <div className="empty-note">No events yet, run a scenario.</div>
+        {timeline.length === 0 ? <div className="empty-note">No events yet. Run a scenario and every step appears here.</div>
           : timeline.map((t, i) => (
             <div className="pl" key={i}>
-              <span className="tier MONITOR">{t.kind}</span>
+              <span className="tier MONITOR">{AUDIT_KIND[t.kind] || t.kind}</span>
               <span className="tx">{t.kind === 'block' ? `${t.agent}: ${(t.report || '…').slice(0, 120)}` : t.text}</span>
             </div>
           ))}
@@ -557,7 +631,7 @@ function PlanView({ plan }) {
             <div className="panel-h"><span className="t">Final Plan</span><span className="sub">{plan.status}</span></div>
             {(plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
             {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
-            {plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
+            {plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
             <TierLegend />
           </div>}
     </>
@@ -601,10 +675,11 @@ function LearningView({ history = [], alert: ALERT }) {
     <>
       <div className="dash-h">Learning <span className="learn-badge">experience + feedback</span></div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '66ch' }}>
-        The system improves over time without retraining the model. Two mechanisms run today: it
-        recalls precedent (case memory) and adapts to the operator's decisions (human feedback). Two
-        more are built into the loop's design: self-critique (reflection) and prediction validation
-        (outcome), marked "design" below.
+        How the system gets better with experience, without retraining a model. One mechanism runs
+        today: it recalls similar past incidents (case memory), and each finished live run is added to
+        that memory. Three more are designed and shown here as worked examples, marked "design":
+        adapting to the plant manager's decisions, self-critique, and checking predictions against
+        what actually happened.
       </p>
 
       {/* 1. Case memory / precedent recall */}
@@ -625,27 +700,27 @@ function LearningView({ history = [], alert: ALERT }) {
 
       {/* 2. Human-feedback / preference learning */}
       <div className="panel">
-        <div className="panel-h"><span className="t">Learned from decisions</span><span className="sub">{totalRuns} run{totalRuns === 1 ? '' : 's'} on record</span></div>
+        <div className="panel-h"><span className="t">Learned from decisions <span className="learn-concept">design</span></span><span className="sub">{totalRuns} run{totalRuns === 1 ? '' : 's'} on record</span></div>
         <div className="stat-row" style={{ marginBottom: 14 }}>
           <Stat lbl="Gate approvals" chip="green" ic="✓" val={`${approvals}`} sub="expedites cleared on record" deltaUp />
           <Stat lbl="Gate rejections" chip="red" ic="✕" val={`${rejections}`} sub="paths declined" />
           <Stat lbl="Runs logged" chip="blue" ic="≣" val={`${totalRuns}`} sub="library + this session" />
-          <Stat lbl="Recommendation" chip="purple" ic="◈" val={approvals >= rejections ? 'EXPEDITE' : 'HOLD'} sub="biased by the record" />
+          <Stat lbl="Recommendation" chip="purple" ic="◈" val={approvals >= rejections ? 'EXPEDITE' : 'HOLD'} sub="what the record would suggest" />
         </div>
         <div className="pl"><span className="tier APPROVE">PATTERN</span><span className="tx">Emergency expedite has been approved {approvals} of {approvals + rejections} times on record. This informs the recommended path shown above (still gated).</span></div>
-        <div className="learn-foot">Each closed run is appended to the case library (append_case); the approve/reject tally above biases the recommended path toward how this plant manager actually decides.</div>
+        <div className="learn-foot">Each closed live run is appended to the case library (append_case). Using the approve/reject tally to steer the recommendation is the design; today the agents do not read it.</div>
       </div>
 
       {/* 3. Reflection (Reflexion) */}
       <div className="panel">
-        <div className="panel-h"><span className="t">Self-critique (reflection) <span className="learn-concept">design</span></span><span className="sub">self_eval prompt exists today</span></div>
+        <div className="panel-h"><span className="t">Self-critique (reflection) <span className="learn-concept">design</span></span><span className="sub">plan check runs today</span></div>
         {REFLECTIONS.map((r, i) => (
           <div className="learn-reflect" key={i}>
             <span className="learn-reflect-ic">✎</span>
             <div><div className="learn-reflect-n">{r.note}</div><div className="learn-reflect-d">{r.date}</div></div>
           </div>
         ))}
-        <div className="learn-foot">Today the self_eval prompt scores each plan. Persisting these critiques and replaying them into the next run is the production design (shown here as worked examples).</div>
+        <div className="learn-foot">Today a plan check (code, not a model) scores every final plan against the tier rules and sends it back once if it fails. Persisting critiques and replaying them into the next run is the production design (shown here as worked examples).</div>
       </div>
 
       {/* 4. Outcome validation */}
@@ -770,7 +845,7 @@ function ReportView({ history, onClearHistory, alert: ALERT }) {
                 <div className="panel-h"><span className="t">Final action plan</span><span className="sub">{run.plan.status}</span></div>
                 {(run.plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
                 {run.plan.text && !run.plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{run.plan.text}</div>}
-                {run.plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{run.plan.roi}</span></div>}
+                {run.plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{run.plan.roi}</span></div>}
               </div>
             </div>
           )}
@@ -887,9 +962,9 @@ function CostView({ mode = 'replay' }) {
       <div className="dash-h">Cost & Feasibility</div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
         {live ? (
-          <>A full 6-agent run is roughly <b>~18k tokens</b> — about <b>~€0.005</b> on a paid model, or <b>free quota</b> on a free tier (it still uses your daily allowance, so it isn't truly €0).</>
+          <>An estimated full 6-agent run is roughly <b>~18k tokens</b>, about <b>~€0.005</b> on a paid model, or <b>free quota</b> on a free tier (it still uses your daily allowance, so it isn't truly €0).</>
         ) : (
-          <>A full 6-agent run is roughly <b>~18k tokens</b> (after a ~62% transcript trim). This is a <b>recorded replay</b>, so it makes <b>no API calls and costs €0</b>.</>
+          <>An estimated full 6-agent run is roughly <b>~18k tokens</b> (after a ~62% transcript trim; not yet benchmarked against a provider). This is a <b>recorded replay</b>, so it makes <b>no API calls and costs €0</b>.</>
         )}
       </p>
       <div className="stat-row" style={{ marginBottom: 16 }}>
@@ -919,6 +994,99 @@ function CostView({ mode = 'replay' }) {
         <div className="pl"><span className="tier APPROVE">SWAP</span><span className="tx">One-line provider switch when a free tier rate-limits.</span></div>
         <div className="pl"><span className="tier AUTO">REPLAY</span><span className="tx">Demo day uses the recorded replay, zero API calls, can't fail.</span></div>
       </div>
+    </>
+  )
+}
+
+// Four-step progress strip: the story of a run, readable at a glance.
+function StoryStrip({ timeline, running, doneCount, runStatus, plan }) {
+  const started = running || timeline.length > 0
+  const decision = timeline.find((t) => t.kind === 'human' && t.text.startsWith('Human decision'))
+  const humanDone = !!decision
+  const rejected = humanDone && /REJECT/i.test(decision.text)
+  const waiting = runStatus === 'Awaiting human approval'
+  const stopped = runStatus === 'Stopped'
+  const gateText = humanDone ? (rejected ? 'A person rejected the spend' : 'A person approved the spend')
+    : waiting ? 'Waiting for a person: over €500'
+    : plan ? (plan.status === 'complete' ? 'Not needed: under €500' : 'Not reached')
+    : 'Anything over €500 stops here'
+  const steps = [
+    { t: 'Alert', s: started ? 'One alert woke the agents' : 'A sensor crosses its limit', st: started ? 'done' : 'todo' },
+    { t: 'Agents', s: stopped && !plan ? `Stopped after ${doneCount} of 5` : `${doneCount} of 5 domains checked`,
+      st: doneCount === 5 ? 'done' : plan || stopped ? 'skip' : waiting ? 'done' : started ? 'now' : 'todo' },
+    { t: 'Human gate', s: gateText, st: humanDone ? 'done' : waiting ? 'now' : plan ? 'skip' : 'todo' },
+    { t: 'Plan', s: plan ? (plan.status === 'complete' ? 'Costed plan ready' : plan.status === 'halted' ? 'Stopped by safety' : 'Handed to a person') : stopped ? 'Run stopped' : 'One costed, safety-checked plan', st: plan ? 'done' : 'todo' },
+  ]
+  return (
+    <ol className="story-strip" aria-label="Run progress">
+      {steps.map((x, i) => (
+        <li key={x.t} className={`story-step ${x.st}`}>
+          <span className="story-n">{x.st === 'done' ? '✓' : x.st === 'skip' ? '–' : i + 1}</span>
+          <span className="story-t">{x.t}</span>
+          <span className="story-s">{x.s}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+// What one agent is for, the tools it can call, the rule it cannot break, and what it
+// concluded in this run. Same text Titan uses, from agentsMeta.js.
+function AgentCard({ agent, block, status }) {
+  return (
+    <div className="agent-card">
+      <p className="agent-card-what">{agent.what}</p>
+      <div className="agent-card-grid">
+        <div>
+          <div className="agent-card-h">Tools it can call</div>
+          <ul className="agent-card-tools">
+            {agent.tools.map(([n, d]) => <li key={n}><code>{n}</code><span>{d}</span></li>)}
+          </ul>
+        </div>
+        <div>
+          <div className="agent-card-h">The rule it cannot break</div>
+          <p className="agent-card-limit">{agent.limit}</p>
+          <div className="agent-card-h">In this run</div>
+          <p className="agent-card-run">{block?.report ? block.report : status === 'active' ? 'Working on it now.' : 'Not run yet. Press Run on the Overview, or tell Titan "run the cascade".'}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// How Titan lines up with the EU AI Act. A reading for discussion, not legal advice.
+const AI_ACT_ROWS = [
+  ['Human oversight', 'Art. 14', 'A person must approve any spend over €500; actions that touch a safety system are flagged for a safety officer; the compliance agent can stop the plan; every run can be stopped.', 'Built'],
+  ['Record-keeping', 'Art. 12', 'In live runs every step goes to the audit file, including how each decision arrived (dialog, Titan, Slack, email, or a timeout with no decision). Replay shows the same on the Audit log page.', 'Built'],
+  ['Information for the company using it', 'Art. 13', 'Each remaining-life prediction says whether it comes from the fitted model or from declared limits; the README and findings register say what is and is not measured.', 'Built'],
+  ['Telling people it is AI', 'Art. 50', 'Titan introduces itself as an AI assistant and labels which answers are written and which come from a model.', 'Built'],
+  ['Accuracy and robustness', 'Art. 15', 'The rules in code are tested (208 checks, 34 scenarios). What the model itself decides is not measured yet.', 'Partial'],
+  ['Data quality', 'Art. 10', 'The remaining-life model is trained on NASA engine data with leak-free features; the plant data is simulated.', 'Partial'],
+  ['AI literacy', 'Art. 4', 'Both the builder and the company using it must make sure people are trained: planners need to know what the agents can and cannot do.', 'Provider and deployer'],
+]
+
+function AiActView() {
+  return (
+    <>
+      <div className="dash-h">EU AI Act</div>
+      <p className="page-intro">How Titan lines up with the EU AI Act. This is a reading for discussion, not legal advice.</p>
+      <div className="panel aiact-class">
+        <div className="panel-h"><span className="t">Risk class: most likely not high-risk</span><span className="sub">Art. 6, Annexes I and III</span></div>
+        <p>Titan is decision support: it recommends maintenance actions, a person must approve spend over €500, and actions that touch a safety system are flagged for a safety officer. That most likely keeps it outside the high-risk list.</p>
+        <p><b>It would change if</b> Titan directly controlled machine safety functions (then the machinery rules in Annex I apply), or allocated work to people based on their behaviour or traits (employment, Annex III).</p>
+        <p>Most duties below are only required for high-risk systems. Titan is built as if it were one, so it is ready if its role grows.</p>
+      </div>
+      <div className="panel">
+        <div className="panel-h"><span className="t">What the Act asks, and where it is in Titan</span></div>
+        {AI_ACT_ROWS.map(([req, art, where, st]) => (
+          <div className="aiact-row" key={req}>
+            <div className="aiact-req"><b>{req}</b><span>{art}</span></div>
+            <div className="aiact-where">{where}</div>
+            <span className={`aiact-st ${st === 'Built' ? 'ok' : st === 'Partial' ? 'part' : 'dep'}`}>{st}</span>
+          </div>
+        ))}
+      </div>
+      <p className="page-intro">For a full readiness assessment of an AI system under the Act, see the companion project <a href="https://github.com/ma731/ai-act-readiness" target="_blank" rel="noreferrer">ai-act-readiness</a>.</p>
     </>
   )
 }

@@ -1,0 +1,69 @@
+/* Guide: floating help chat. Own tokens so it looks the same on the showcase and in the console. */
+.guide-fab, .guide {
+  --g-card: #ffffff; --g-bg: #f3f5f8; --g-ink: #14171c; --g-ink-2: #555e6b; --g-line: #e4e7ec;
+  --g-accent: #0fbe85; --g-accent-ink: #04130d;
+  font-family: 'Fira Sans', system-ui, sans-serif;
+}
+.guide-fab {
+  position: fixed; z-index: 70; right: max(20px, env(safe-area-inset-right, 0px)); bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 9px; height: 48px; padding: 0 18px 0 8px; border: 0; border-radius: 999px;
+  background: var(--g-ink); color: #fff; font-weight: 700; font-size: 14.5px; cursor: pointer;
+  box-shadow: 0 14px 34px -12px rgba(10, 20, 15, 0.55); transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.guide-fab:active { transform: scale(0.96); }
+.guide-fab-ic { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--g-accent); color: var(--g-accent-ink); font-size: 15px; font-weight: 800; }
+.guide {
+  position: fixed; z-index: 71; right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 60px);
+  width: min(400px, calc(100vw - 32px)); height: min(580px, calc(100vh - 120px)); display: flex; flex-direction: column;
+  background: var(--g-card); color: var(--g-ink); border: 1px solid var(--g-line); border-radius: 20px; overflow: hidden;
+  box-shadow: 0 34px 90px -24px rgba(10, 20, 15, 0.45); animation: guide-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes guide-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+.guide-h { display: flex; align-items: center; gap: 12px; padding: 14px 14px 12px 16px; border-bottom: 1px solid var(--g-line); }
+.guide-t { font-weight: 800; font-size: 17px; }
+.guide-s { font-size: 12px; color: var(--g-ink-2); margin-top: 2px; }
+.guide-body { flex: 1; overflow-y: auto; padding: 14px 14px 6px; display: flex; flex-direction: column; gap: 12px; }
+.guide-hello { display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.5; }
+.guide-hello span { color: var(--g-ink-2); }
+.guide-msg { display: flex; flex-direction: column; gap: 6px; max-width: 92%; }
+.guide-msg.me { align-self: flex-end; }
+.guide-bubble { padding: 10px 13px; border-radius: 14px 14px 14px 4px; background: var(--g-bg); font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+.guide-msg.me .guide-bubble { background: var(--g-ink); color: #fff; border-radius: 14px 14px 4px 14px; }
+.guide-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.guide-src { font-size: 11px; color: var(--g-ink-2); }
+.guide-show { border: 0; background: var(--g-accent); color: var(--g-accent-ink); font-weight: 700; font-size: 12.5px; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.guide-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.guide-chip { border: 1px solid var(--g-line); background: var(--g-card); color: var(--g-ink); font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 999px; cursor: pointer; text-align: left; transition: border-color 0.15s; }
+.guide-chip:hover { border-color: var(--g-accent); }
+.guide-typing { display: inline-flex; gap: 5px; padding: 13px 14px; }
+.guide-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--g-ink-2); animation: guide-dot 1s infinite ease-in-out; }
+.guide-typing i:nth-child(2) { animation-delay: 0.15s; } .guide-typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes guide-dot { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+.guide-in { display: flex; gap: 8px; padding: 10px 12px 12px; border-top: 1px solid var(--g-line); }
+.guide-in input { flex: 1; min-width: 0; border: 1px solid var(--g-line); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; color: var(--g-ink); background: var(--g-card); outline: none; }
+.guide-in input:focus { border-color: var(--g-accent); }
+.guide-in button { width: 42px; border: 0; border-radius: 12px; background: var(--g-ink); color: #fff; font-size: 17px; cursor: pointer; }
+.guide-in button:disabled { opacity: 0.35; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .guide { animation: none; } .guide-typing i { animation: none; opacity: 0.6; } }
+
+.guide-orb { width: 34px; height: 34px; flex: none; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d9fff0, var(--g-accent) 55%, #077a55); box-shadow: 0 0 0 0 rgba(15, 190, 133, 0.5); }
+.guide-orb.on { animation: guide-listen 1.1s ease-out infinite; }
+.guide-orb.busy { animation: guide-think 1.2s ease-in-out infinite; }
+@keyframes guide-listen { 0% { box-shadow: 0 0 0 0 rgba(15, 190, 133, 0.55); } 100% { box-shadow: 0 0 0 14px rgba(15, 190, 133, 0); } }
+@keyframes guide-think { 50% { transform: scale(0.88); opacity: 0.75; } }
+.guide-mute { width: 36px; height: 36px; border: 1px solid var(--g-line); background: var(--g-card); border-radius: 10px; cursor: pointer; font-size: 15px; }
+.guide-mic { width: 42px; flex: none; border: 1px solid var(--g-line) !important; background: var(--g-card) !important; color: var(--g-ink) !important; display: grid; place-items: center; }
+.guide-mic.on { background: #e5484d !important; border-color: #e5484d !important; color: #fff !important; animation: guide-listen 1.1s ease-out infinite; }
+.guide-bubble.act { background: #e3f7ee; }
+.guide-said { opacity: 0.7; }
+.guide-chips-l { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--g-ink-2); margin-top: 2px; }
+.guide-chip.do { border-color: color-mix(in srgb, var(--g-accent) 55%, var(--g-line)); background: #f2fbf7; }
+.guide-note { margin: 0 12px; padding: 8px 10px; border-radius: 10px; background: #fff4e5; font-size: 12.5px; color: #6b4a12; }
+@media (prefers-reduced-motion: reduce) { .guide-orb.on, .guide-orb.busy, .guide-mic.on { animation: none; } }
+.guide-play { width: 24px; height: 24px; border: 1px solid var(--g-line); background: var(--g-card); border-radius: 50%; cursor: pointer; font-size: 9px; color: var(--g-ink-2); display: grid; place-items: center; padding: 0; }
+.guide-fab.alert { background: #b45309; animation: guide-listen 1.4s ease-out infinite; }
+.guide-decide { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; background: #fff7e6; border-bottom: 1px solid #f3dfb5; font-size: 13px; font-weight: 600; color: #6b4a12; }
+.guide-decide span { flex: 1 1 160px; }
+.guide-decide button { border: 0; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; background: var(--g-accent); color: var(--g-accent-ink); }
+.guide-decide button.no { background: #fff; color: #9b1c1c; border: 1px solid #f1c4c4; }
+@media (prefers-reduced-motion: reduce) { .guide-fab.alert { animation: none; } }

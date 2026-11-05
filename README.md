@@ -17,6 +17,11 @@ action plan: 116h of unplanned downtime avoided for a 3,200 EUR expedite (the ol
 was wrong, see [F-09](eval/FINDINGS.md)). Regenerate it with `python scripts/record_demo.py`, which
 drives the real console rather than being a screen capture that quietly goes stale.*
 
+> Lost? Press **Ask Titan** (bottom right), the console's AI assistant. It explains the project, runs
+> scenarios, approves or rejects at the gate, and opens any page, by text or push-to-talk voice.
+> In Replay it uses written answers; connected live, your own model answers from
+> [`prompts/guide.md`](prompts/guide.md).
+>
 > The demo runs in Replay mode: a recorded run played back in the browser. No API key, no
 > cost, nothing to install. The console labels it as a recording rather than passing it off
 > as live.
@@ -62,7 +67,7 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Triage gate | default 48 ticks: **192** readings, **1** wake, **0.52%** wake rate (dry run) |
 | RUL model | **RMSE 17.0 cycles** on **707** held-out engines (NASA C-MAPSS), against a mean-predictor baseline of 41.8 ([backtest](eval/results/rul_backtest.md)) |
 | Live cost and latency | instrumented per run; provider benchmark not yet measured |
-| Tests | **293** passed, **4** provider-dependent tests skipped in the offline validation |
+| Tests | **363** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
 `python -m stream.run`. The scorecard is generated; this table is a summary.
@@ -190,7 +195,7 @@ They never make a decision or commit anything irreversible.
 Every agent is a LangGraph `create_react_agent`: its own model picks which of its tools to
 call and loops until it is done. Agents communicate by appending their full report to one
 shared transcript that every later agent reads, and an agent may end with
-`FOLLOWUP: <agent> — <question>` to put a direct question to another specialist.
+`FOLLOWUP: <agent> - <question>` to put a direct question to another specialist.
 
 ---
 
@@ -351,6 +356,21 @@ Langfuse for a per-agent waterfall. Both are off by default and neither can brea
 
 ---
 
+## Agent patterns
+
+Mapped to Anthropic's [Building Effective Agents](https://www.anthropic.com/research/building-effective-agents). The rule throughout: guarantees in code, judgement in the model.
+
+| Pattern | In Titan |
+|---|---|
+| Augmented model | Each specialist has retrieval over the technical corpus, its own tools, and case memory |
+| Routing | A code-only triage gate decides which alerts wake the agents; the supervisor picks the next specialist from what `policy.allowed_next` permits |
+| Orchestrator-workers | One supervisor, five ReAct specialists that choose their own tools |
+| Evaluator-optimizer | `policy.check_plan` checks the final plan; one model revision, then a correction in code |
+| Parallelisation | Supply chain and production in one step with `TOS_PARALLEL=1` (off by default; [why](docs/decisions/009-apply-building-effective-agents.md)) |
+| Human checkpoint | The €500 approval gate, write-once |
+| Tool design | Numeric arguments accept arithmetic strings instead of failing the call; errors name the argument |
+| Transparency | Every route, tool call, handoff, check and decision is a logged event |
+
 ## The learning loop
 
 Perceive, reason, act, learn, without retraining anything.
@@ -360,7 +380,8 @@ Perceive, reason, act, learn, without retraining anything.
 | Case memory recall | live | `recall_similar_cases` pulls the closest past case (predicted vs actual life, the decision, the outcome) into the Reliability agent |
 | Write-back | live | ordinary runs append to `data/memory/case_library.json`; evaluation and stream simulation leave it unchanged |
 | Outcome validation | live, self-closing | `reconcile_due()` runs at the start of each cycle and closes any case whose outcome is now known, updating life-estimate accuracy |
-| Reflection and signature down-weighting | design stage | the `self_eval` prompt scores each plan today; replaying those critiques and down-weighting signatures that miss is the planned next step, and is labelled "design" in the console |
+| Plan check (evaluator) | live | `policy.check_plan` scores every written plan against the tier rules; a failing plan gets one revision, then is corrected in code ([decision 009](docs/decisions/009-apply-building-effective-agents.md)). Earlier versions of this README said the `self_eval` prompt scored each plan; no code loaded it ([F-10](eval/FINDINGS.md)) |
+| Reflection and signature down-weighting | design stage | replaying critiques into the next run and down-weighting signatures that miss is the planned next step, labelled "design" in the console |
 
 ---
 
@@ -377,8 +398,26 @@ the audit log, run history with Markdown export, presenter auto-play, a command 
 Replay/Live toggle, an in-app provider picker, and the slide deck at `/deck.html`. Details
 in [`webapp/README.md`](webapp/README.md).
 
+- **Overview as a story:** a Run button, the scenario picker and a four-step strip (alert,
+  agents, human gate, plan) with a one-line result.
+- **Every agent page explains itself:** what the agent is for, the tools it can call, the
+  rule it cannot break, and what it concluded in this run.
+- **Titan, the assistant:** written answers that work on the static demo; with a model
+  connected, `/api/guide` answers from `prompts/guide.md`. Push-to-talk voice and replies
+  pre-recorded with a neural voice (`scripts/build_titan_voice.py`). Requests become
+  actions only when they are short, direct orders; a spoken approval needs a spoken "yes";
+  questions never trigger actions and model output never reaches one.
+- **EU AI Act page:** the likely risk class, what would change it, and where oversight,
+  record-keeping, transparency, accuracy and data quality live in the console. A reading,
+  not legal advice; the companion project
+  [ai-act-readiness](https://github.com/ma731/ai-act-readiness) does the full assessment.
+- **Honest machine checks:** asking about another machine reports its readings and that the
+  triage gate raises no alert, instead of replaying the CNC-07 incident.
+
 The backend exposes `/api/run` (SSE), `/api/decision`, `/api/decision/link`,
-`/api/slack/interactions`, `/api/providers`, `/api/config` and `/api/health`. The health
+`/api/slack/interactions`, `/api/providers`, `/api/config`, `/api/guide` and `/api/health`.
+Every approval decision is logged with how it arrived (console, Titan, Slack, email, or a
+timeout with no human decision). The health
 endpoint reports what is actually wired up: the active provider, the approval channel, the
 retrieval mode, the corpus size and the policy constants.
 
@@ -483,11 +522,11 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
 
 ## Docs
 
-- [Decision records](docs/decisions/) — why it is built this way, including the change we
+- [Decision records](docs/decisions/): why it is built this way, including the change we
   measured and rejected, and the two guarantees the evaluation caught us breaking.
-- [What carries to the next problem](docs/REUSABILITY.md) — what is domain-specific, what
+- [What carries to the next problem](docs/REUSABILITY.md): what is domain-specific, what
   is scaffolding, and what it would actually take to move this somewhere else.
-- [Evaluation findings](eval/FINDINGS.md) — every miss the suite has surfaced.
+- [Evaluation findings](eval/FINDINGS.md): every miss the suite has surfaced.
 
 [`docs/`](docs/) and [`docs/appendix/`](docs/appendix/): the prompt pack, the tool catalog,
 the risk matrix and FMEA, the confidence policy, the sequence diagram and audit log schema,

@@ -39,7 +39,7 @@ const happy = [
 
   { t: 650, type: 'route', to: 'production', allowed: ['production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'production', tool: 'robot_cell_status', input: { plant: 'LEI' }, result: { 'CNC-08': 'idle' } },
-  { t: 550, type: 'tool_call', agent: 'production', tool: 'shift_conflict_check', input: { target: 'CNC-08' }, result: { conflict: 'op_Keller' } },
+  { t: 550, type: 'tool_call', agent: 'production', tool: 'shift_conflict_check', input: { target: 'CNC-05' }, result: { conflict: 'op_Keller' } },
   { t: 600, type: 'tool_call', agent: 'production', tool: 'job_reroute', input: { from: 'CNC-07', to: 'CNC-08' }, result: { rerouted: 5 } },
   { t: 900, type: 'agent_report', agent: 'production', report: 'Rerouted jobs J4421-J4425 off CNC-07. First-choice CNC-05 hit an operator conflict (op_Keller, overlapping shift), so adapted to CNC-08, idle, no human-robot conflict. Throughput preserved during the maintenance window.' },
 
@@ -60,7 +60,7 @@ const happy = [
 
 const HUMAN_APPROVED = [
   { t: 250, type: 'human_decision', decision: 'APPROVED', by: 'Plant Manager' },
-  { t: 700, type: 'plan', status: 'complete', roi: '€870k avoided · 271.9:1', lines: [
+  { t: 700, type: 'plan', status: 'complete', roi: '116h of downtime avoided for €3,200 (€870k at production value, an upper bound)', lines: [
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM safe limits (buys runway to the window).' },
     { tier: 'AUTO', txt: 'Reroute jobs J4421-J4425 to CNC-08-LEI; notify shift lead.' },
     { tier: 'APPROVE', txt: '✓ Authorized, Schaeffler P-4421 expedite, 18h, €3,200.' },
@@ -118,9 +118,9 @@ const edge = [
 
   { t: 650, type: 'route', to: 'compliance_safety', allowed: ['compliance_safety'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'compliance_safety', tool: 'safety_gate', input: { actions: 3 }, result: { verdict: 'SIGN-OFF' } },
-  { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'All actions within OSHA/OEM limits and under the spend ceiling. VERDICT: SIGN-OFF. No human gate needed, the plan can execute autonomously.' },
+  { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'All actions within OSHA/OEM limits and under the spend ceiling. VERDICT: SIGN-OFF. No human gate needed, the plan can go ahead without approval.' },
 
-  { t: 800, type: 'plan', status: 'complete', roi: '€870k avoided · €420 spent', lines: [
+  { t: 800, type: 'plan', status: 'complete', roi: '116h of downtime avoided with a cross-plant transfer under the €500 ceiling, so no human gate', lines: [
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM limits.' },
     { tier: 'AUTO', txt: 'Cross-plant transfer P-4421 from MUC, €420, 36h (under the €500 ceiling, no approval needed).' },
     { tier: 'AUTO', txt: 'Reroute jobs J4421-J4425 to CNC-08-LEI for the transfer window.' },

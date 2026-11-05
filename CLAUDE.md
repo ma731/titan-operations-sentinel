@@ -204,6 +204,7 @@ python scripts/fetch_prognostics_data.py   # download NASA C-MAPSS (~12 MB, once
 python -m ml.train_rul FD001          # retrain + rebacktest the RUL model (needs requirements-ml.txt)
 python -m eval.run_eval --live         # adds the live agent suite (costs tokens)
 python -m stream.run                   # continuous alert stream, triage only, no model calls
+TOS_PARALLEL=1 python scripts/run_demo.py  # supply chain + production in one step (decision 009)
 python -m stream.run --live            # let the stream actually trigger agent runs
 python -m ruff check .                 # lint (CI runs this)
 docker compose up --build              # console on :5173, API on :8000, no key needed

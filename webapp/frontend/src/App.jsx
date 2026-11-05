@@ -5,13 +5,14 @@ import Showcase from './Showcase.jsx'
 import Dashboard from './Dashboard.jsx'
 import SignIn from './SignIn.jsx'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
+import { machineReport } from './fleet.js'
 
 const RATE_PER_S = 180000 / 86400
 const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
 const TICKER = [
   'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h',
-  'DOWNTIME €180,000 / day', '€870k DOWNTIME AVOIDED', '5 TMC CHALLENGES',
+  'DOWNTIME €180,000 / day', '116h DOWNTIME AVOIDED FOR €3,200', '5 DOMAINS',
   'HUMAN GATE > €500', 'RUNS ON FREE-TIER GEMINI',
 ]
 
@@ -175,25 +176,47 @@ export default function App() {
   }
 
   const submitCommand = (text) => {
+    // Asking about another machine does not replay the CNC-07 incident as if it were
+    // that machine: report what the triage gate sees there instead.
+    const m = (text || '').toLowerCase().match(/\b(cnc)[- ]?0?(\d)\b|\brob(?:ot)?[- ]?(?:cell[- ]?)?0?(\d)\b/)
+    if (m) {
+      const id = m[1] ? `CNC-0${m[2]}-LEI` : `ROB-0${m[3]}-LEI`
+      const note = machineReport(id, ALERT.machine_id, ALERT.threshold)
+      if (note) {
+        reset()
+        pushItem({ kind: 'human', text: `Operator, ${text}` })
+        pushItem({ kind: 'system', text: note })
+        setRunStatus(`Checked ${id}: no alert`)
+        return
+      }
+    }
     const scen = scenarioFor(text)
     setScenario(scen)
     run(scen, text)
   }
 
-  const resolve = (choice) => {
+  // One decision per gate, whichever way it arrives (dialog, Titan, presenter mode).
+  // The record says how it was made, so a typed or spoken approval is never hidden.
+  const approvalRef = useRef(null)
+  approvalRef.current = approval
+  const resolve = (choice, via = 'approval dialog') => {
+    if (!approvalRef.current) return
+    approvalRef.current = null
+    setApproval(null)
     if (mode === 'live') {
-      setApproval(null)
-      fetch('/api/decision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: choice }) }).catch(() => {})
+      pushItem({ kind: 'note', text: `Decision entered through the ${via}` })
+      fetch('/api/decision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: choice, via }) }).catch(() => {})
       return
     }
-    queueRef.current = RESOLUTIONS[choice].map((e) => ({ ...e })); setApproval(null); pump()
+    queueRef.current = RESOLUTIONS[choice].map((e) => (e.type === 'human_decision' ? { ...e, by: `${e.by} · via ${via}` } : { ...e }))
+    pump()
   }
 
   // ---- presenter (hands-free) mode ----
   const present = (scen = scenario) => { setPresenting(true); run(scen) }
   useEffect(() => {                         // auto-approve the human gate while presenting
     if (!presenting || !approval) return
-    const id = setTimeout(() => resolve('approve'), 3800)
+    const id = setTimeout(() => resolve('approve', 'presenter mode (auto)'), 3800)
     return () => clearTimeout(id)
   }, [presenting, approval])               // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (completed) setPresenting(false) }, [completed])
@@ -255,6 +278,7 @@ export default function App() {
         onCommand={submitCommand}
         history={history} onClearHistory={clearHistory}
         presenting={presenting} onPresent={() => present(scenario)}
+        approvalPending={!!approval} onDecide={resolve}
       />
       {approval && <ApprovalModal req={approval} onApprove={() => resolve('approve')} onReject={() => resolve('reject')} />}
     </>
@@ -279,7 +303,7 @@ function Topbar({ scenario, setScenario, mode, setMode, running, onRun, clock, o
         <div className="mark" onClick={onBack} title="Back to showcase" style={{ cursor: 'pointer' }}>T</div>
         <div>
           <div className="title">Titan Operations Sentinel</div>
-          <div className="sub">Multi-agent operations brain</div>
+          <div className="sub">Multi-agent operations console</div>
         </div>
       </div>
       <div className="spacer" />
@@ -357,7 +381,7 @@ function IdleHero() {
     <div className="console-hero">
       <div className="eyebrow">◈ Standing by · Titan Leipzig Plant 7</div>
       <h1>One alert. Five domains. <em>One costed plan.</em></h1>
-      <p className="lead">Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents perceive, reason across every domain, and converge on a safety-gated action plan, with a human in the loop on every euro.</p>
+      <p className="lead">When a machine signals failure, six AI agents perceive, reason across every domain, and converge on a safety-gated action plan, with a human in the loop on every euro.</p>
       <div className="alert-card">
         <span className="pulse" />
         <div className="ac-body">
@@ -377,9 +401,9 @@ function ApprovalModal({ req, onApprove, onReject }) {
         <div className="body">
           <div className="kicker">◈ Human-in-the-loop · approval required</div>
           <h2>{req.question}</h2>
-          <p>This spend exceeds the agent's autonomous authority. It cannot self-approve, a human must decide.</p>
+          <p>This spend is over the agents' €500 limit. They cannot approve it themselves: a person must decide.</p>
           <div className="figure">€{(req.amount_eur ?? 0).toLocaleString()}</div>
-          <div className="ceiling">€{req.ceiling_eur} autonomous ceiling · routed to Plant Manager</div>
+          <div className="ceiling">€{req.ceiling_eur} agent spending limit · routed to Plant Manager</div>
           <div className="actions">
             <button className="btn approve" onClick={onApprove}>✓ Approve</button>
             <button className="btn reject" onClick={onReject}>✕ Reject</button>

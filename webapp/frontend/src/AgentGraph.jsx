@@ -23,7 +23,7 @@ export default function AgentGraph({ agentStatus = {}, running, risk }) {
       <div className="ag-stars" />
 
       <div className="ag-cap">
-        <span className="ag-cap-t">Live Orchestration</span>
+        <span className="ag-cap-t">Agent orchestration</span>
         <span className="ag-cap-s">{running ? (anyActive ? 'supervisor routing…' : 'engaging agents…') : 'standing by'}</span>
       </div>
 

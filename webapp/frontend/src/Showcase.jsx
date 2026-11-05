@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { animate, stagger } from 'animejs'
+import Guide from './Guide.jsx'
+import { REPLIES } from './titanCommands.js'
 import AgentGraph from './AgentGraph.jsx'
 import Logo from './Logo.jsx'
 
@@ -10,26 +12,26 @@ import Logo from './Logo.jsx'
 const shot = (name) => `${import.meta.env.BASE_URL}shots/${name}.png`
 
 const HERO_STATE = { reliability: 'done', supply_chain: 'done', production: 'active', quality: 'idle', compliance_safety: 'idle' }
-const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€180,000 / day AT RISK', '€870k DOWNTIME AVOIDED', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
+const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€180,000 / day AT RISK', '116h DOWNTIME AVOIDED FOR €3,200', '6 AI AGENTS', '5 DOMAINS', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
 
 const STATS = [
-  { n: '6', l: 'Autonomous agents' },
-  { n: '5', l: 'TMC challenges' },
-  { n: <>€870<span className="g">k</span></>, l: 'Downtime avoided (upper bound)' },
-  { n: <>€0<span className="g"></span></>, l: 'Runs on free tier' },
+  { n: '6', l: 'AI agents' },
+  { n: '5', l: 'Domains checked' },
+  { n: <>116<span className="g">h</span></>, l: 'Downtime avoided for €3,200' },
+  { n: <>€0<span className="g"></span></>, l: 'Per replay run' },
 ]
 
 const PROJECTS = [
   {
-    id: 'console', cat: 'Demo', tag: 'Live Demo', title: 'Live Operations Console', year: '2026',
+    id: 'console', cat: 'Demo', tag: 'Demo', title: 'Operations Console', year: '2026',
     bg: 'var(--c-dark)', dark: true, feature: true, span: 2, img: shot('console'),
-    blurb: 'Watch six agents perceive, reason across five domains, and converge on one costed plan, live.',
+    blurb: 'Watch six agents perceive, reason across five domains, and converge on one costed plan. Replay a recorded run, or go live with your own key.',
     launch: true,
   },
   {
     id: 'agents', cat: 'Architecture', tag: 'Architecture', title: 'Six-Agent Orchestrator', year: '2026',
     bg: 'var(--c-lav)', img: shot('agents'),
-    blurb: 'An LLM supervisor routes autonomous ReAct specialists and lets them converse through a shared transcript.',
+    blurb: 'An LLM supervisor routes ReAct specialists that pick their own tools, and lets them converse through a shared transcript.',
   },
   {
     id: 'approval', cat: 'Safety', tag: 'Human-in-the-loop', title: 'The €500 Approval Gate', year: '2026',
@@ -54,16 +56,16 @@ const PROJECTS = [
 ]
 
 const DETAILS = {
-  console: ['Six agents reason live over one sensor alert', 'Supervisor routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
-  agents: ['An LLM supervisor routes between 6 agents', 'Each specialist is an autonomous ReAct agent', 'They converse through one shared transcript', 'FOLLOWUP lets an agent ask another directly'],
+  console: ['Six agents reason over one sensor alert', 'Supervisor routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
+  agents: ['An LLM supervisor routes between 6 agents', 'Each specialist is a ReAct agent that picks its own tools', 'They converse through one shared transcript', 'FOLLOWUP lets an agent ask another directly'],
   approval: ['€500 autonomy ceiling on spend', 'Anything above pauses the whole plan', 'interrupt() gate → human approve / reject', 'Compliance can HALT independently of cost'],
-  cascade: ['CNC-07-LEI bearing failure predicted 52-76h out', '€180,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each behaves differently, gate / autonomous / human review'],
+  cascade: ['CNC-07-LEI bearing failure predicted 52-76h out', '€180,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each ends differently: human gate / under the ceiling / human review'],
   compliance: ['Every proposed action gated vs OSHA / OEM limits', 'Compliance can HALT the entire plan', 'Full audit trail assembled per run', 'Safety is a hard override, not a suggestion'],
   feasible: ['Runs on free Gemini / OpenRouter tiers', '~62% transcript token trim', 'Recorded replay = €0, can-not-fail demo', 'One-line provider swap when limits bite'],
 }
 
 const STEPS = [
-  { n: '01', t: 'Perceive', d: 'A sensor alert arrives; the orchestrator triages 22k signals to the critical asset.' },
+  { n: '01', t: 'Perceive', d: 'A plant raises over 22,000 alerts a day. A code-only gate decides which ones wake the agents.' },
   { n: '02', t: 'Route', d: 'A supervisor decides which specialist acts next, guided autonomy, not a fixed script.' },
   { n: '03', t: 'Reason', d: 'Each agent picks its own tools, reasons, and reports into a shared transcript.' },
   { n: '04', t: 'Converge', d: 'Findings combine into one costed, safety-gated plan across five domains.' },
@@ -76,10 +78,10 @@ const PILLARS = [
   { n: '02', t: 'Input & context', d: 'Trigger: a sensor alert. Inputs: telemetry, inventory, suppliers, production, quality, compliance. Memory: shared transcript + run checkpoints.' },
   { n: '03', t: 'Tools & actions', d: '18 tools across the agents (read / write / execute). Spend over €500 or any safety action needs human approval.' },
   { n: '04', t: 'Lifecycle', d: 'Perceive the alert, reason across five domains, act on a plan, and learn: case memory, human feedback, self-critique, and outcome validation.' },
-  { n: '05', t: 'Architecture', d: 'Multi-agent: an LLM orchestrator routes five autonomous ReAct specialists that converse through one shared transcript.' },
+  { n: '05', t: 'Architecture', d: 'Multi-agent: an LLM orchestrator routes five ReAct specialists that converse through one shared transcript.' },
   { n: '06', t: 'Risks & guardrails', d: 'Hallucination guard (it refuses thin data), Compliance HALT, the €500 ceiling, and an interrupt() human gate.' },
-  { n: '07', t: 'Example run', d: 'The Friday Cascade: bearing failure 52-76h out, parts gap, ROI math, then a human approves the expedite. Three live paths.' },
-  { n: '08', t: 'Tech stack', d: 'Python + LangGraph for the graph; FastAPI + React/Vite for this console. Provider-agnostic LLM (Gemini, Groq, Azure), hosted on Azure.' },
+  { n: '07', t: 'Example run', d: 'The Friday Cascade: bearing failure 52-76h out, parts gap, value math, then a human approves the expedite. Three scenarios.' },
+  { n: '08', t: 'Tech stack', d: 'Python + LangGraph for the graph; FastAPI + React/Vite for this console. Provider-agnostic LLM (Gemini, Groq, Azure, Ollama). Docker for local runs; this demo is a static replay on GitHub Pages.' },
 ]
 const FILTERS = ['All', 'Demo', 'Architecture', 'Safety', 'Engineering']
 
@@ -129,7 +131,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         <div className="sc-nav-inner">
           <div className="sc-logo"><Logo size={24} accent="#0fbe85" /> Titan Operations Sentinel</div>
           <div className="links">
-            <a onClick={onLaunch}>Live demo</a>
+            <a onClick={onLaunch}>Demo</a>
             <a href="#work">Work</a>
             <a href="#contact">Approach</a>
             {user && <a onClick={onSignOut} title="Switch user">Sign out ({user.name.split(' ')[0]})</a>}
@@ -142,17 +144,17 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         <header className="sc-hero">
           <div className="sc-eyebrow">◈ Agentic AI · Manufacturing operations</div>
           <RevealHeadline />
-          <p>Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents reason across reliability, supply, production, quality and safety, and hand a human one decision.</p>
+          <p>When a machine signals failure, five specialist agents, coordinated by an orchestrator, check reliability, supply, production, quality and safety, and hand the plant manager one costed plan. Anything over €500 waits for a person.</p>
           <div className="actions">
-            <button className="sc-btn-primary" onClick={onLaunch}>Launch the live console →</button>
+            <button className="sc-btn-primary" onClick={onLaunch}>Open the console →</button>
             <a className="sc-btn-ghost" href="#work">See the system</a>
           </div>
         </header>
 
         {/* live orchestration graph as the hero centerpiece */}
-        <div className="sc-hero-stage" onClick={onLaunch} title="Launch the live console">
+        <div className="sc-hero-stage" onClick={onLaunch} title="Open the console">
           <AgentGraph agentStatus={HERO_STATE} running />
-          <div className="sc-stage-badge"><span className="d" /> live · click to run</div>
+          <div className="sc-stage-badge"><span className="d" /> recorded run · click to play</div>
         </div>
 
         <div className="sc-marquee" aria-hidden="true">
@@ -222,11 +224,16 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         <footer className="sc-footer" id="contact">
           <h2>See it think. <span className="g">Then judge it.</span></h2>
           <div className="sub">The whole point is the demo. Launch the console and watch one alert become a safety-gated, costed action plan in under two minutes.</div>
-          <button className="sc-btn-primary" onClick={onLaunch}>Launch the live console →</button>
+          <button className="sc-btn-primary" onClick={onLaunch}>Open the console →</button>
           <div className="fine">Titan Operations Sentinel · IE Agentic AI · 2026</div>
         </footer>
 
         {detail && <DetailModal p={detail} onClose={() => setDetail(null)} onLaunch={onLaunch} />}
+        <Guide onAction={onLaunch} actionLabel="Open the console"
+          onCommand={(c) => {
+            if (c.cmd === 'run' || c.cmd === 'present' || c.cmd === 'nav') { setTimeout(onLaunch, 900); return REPLIES.showcaseOpen }
+            return REPLIES.showcaseFirst
+          }} />
       </div>
     </div>
   )
@@ -348,7 +355,7 @@ function DetailModal({ p, onClose, onLaunch }) {
         <ul className="sc-modal-list">
           {points.map((pt, i) => <li key={i}><span className="sc-bullet" />{pt}</li>)}
         </ul>
-        <button className="sc-btn-primary" onClick={onLaunch} style={{ marginTop: 22 }}>Launch the live console →</button>
+        <button className="sc-btn-primary" onClick={onLaunch} style={{ marginTop: 22 }}>Open the console →</button>
       </div>
     </div>
   )

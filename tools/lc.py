@@ -8,6 +8,9 @@ just calls the pure function in tools/; no logic lives here.
 """
 from __future__ import annotations
 
+import ast
+import operator
+
 from langchain_core.tools import tool
 
 from .alert_triage import alert_triage as _alert_triage
@@ -30,6 +33,45 @@ from .supplier_catalog import supplier_catalog as _supplier_catalog
 from .telemetry_correlate import telemetry_correlate as _telemetry_correlate
 from .tier2_supplier_risk import tier2_supplier_risk as _tier2_supplier_risk
 from .work_order_draft import work_order_draft as _work_order_draft
+
+# Mistake-proof numbers (the "poka-yoke" tool design in Anthropic's Building Effective
+# Agents). Models often write a number as arithmetic, e.g. 180000/24. As a raw JSON value
+# that is invalid and the provider rejects the whole tool call; as a string it is fine.
+# So numeric arguments accept a number OR a simple arithmetic string, computed safely
+# here (numbers and + - * / only, no names, no calls), instead of only being asked for
+# plain numbers in the prompt.
+_OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+        ast.Div: operator.truediv, ast.USub: operator.neg, ast.UAdd: operator.pos}
+
+
+def as_number(value, name: str = "value") -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a number, got {value!r}")
+    if isinstance(value, (int, float)):
+        return value
+    if not isinstance(value, str):
+        raise ValueError(f"{name} must be a number, got {value!r}")
+    text = value.replace(",", "").replace("€", "").replace("EUR", "").strip()
+
+    def ev(node):
+        if isinstance(node, ast.Expression):
+            return ev(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+            return node.value
+        if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
+            return _OPS[type(node.op)](ev(node.left), ev(node.right))
+        if isinstance(node, ast.UnaryOp) and type(node.op) in _OPS:
+            return _OPS[type(node.op)](ev(node.operand))
+        raise ValueError(f"{name} must be a number or simple arithmetic like '180000/24', got {value!r}")
+    try:
+        return ev(ast.parse(text, mode="eval"))
+    except (SyntaxError, ZeroDivisionError) as exc:
+        raise ValueError(f"{name} must be a number or simple arithmetic like '180000/24', got {value!r}") from exc
+
+
+def _numbers(**kw) -> dict:
+    """Convert named numeric arguments; None stays None."""
+    return {k: (None if v is None else as_number(v, k)) for k, v in kw.items()}
 
 
 # --- Reliability (challenge 1) -------------------------------------------- #
@@ -105,16 +147,22 @@ def supplier_catalog(part_ids: list[str], scenario: str = "default") -> dict:
 
 
 @tool
-def expedite_cost(options: list[dict], downtime_cost_per_hour: float,
-                  failure_window_hours: int, baseline_lead_time_hours: float,
-                  failure_window_max_hours: float | None = None) -> dict:
+def expedite_cost(options: list[dict], downtime_cost_per_hour: float | str,
+                  failure_window_hours: float | str, baseline_lead_time_hours: float | str,
+                  failure_window_max_hours: float | str | None = None) -> dict:
     """Rank procurement options by fit-to-window, risk, then downtime avoided per euro.
     Each option = {label, cost_eur, lead_time_hours, risk_level}.
     failure_window_hours = RUL minimum; failure_window_max_hours = RUL maximum.
     baseline_lead_time_hours = the standard (non-expedited) lead time from
-    supplier_catalog: when the part would arrive if nobody acted."""
-    return _expedite_cost(options, downtime_cost_per_hour, failure_window_hours,
-                          baseline_lead_time_hours, failure_window_max_hours)
+    supplier_catalog: when the part would arrive if nobody acted.
+    Numbers may be plain numbers or simple arithmetic as a string, e.g. "180000/24"."""
+    try:
+        n = _numbers(downtime_cost_per_hour=downtime_cost_per_hour, failure_window_hours=failure_window_hours,
+                     baseline_lead_time_hours=baseline_lead_time_hours, failure_window_max_hours=failure_window_max_hours)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    return _expedite_cost(options, n["downtime_cost_per_hour"], int(round(n["failure_window_hours"])),
+                          n["baseline_lead_time_hours"], n["failure_window_max_hours"])
 
 
 @tool
@@ -127,24 +175,32 @@ def tier2_supplier_risk(supplier_ids: list[str]) -> dict:
 @tool
 def work_order_draft(machine_id: str, plant_id: str, failure_mode: str,
                      parts_required: list[dict], proposed_window: dict,
-                     technicians_required: list[str], estimated_duration_hours: int,
+                     technicians_required: list[str], estimated_duration_hours: float | str,
                      actions: list[dict]) -> dict:
     """Draft a DRAFT_PENDING_APPROVAL work order once the parts plan is confirmed. Not
     committed until a human releases it. Call after expedite_cost picks an option."""
+    try:
+        hours = int(round(as_number(estimated_duration_hours, "estimated_duration_hours")))
+    except ValueError as exc:
+        return {"error": str(exc)}
     return _work_order_draft(machine_id, plant_id, failure_mode, parts_required,
-                             proposed_window, technicians_required,
-                             estimated_duration_hours, actions)
+                             proposed_window, technicians_required, hours, actions)
 
 
 @tool
 def notify(recipient_role: str, subject: str, situation_summary: str,
-           recommended_actions: list[dict], cost_of_inaction_eur: float,
-           cost_of_recommended_plan_eur: float, decision_deadline_utc: str,
+           recommended_actions: list[dict], cost_of_inaction_eur: float | str,
+           cost_of_recommended_plan_eur: float | str, decision_deadline_utc: str,
            work_order_id: str | None = None) -> dict:
     """Draft an approval-request notification for the decision-maker (e.g. plant_manager).
-    Reference the work_order_id from work_order_draft. Drafted, not sent."""
+    Reference the work_order_id from work_order_draft. Drafted, not sent.
+    Costs may be plain numbers or simple arithmetic as a string."""
+    try:
+        n = _numbers(cost_of_inaction_eur=cost_of_inaction_eur, cost_of_recommended_plan_eur=cost_of_recommended_plan_eur)
+    except ValueError as exc:
+        return {"error": str(exc)}
     return _notify(recipient_role, subject, situation_summary, recommended_actions,
-                   cost_of_inaction_eur, cost_of_recommended_plan_eur,
+                   n["cost_of_inaction_eur"], n["cost_of_recommended_plan_eur"],
                    decision_deadline_utc, work_order_id)
 
 

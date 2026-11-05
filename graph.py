@@ -18,6 +18,7 @@ import ast
 import json
 import logging
 import operator
+import os
 import re
 import sys
 import time
@@ -109,6 +110,21 @@ class OpsState(TypedDict, total=False):
     final_plan: str
     status: str
     trace: Annotated[list, operator.add]
+    # Parallel mode only: follow-up requests from agents that ran side by side, merged by
+    # the join node into pending_followup (two writes to one plain key would collide).
+    par_followups: Annotated[dict, _merge]
+
+
+# Parallelisation (opt-in, TOS_PARALLEL=1). Supply chain and production do not need each
+# other's reports, so after reliability they can run side by side ("sectioning" in
+# Anthropic's Building Effective Agents). Quality and compliance still run after them and
+# read both. Off by default: in sequential mode production can read supply chain's report,
+# which is the trade-off this flag makes. See docs/decisions/009.
+PARALLEL_PAIR = ("supply_chain", "production")
+
+
+def _parallel_enabled() -> bool:
+    return os.getenv("TOS_PARALLEL", "0") == "1"
 
 
 def _provenance_message(rp: dict, rh: dict) -> str:
@@ -278,7 +294,22 @@ def perceive(state: OpsState) -> dict:
             "status": "perceiving", "trace": [ev]}
 
 
-def _make_worker(name: str):
+def _make_worker(name: str, parallel: bool = False):
+    node = _make_worker_seq(name)
+    if not parallel:
+        return node
+
+    def par_node(state: OpsState) -> dict:
+        # Same agent, same verdicts. Only the two plain keys a sibling would also write are
+        # moved: the follow-up goes to par_followups for the join node, status is dropped.
+        update = node(state)
+        update["par_followups"] = {name: update.pop("pending_followup", "") or ""}
+        update.pop("status", None)
+        return update
+    return par_node
+
+
+def _make_worker_seq(name: str):
     def node(state: OpsState) -> dict:
         rid = state["run_id"]
         log.info("RUN   %-17s| working… (reads %d prior reports)",
@@ -416,6 +447,14 @@ def _llm_route(state: OpsState, allowed: list[str]) -> str:
 
 def supervisor(state: OpsState) -> dict:
     allowed = _allowed_next(state)
+    visited = state.get("visited", [])
+    if (_parallel_enabled() and all(a in allowed for a in PARALLEL_PAIR)
+            and not any(a in visited for a in PARALLEL_PAIR)):
+        log.info("ROUTE         | → %s in parallel (allowed=%s)", " + ".join(PARALLEL_PAIR), allowed)
+        ev = _ev(state["run_id"], "route", "orchestrator",
+                 message=f"Orchestrator runs {' and '.join(PARALLEL_PAIR)} in parallel",
+                 allowed=allowed, to=list(PARALLEL_PAIR), how="parallel")
+        return {"next_agent": "PARALLEL", "trace": [ev]}
     choice = allowed[0] if len(allowed) == 1 else _llm_route(state, allowed)
     how = "forced" if len(allowed) == 1 else "LLM-picked"
     log.info("ROUTE         | → %s  (%s; allowed=%s)",
@@ -425,9 +464,24 @@ def supervisor(state: OpsState) -> dict:
     return {"next_agent": choice, "trace": [ev]}
 
 
-def route_from_supervisor(state: OpsState) -> str:
+def route_from_supervisor(state: OpsState):
     nxt = state.get("next_agent", "FINISH")
+    if nxt == "PARALLEL":
+        return [f"{a}__par" for a in PARALLEL_PAIR]      # fan-out: both run in one step
     return "finalize" if nxt == "FINISH" else nxt
+
+
+def join_parallel(state: OpsState) -> dict:
+    """Fan-in after the parallel pair: turn their follow-up requests into the one
+    pending_followup the routing policy reads, then clear them."""
+    asks = {k: v for k, v in (state.get("par_followups") or {}).items() if v}
+    target = next(iter(asks.values()), "")
+    msg = "Parallel step done: " + " and ".join(PARALLEL_PAIR) + " reported."
+    if target:
+        msg += f" Follow-up requested for {target}."
+    return {"pending_followup": target, "status": "parallel_done",
+            "par_followups": dict.fromkeys(PARALLEL_PAIR, ""),
+            "trace": [_ev(state["run_id"], "decision", "orchestrator", message=msg)]}
 
 
 def approval_gate(state: OpsState) -> dict:
@@ -558,11 +612,47 @@ def synthesize(state: OpsState) -> dict:
         f"{state.get('approval', 'N/A')}.\n\nALERT: {json.dumps(state['alert'])}\n\n"
         f"FULL AGENT CONVERSATION:\n{_conversation(state)}",
     )
+    plan, checks = _evaluate_and_revise(state, plan)
     status = "halted" if state.get("halt") else "complete"
     ev = _ev(rid, "plan", "orchestrator", plan=plan)
     _log_closed_case(state, status)
     log.info("END           | status=%s", status)
-    return {"final_plan": plan, "status": status, "trace": [ev]}
+    return {"final_plan": plan, "status": status, "trace": checks + [ev]}
+
+
+def _evaluate_and_revise(state: OpsState, plan: str) -> tuple[str, list]:
+    """Evaluator-optimizer (Anthropic, Building Effective Agents). The evaluator is code:
+    policy.check_plan scores the plan against the tier rules, offline and testable. If it
+    fails, the model gets ONE revision with the exact violations; if that still fails,
+    the tiers are corrected in code. Every step is logged, so a corrected plan is visible."""
+    rid = state["run_id"]
+    if (plan or "").startswith("[LLM UNAVAILABLE"):
+        return plan, [_ev(rid, "decision", "orchestrator", message="Plan check skipped: no model produced a plan.")]
+    risk = state.get("risk")
+    issues = policy.check_plan(plan, risk)
+    if not issues:
+        log.info("CHECK         | plan passes the tier rules")
+        return plan, [_ev(rid, "decision", "orchestrator", check="passed",
+                          message="Plan check passed: every action is tiered as the rules require.")]
+    log.info("CHECK         | %d issue(s); asking for one revision", len(issues))
+    events = [_ev(rid, "decision", "orchestrator", check="failed", issues=issues,
+                  message=f"Plan check found {len(issues)} issue(s); sent back for one revision.")]
+    revised = llm.complete(
+        _prompt("orchestrator_system.md"),
+        "Revise this action plan. Keep everything else, but fix exactly these problems:\n"
+        + "\n".join(f"- {i['fix']}" + (f": {i['line']}" if i.get("line") else "") for i in issues)
+        + f"\n\nPLAN:\n{plan}",
+    )
+    base = plan if (revised or "").startswith("[LLM UNAVAILABLE") else revised
+    left = policy.check_plan(base, risk)
+    if not left:
+        events.append(_ev(rid, "decision", "orchestrator", check="revised",
+                          message="Revised plan passes the check."))
+        return base, events
+    corrected = policy.enforce_plan(base, left)
+    events.append(_ev(rid, "decision", "orchestrator", check="corrected_in_code", issues=left,
+                      message=f"Revision still had {len(left)} issue(s); tiers corrected in code."))
+    return corrected, events
 
 
 # --------------------------------------------------------------------------- #
@@ -574,16 +664,22 @@ def build_graph():
     g.add_node("supervisor", supervisor)
     for name in AGENT_NAMES:
         g.add_node(name, _make_worker(name))
+    for name in PARALLEL_PAIR:                       # used only when TOS_PARALLEL=1
+        g.add_node(f"{name}__par", _make_worker(name, parallel=True))
+    g.add_node("join", join_parallel)
     g.add_node("finalize", approval_gate)
     g.add_node("synthesize", synthesize)
 
     g.add_edge(START, "perceive")
     g.add_edge("perceive", "supervisor")
     routes = {a: a for a in AGENT_NAMES}
+    routes.update({f"{a}__par": f"{a}__par" for a in PARALLEL_PAIR})
     routes["finalize"] = "finalize"
     g.add_conditional_edges("supervisor", route_from_supervisor, routes)
     for name in AGENT_NAMES:
         g.add_edge(name, "supervisor")
+    g.add_edge([f"{a}__par" for a in PARALLEL_PAIR], "join")   # wait for both, then join
+    g.add_edge("join", "supervisor")
     g.add_edge("finalize", "synthesize")
     g.add_edge("synthesize", END)
 
