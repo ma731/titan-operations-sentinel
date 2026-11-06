@@ -67,7 +67,7 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Triage gate | default 48 ticks: **192** readings, **1** wake, **0.52%** wake rate (dry run) |
 | RUL model | **RMSE 17.0 cycles** on **707** held-out engines (NASA C-MAPSS), against a mean-predictor baseline of 41.8 ([backtest](eval/results/rul_backtest.md)) |
 | Live cost and latency | instrumented per run; provider benchmark not yet measured |
-| Tests | **363** passed, **4** provider-dependent tests skipped in the offline validation |
+| Tests | **372** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
 `python -m stream.run`. The scorecard is generated; this table is a summary.
@@ -370,6 +370,37 @@ Mapped to Anthropic's [Building Effective Agents](https://www.anthropic.com/rese
 | Human checkpoint | The €500 approval gate, write-once |
 | Tool design | Numeric arguments accept arithmetic strings instead of failing the call; errors name the argument |
 | Transparency | Every route, tool call, handoff, check and decision is a logged event |
+
+## Titan's tools over MCP
+
+The agents call their tools directly. The same tools are also an
+[MCP](https://modelcontextprotocol.io) server, so any MCP client (Claude Desktop, a Copilot,
+another team's agent) can discover and use them without new integration code: each system
+wrapped once, reused by every agent. [Decision 010](docs/decisions/010-expose-the-tools-over-mcp.md)
+
+| Exposed | |
+|---|---|
+| 17 read-only tools | alerts, sensors, remaining life, case memory, documents, stock, suppliers, expedite ranking, Tier-2 risk, rerouting, robot cells, shifts, quality, the safety gate |
+| `draft_work_order` | the only action, and only ever a draft: `DRAFT_PENDING_APPROVAL`, approver chosen by `policy.py` (safety officer for safety actions, plant manager over EUR 500, for unknown cost, or a purchase) |
+| `titan://policy` | the tiers and the ceiling, as a resource a client reads before acting |
+| `investigate_plant` | a prompt for a standard first look at a plant |
+
+Not exposed: `notify` and anything that sends, commits or approves. Every MCP call is in the
+audit log with `channel: "mcp"`.
+
+```bash
+python scripts/mcp_demo.py      # starts the server, discovers the tools, runs an investigation: no model, no key
+```
+
+To use it from Claude Desktop, add to `claude_desktop_config.json`:
+
+```json
+{ "mcpServers": { "titan": { "command": "python", "args": ["<path to repo>/mcp_server.py"] } } }
+```
+
+Then ask: *"Which machine at Leipzig is at risk, do we have the parts, and who has to approve
+the fix?"* The ceiling holds here too: a EUR 3,200 expedite comes back as a draft for the
+plant manager, because the rule lives in `policy.py`, not in a prompt.
 
 ## The learning loop
 

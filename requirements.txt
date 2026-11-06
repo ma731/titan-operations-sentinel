@@ -11,3 +11,4 @@ langchain-anthropic>=0.2.0       # Claude
 langchain-mistralai>=0.2.0       # Mistral (free tier)
 langchain-ollama>=0.2.0          # local / offline (no key)
 python-dotenv>=1.0.0
+mcp>=2.0,<3                      # the MCP server (mcp_server.py); agents do not need it
