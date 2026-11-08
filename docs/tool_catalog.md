@@ -91,12 +91,12 @@ Per-agent tool map (`tools/lc.py` groups):
 ### 8. `work_order_draft`
 - **What it does:** Generates a structured draft WO. **Not committed** until a human releases it.
 - **Inputs:** machine/plant/failure_mode/parts/window/technicians/duration/actions
-- **Outputs:** WO dict, `status: DRAFT_PENDING_APPROVAL`, `incomplete_flag`
+- **Outputs:** WO dict, `status: DRAFT_PENDING_APPROVAL`, `incomplete_flag`, `time_basis` (plant time inside a simulated run, see `tools/sim_clock.py`)
 - **Use when:** Parts plan confirmed. **Do NOT use:** Before the plan exists. **Auth:** APPROVE (human releases).
 
 ### 9. `notify`
 - **What it does:** Drafts the approval request to the decision-maker. **Not sent** until reviewed.
-- **Inputs:** recipient/subject/summary/actions/costs/deadline/WO id · **Outputs:** draft notification, `status: DRAFT_PENDING_SEND`
+- **Inputs:** recipient/subject/summary/actions/costs/deadline/WO id · **Outputs:** draft notification, `status: DRAFT_PENDING_SEND`, `time_basis`
 - **Use when:** Plan needs cost authority. **Do NOT use:** For routine status. **Auth:** APPROVE.
 
 ### `tier2_supplier_risk`

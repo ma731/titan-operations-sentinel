@@ -64,8 +64,13 @@ def trigger_run(verdict: TriageVerdict, live: bool, auto_decision: str = "reject
     readings = {"vibration": alert.get("value", 0)}
     if "bearing_temp_c" in alert:
         readings["bearing_temp"] = alert["bearing_temp_c"]
+    if "spindle_current_a" in alert:
+        readings["spindle_current"] = alert["spindle_current_a"]
+    from tools.sim_clock import sim_clock
+
+    # Plant time, not today's date: the drafts must agree with the reading that woke us.
     with runtime_inputs(alert["machine_id"], readings,
-                        "INTERRUPTED" if mode == "escalation" else "OK"), observability.instrument_run() as usage:
+                        "INTERRUPTED" if mode == "escalation" else "OK"),             sim_clock(alert.get("timestamp")), observability.instrument_run() as usage:
         for chunk in graph.stream(state, cfg):
             if "__interrupt__" in chunk:
                 interrupted = True

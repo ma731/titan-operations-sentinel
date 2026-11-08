@@ -1,0 +1,755 @@
+{
+ "scenario": {
+  "start": "2026-10-05T00:00:00+00:00",
+  "days": 30,
+  "seed": 11,
+  "machines": 4,
+  "ticks": 4320
+ },
+ "events": [
+  {
+   "id": "M01-fast-bearing",
+   "machine_id": "CNC-07-LEI",
+   "kind": "bearing",
+   "title": "Friday afternoon bearing failure, fast regime",
+   "expected_wake": true,
+   "wakes": 5,
+   "source": "tms-101-spindle-bearing-maintenance#S4",
+   "why": "Vibration doubles in under 6 hours, so the bearing has roughly 40 to 80 hours left once it is critical.",
+   "failure_at": "2026-10-11T22:30:00+00:00",
+   "critical_at": "2026-10-09T14:30:00+00:00",
+   "true_window_h": 56,
+   "first_wake_at": "2026-10-09T13:10:00+00:00",
+   "lead_h": 57.3,
+   "life": [
+    {
+     "at": "2026-10-09T13:10:00+00:00",
+     "vibration": 5.23,
+     "bearing_temp": 61.2,
+     "predicted_h": [
+      96,
+      144
+     ],
+     "true_h_left": 57.3,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-10T01:10:00+00:00",
+     "vibration": 6.28,
+     "bearing_temp": 66.5,
+     "predicted_h": [
+      72,
+      120
+     ],
+     "true_h_left": 45.3,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-10T13:10:00+00:00",
+     "vibration": 7.31,
+     "bearing_temp": 71.4,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 33.3,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-11T01:10:00+00:00",
+     "vibration": 9.27,
+     "bearing_temp": 74.4,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 21.3,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-11T13:10:00+00:00",
+     "vibration": 10.57,
+     "bearing_temp": 78.6,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 9.3,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    }
+   ],
+   "truth_matches_corpus": true,
+   "pass": true
+  },
+  {
+   "id": "M02-heavy-cut",
+   "machine_id": "CNC-02-AMS",
+   "kind": "heavy_cut",
+   "title": "Deeper cut on a hard alloy job: vibration rises with motor current",
+   "expected_wake": false,
+   "wakes": 1,
+   "source": "tms-101-spindle-bearing-maintenance#S2",
+   "why": "Vibration tracks spindle current and temperature barely moves. That is a process effect, not a bearing finding.",
+   "first_wake_at": "2026-10-13T06:40:00+00:00",
+   "first_reason": "vibration up 2.0x over the trend window",
+   "pass": false
+  },
+  {
+   "id": "M03-healthy-feed-loss",
+   "machine_id": "CNC-08-LEI",
+   "kind": "dropout",
+   "title": "Telemetry feed drops overnight on a healthy machine",
+   "expected_wake": false,
+   "wakes": 0,
+   "source": "tms-705-telemetry-data-quality-and-abstention#S6",
+   "why": "A healthy machine going quiet is an instrumentation ticket, not an operations event.",
+   "first_wake_at": null,
+   "first_reason": null,
+   "pass": true
+  },
+  {
+   "id": "M04-sensor-rail",
+   "machine_id": "CNC-05-LEI",
+   "kind": "sensor_rail",
+   "title": "Vibration channel saturates at its rail value for 30 minutes",
+   "expected_wake": false,
+   "wakes": 1,
+   "source": "tms-705-telemetry-data-quality-and-abstention#S6",
+   "why": "One channel pinned at a rail value while temperature and current stay normal is a suspected sensor fault, raised against the instrumentation.",
+   "first_wake_at": "2026-10-17T03:10:00+00:00",
+   "first_reason": "trip band (25.4 mm/s, 51 C); vibration up 9.6x over the trend window",
+   "pass": false
+  },
+  {
+   "id": "M05-fast-bearing-feed-loss",
+   "machine_id": "CNC-02-AMS",
+   "kind": "bearing",
+   "title": "Fast bearing failure, and the feed drops 3 hours after it turns critical",
+   "expected_wake": true,
+   "wakes": 7,
+   "source": "tms-101-spindle-bearing-maintenance#S4; tms-705-telemetry-data-quality-and-abstention#S5",
+   "why": "Fast regime, so 40 to 80 hours left. A feed that dies on a critical machine is a wake condition in its own right, and the right answer on it is an abstention.",
+   "failure_at": "2026-10-24T07:00:00+00:00",
+   "critical_at": "2026-10-21T09:00:00+00:00",
+   "true_window_h": 70,
+   "first_wake_at": "2026-10-21T08:20:00+00:00",
+   "lead_h": 70.7,
+   "life": [
+    {
+     "at": "2026-10-21T08:20:00+00:00",
+     "vibration": 5.21,
+     "bearing_temp": 59.6,
+     "predicted_h": [
+      96,
+      144
+     ],
+     "true_h_left": 70.7,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-22T00:20:00+00:00",
+     "vibration": 6.93,
+     "bearing_temp": 64.8,
+     "predicted_h": [
+      72,
+      120
+     ],
+     "true_h_left": 54.7,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-22T12:20:00+00:00",
+     "vibration": 7.49,
+     "bearing_temp": 66.2,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 42.7,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-23T00:20:00+00:00",
+     "vibration": 7.74,
+     "bearing_temp": 70.0,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 30.7,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-23T12:20:00+00:00",
+     "vibration": 9.96,
+     "bearing_temp": 72.2,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 18.7,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-24T00:20:00+00:00",
+     "vibration": 10.46,
+     "bearing_temp": 76.5,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 6.7,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    }
+   ],
+   "dropout_wake": true,
+   "truth_matches_corpus": true,
+   "pass": true
+  },
+  {
+   "id": "M06-medium-bearing",
+   "machine_id": "CNC-05-LEI",
+   "kind": "bearing",
+   "title": "Bearing wear over two days, medium regime",
+   "expected_wake": true,
+   "wakes": 13,
+   "source": "tms-101-spindle-bearing-maintenance#S4",
+   "why": "Vibration doubles over 24 to 72 hours, so roughly 100 to 200 hours are left once it is critical.",
+   "failure_at": "2026-10-30T14:00:00+00:00",
+   "critical_at": "2026-10-24T08:00:00+00:00",
+   "true_window_h": 150,
+   "first_wake_at": "2026-10-24T04:00:00+00:00",
+   "lead_h": 154.0,
+   "life": [
+    {
+     "at": "2026-10-24T04:00:00+00:00",
+     "vibration": 6.14,
+     "bearing_temp": 56.9,
+     "predicted_h": [
+      72,
+      120
+     ],
+     "true_h_left": 154.0,
+     "verdict": "conservative",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-24T16:00:00+00:00",
+     "vibration": 6.8,
+     "bearing_temp": 59.0,
+     "predicted_h": [
+      72,
+      120
+     ],
+     "true_h_left": 142.0,
+     "verdict": "conservative",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-25T04:00:00+00:00",
+     "vibration": 6.68,
+     "bearing_temp": 60.2,
+     "predicted_h": [
+      72,
+      120
+     ],
+     "true_h_left": 130.0,
+     "verdict": "conservative",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-25T16:00:00+00:00",
+     "vibration": 6.17,
+     "bearing_temp": 60.4,
+     "predicted_h": [
+      72,
+      120
+     ],
+     "true_h_left": 118.0,
+     "verdict": "inside",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-26T04:00:00+00:00",
+     "vibration": 6.46,
+     "bearing_temp": 62.7,
+     "predicted_h": [
+      72,
+      120
+     ],
+     "true_h_left": 106.0,
+     "verdict": "inside",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-26T16:00:00+00:00",
+     "vibration": 7.16,
+     "bearing_temp": 63.6,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 94.0,
+     "verdict": "conservative",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-27T04:00:00+00:00",
+     "vibration": 8.75,
+     "bearing_temp": 65.0,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 82.0,
+     "verdict": "conservative",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-27T16:00:00+00:00",
+     "vibration": 7.35,
+     "bearing_temp": 66.7,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 70.0,
+     "verdict": "inside",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-28T04:00:00+00:00",
+     "vibration": 8.14,
+     "bearing_temp": 67.3,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 58.0,
+     "verdict": "inside",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-28T16:00:00+00:00",
+     "vibration": 9.66,
+     "bearing_temp": 68.3,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 46.0,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-29T04:00:00+00:00",
+     "vibration": 10.05,
+     "bearing_temp": 70.7,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 34.0,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-29T16:00:00+00:00",
+     "vibration": 9.17,
+     "bearing_temp": 71.2,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 22.0,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    },
+    {
+     "at": "2026-10-30T04:00:00+00:00",
+     "vibration": 9.63,
+     "bearing_temp": 72.0,
+     "predicted_h": [
+      52,
+      76
+     ],
+     "true_h_left": 10.0,
+     "verdict": "optimistic",
+     "source": "declared_thresholds"
+    }
+   ],
+   "truth_matches_corpus": true,
+   "pass": true
+  },
+  {
+   "id": "M07-slow-drift",
+   "machine_id": "CNC-08-LEI",
+   "kind": "slow_drift",
+   "title": "Slow wear all month, about 10 percent a week",
+   "expected_wake": false,
+   "wakes": 0,
+   "source": "tms-101-spindle-bearing-maintenance#S3; tms-101-spindle-bearing-maintenance#S4",
+   "why": "Under 20 percent a week means more than 500 hours left. It is planned maintenance, not an emergency.",
+   "first_wake_at": null,
+   "first_reason": null,
+   "pass": true
+  }
+ ],
+ "answers_right": 5,
+ "answers_total": 7,
+ "wakes_total": 27,
+ "wakes_on_noise": 0,
+ "life_checks": 24,
+ "life_inside": 4,
+ "life_optimistic": 15,
+ "life_conservative": 5,
+ "first_estimates": {
+  "M01-fast-bearing": "optimistic",
+  "M05-fast-bearing-feed-loss": "optimistic",
+  "M06-medium-bearing": "conservative"
+ },
+ "first_inside": 0,
+ "gate": {
+  "readings_seen": 17172,
+  "runs_triggered": 27,
+  "suppressed_by_cooldown": 1584,
+  "wake_rate": 0.00157
+ },
+ "wakes": [
+  {
+   "tick": 655,
+   "hours": 109.16666666666667,
+   "at": "2026-10-09T13:10:00+00:00",
+   "machine_id": "CNC-07-LEI",
+   "band": "warning",
+   "reason": "vibration up 1.9x over the trend window",
+   "kind": "reading",
+   "vibration": 5.23,
+   "bearing_temp": 61.2,
+   "event": "M01-fast-bearing"
+  },
+  {
+   "tick": 727,
+   "hours": 121.16666666666667,
+   "at": "2026-10-10T01:10:00+00:00",
+   "machine_id": "CNC-07-LEI",
+   "band": "critical",
+   "reason": "critical band (6.3 mm/s, 67 C)",
+   "kind": "reading",
+   "vibration": 6.28,
+   "bearing_temp": 66.5,
+   "event": "M01-fast-bearing"
+  },
+  {
+   "tick": 799,
+   "hours": 133.16666666666666,
+   "at": "2026-10-10T13:10:00+00:00",
+   "machine_id": "CNC-07-LEI",
+   "band": "critical",
+   "reason": "critical band (7.3 mm/s, 71 C)",
+   "kind": "reading",
+   "vibration": 7.31,
+   "bearing_temp": 71.4,
+   "event": "M01-fast-bearing"
+  },
+  {
+   "tick": 871,
+   "hours": 145.16666666666666,
+   "at": "2026-10-11T01:10:00+00:00",
+   "machine_id": "CNC-07-LEI",
+   "band": "critical",
+   "reason": "critical band (9.3 mm/s, 74 C)",
+   "kind": "reading",
+   "vibration": 9.27,
+   "bearing_temp": 74.4,
+   "event": "M01-fast-bearing"
+  },
+  {
+   "tick": 943,
+   "hours": 157.16666666666666,
+   "at": "2026-10-11T13:10:00+00:00",
+   "machine_id": "CNC-07-LEI",
+   "band": "critical",
+   "reason": "critical band (10.6 mm/s, 79 C)",
+   "kind": "reading",
+   "vibration": 10.57,
+   "bearing_temp": 78.6,
+   "event": "M01-fast-bearing"
+  },
+  {
+   "tick": 1192,
+   "hours": 198.66666666666666,
+   "at": "2026-10-13T06:40:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "band": "warning",
+   "reason": "vibration up 2.0x over the trend window",
+   "kind": "reading",
+   "vibration": 5.91,
+   "bearing_temp": 57.9,
+   "event": "M02-heavy-cut"
+  },
+  {
+   "tick": 1747,
+   "hours": 291.1666666666667,
+   "at": "2026-10-17T03:10:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "trip",
+   "reason": "trip band (25.4 mm/s, 51 C); vibration up 9.6x over the trend window",
+   "kind": "reading",
+   "vibration": 25.4,
+   "bearing_temp": 51.1,
+   "event": "M04-sensor-rail"
+  },
+  {
+   "tick": 2354,
+   "hours": 392.3333333333333,
+   "at": "2026-10-21T08:20:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "band": "warning",
+   "reason": "vibration up 1.8x over the trend window",
+   "kind": "reading",
+   "vibration": 5.21,
+   "bearing_temp": 59.6,
+   "event": "M05-fast-bearing-feed-loss"
+  },
+  {
+   "tick": 2378,
+   "hours": 396.3333333333333,
+   "at": "2026-10-21T12:20:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "band": "critical",
+   "reason": "telemetry feed silent for 3 ticks while the machine was above threshold",
+   "kind": "dropout",
+   "vibration": 6.96,
+   "bearing_temp": null,
+   "event": "M05-fast-bearing-feed-loss"
+  },
+  {
+   "tick": 2450,
+   "hours": 408.3333333333333,
+   "at": "2026-10-22T00:20:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "band": "critical",
+   "reason": "critical band (6.9 mm/s, 65 C)",
+   "kind": "reading",
+   "vibration": 6.93,
+   "bearing_temp": 64.8,
+   "event": "M05-fast-bearing-feed-loss"
+  },
+  {
+   "tick": 2522,
+   "hours": 420.3333333333333,
+   "at": "2026-10-22T12:20:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "band": "critical",
+   "reason": "critical band (7.5 mm/s, 66 C)",
+   "kind": "reading",
+   "vibration": 7.49,
+   "bearing_temp": 66.2,
+   "event": "M05-fast-bearing-feed-loss"
+  },
+  {
+   "tick": 2594,
+   "hours": 432.3333333333333,
+   "at": "2026-10-23T00:20:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "band": "critical",
+   "reason": "critical band (7.7 mm/s, 70 C)",
+   "kind": "reading",
+   "vibration": 7.74,
+   "bearing_temp": 70.0,
+   "event": "M05-fast-bearing-feed-loss"
+  },
+  {
+   "tick": 2666,
+   "hours": 444.3333333333333,
+   "at": "2026-10-23T12:20:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "band": "critical",
+   "reason": "critical band (10.0 mm/s, 72 C)",
+   "kind": "reading",
+   "vibration": 9.96,
+   "bearing_temp": 72.2,
+   "event": "M05-fast-bearing-feed-loss"
+  },
+  {
+   "tick": 2738,
+   "hours": 456.3333333333333,
+   "at": "2026-10-24T00:20:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "band": "critical",
+   "reason": "critical band (10.5 mm/s, 77 C)",
+   "kind": "reading",
+   "vibration": 10.46,
+   "bearing_temp": 76.5,
+   "event": "M05-fast-bearing-feed-loss"
+  },
+  {
+   "tick": 2760,
+   "hours": 460.0,
+   "at": "2026-10-24T04:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (6.1 mm/s, 57 C)",
+   "kind": "reading",
+   "vibration": 6.14,
+   "bearing_temp": 56.9,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 2832,
+   "hours": 472.0,
+   "at": "2026-10-24T16:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (6.8 mm/s, 59 C)",
+   "kind": "reading",
+   "vibration": 6.8,
+   "bearing_temp": 59.0,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 2904,
+   "hours": 484.0,
+   "at": "2026-10-25T04:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (6.7 mm/s, 60 C)",
+   "kind": "reading",
+   "vibration": 6.68,
+   "bearing_temp": 60.2,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 2976,
+   "hours": 496.0,
+   "at": "2026-10-25T16:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (6.2 mm/s, 60 C)",
+   "kind": "reading",
+   "vibration": 6.17,
+   "bearing_temp": 60.4,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3048,
+   "hours": 508.0,
+   "at": "2026-10-26T04:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (6.5 mm/s, 63 C)",
+   "kind": "reading",
+   "vibration": 6.46,
+   "bearing_temp": 62.7,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3120,
+   "hours": 520.0,
+   "at": "2026-10-26T16:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (7.2 mm/s, 64 C)",
+   "kind": "reading",
+   "vibration": 7.16,
+   "bearing_temp": 63.6,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3192,
+   "hours": 532.0,
+   "at": "2026-10-27T04:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (8.8 mm/s, 65 C)",
+   "kind": "reading",
+   "vibration": 8.75,
+   "bearing_temp": 65.0,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3264,
+   "hours": 544.0,
+   "at": "2026-10-27T16:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (7.4 mm/s, 67 C)",
+   "kind": "reading",
+   "vibration": 7.35,
+   "bearing_temp": 66.7,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3336,
+   "hours": 556.0,
+   "at": "2026-10-28T04:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (8.1 mm/s, 67 C)",
+   "kind": "reading",
+   "vibration": 8.14,
+   "bearing_temp": 67.3,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3408,
+   "hours": 568.0,
+   "at": "2026-10-28T16:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (9.7 mm/s, 68 C)",
+   "kind": "reading",
+   "vibration": 9.66,
+   "bearing_temp": 68.3,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3480,
+   "hours": 580.0,
+   "at": "2026-10-29T04:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (10.1 mm/s, 71 C)",
+   "kind": "reading",
+   "vibration": 10.05,
+   "bearing_temp": 70.7,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3552,
+   "hours": 592.0,
+   "at": "2026-10-29T16:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (9.2 mm/s, 71 C)",
+   "kind": "reading",
+   "vibration": 9.17,
+   "bearing_temp": 71.2,
+   "event": "M06-medium-bearing"
+  },
+  {
+   "tick": 3624,
+   "hours": 604.0,
+   "at": "2026-10-30T04:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "band": "critical",
+   "reason": "critical band (9.6 mm/s, 72 C)",
+   "kind": "reading",
+   "vibration": 9.63,
+   "bearing_temp": 72.0,
+   "event": "M06-medium-bearing"
+  }
+ ]
+}

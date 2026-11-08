@@ -76,6 +76,7 @@ class _MachineState:
     last_wake_tick: int | None = None
     baseline: float | None = None
     dropout_reported: bool = False
+    plant_id: str = "LEI"
 
 
 @dataclass
@@ -97,6 +98,7 @@ class TriageGate:
         self.seen += 1
         st = self._machine(reading.machine_id)
         st.last_seen_tick = reading.tick
+        st.plant_id = reading.plant_id
         st.dropout_reported = False          # the feed is back
         st.history.append((reading.tick, reading.vibration))
         st.history = st.history[-(TREND_WINDOW_TICKS + 1):]
@@ -164,7 +166,7 @@ class TriageGate:
                 priority=0.99,
                 alert={
                     "alert_id": f"ALT-DROP-{machine_id}-{tick}",
-                    "machine_id": machine_id, "plant_id": "LEI",
+                    "machine_id": machine_id, "plant_id": st.plant_id,
                     "sensor": "vibration", "value": round(last_vib, 2),
                     "unit": "mm/s_RMS", "threshold": VIB_CRITICAL,
                     "trend": "feed_lost", "production_impact_per_day_eur": 180000,
@@ -200,6 +202,8 @@ class TriageGate:
             "trend_window": "6h",
             "timestamp": reading.timestamp,
             "bearing_temp_c": round(reading.bearing_temp, 1),
+            # Current is what tells a heavier cut from a bearing defect (tms-101#S2).
+            "spindle_current_a": round(reading.spindle_current, 2),
             "production_impact_per_day_eur": 180000,
             "triage_band": band.value,
         }
