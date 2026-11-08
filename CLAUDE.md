@@ -69,6 +69,8 @@ tools/
   job_reroute, robot_cell_status, shift_conflict_check              # production/human-robot (3)
   quality_history, telemetry_correlate                              # quality (4)
   safety_gate, audit_assemble                                       # compliance & safety (5)
+  sim_clock.py           # one plant-time clock for simulated runs (drafts read it)
+  sim_window.py          # serves sensor_query a window from the simulated month
   maintenance_schedule, work_order_draft, notify                    # shared / scheduling
 prompts/                 # supervisor + orchestrator + 5 agent prompts + guardrails + self_eval
 data/                    # scenario data: alerts/ sensors/ assets/ inventory/ suppliers/ production/ quality/ compliance/
@@ -100,11 +102,13 @@ eval/
   rag_eval.py            # recall@k / MRR / precision@k per retriever and difficulty split
   live_eval.py           # full-graph runs: tool-call correctness, citation rate, tokens
   run_eval.py            # CLI -> eval/results/scorecard.md
+  sim_month_eval.py      # offline: CNC life interval coverage + risk on the month's 27 wakes
   FINDINGS.md            # open findings, with why each is not simply patched to green
 stream/
   simulator.py           # seeded fleet sensor simulator with a degradation model
   triage.py              # the wake gate: severity band + trend + per-machine cooldown
   run.py                 # the continuous loop (dry run by default)
+  month.py               # one simulated month with known answers; scores triage + CNC life estimate
 integrations/approval.py # Slack Block Kit / SMTP email / console approval routing
 integrations/a2a.py      # A2A Agent Card + message/send, 4 deterministic skills (decision 012)
 tests/
@@ -207,6 +211,9 @@ python scripts/fetch_prognostics_data.py   # download NASA C-MAPSS (~12 MB, once
 python -m ml.train_rul FD001          # retrain + rebacktest the RUL model (needs requirements-ml.txt)
 python -m eval.run_eval --live         # adds the live agent suite (costs tokens)
 python -m stream.run                   # continuous alert stream, triage only, no model calls
+python -m stream.month                 # simulated month vs known answers -> eval/results/sim_month.md (free)
+python -m stream.month --live --max-runs 3   # also run the agents on the key wakes (tokens)
+python -m stream.month --write-cases   # regenerate eval/cases/sim_month_cases.json after editing the scenario
 TOS_PARALLEL=1 python scripts/run_demo.py  # supply chain + production in one step (decision 009)
 python -m eval.routing_compare --run     # live: one model vs routed, writes eval/results/routing_comparison.md (decision 011)
 python mcp_server.py                   # Titan's tools as an MCP server (stdio), decision 010
@@ -249,6 +256,8 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
   `source` field; keep it accurate. See decision 008 and F-07/F-08.
 - Do not add a feature to `ml/` computed from a unit's full history. That is F-07, and
   `tests/test_rul_model.py::test_features_do_not_use_the_future` exists to catch it.
+- Do not edit `data/sim_month/scenario.json` answers to match the code. Each one cites the
+  corpus; the three known gaps are pinned as strict xfails in `tests/test_sim_month.py`.
 - Do not hardcode machine IDs or part numbers in agent code — they come from alerts/tool outputs.
 
 ---
@@ -275,7 +284,7 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 | Live Groq run verified (happy path end-to-end) | Done |
 | RUL model on real run-to-failure data (C-MAPSS, 707 held-out units) | Done |
 | Provenance on every RUL prediction (fitted_model vs declared_thresholds) | Done |
-| Backtested predictions for the CNC demo asset | Not possible: no public run-to-failure data for it |
+| Backtested predictions for the CNC demo asset | No real run-to-failure data. Checked against a simulated month instead (`stream/month.py`): 4 of 24 estimates inside the range, 15 optimistic |
 | Live evaluation suite scored against a provider | Needs a key: not yet run |
 | Dense / hybrid retrieval rows on the scorecard | Needs TOS_EMBEDDINGS: not yet run |
 | Slides | Done (webapp/frontend/public/deck.html) |

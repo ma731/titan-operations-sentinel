@@ -201,6 +201,37 @@ def _live_section(r: dict | None) -> list[str]:
     return lines
 
 
+def _sim_month_section(r: dict | None) -> list[str]:
+    if not r:
+        return []
+    li, rk = r["rul_interval"], r["risk"]
+    lines = [
+        "## 5. Simulated month (no key, no tokens, deterministic)",
+        "",
+        f"{r['cases']} wakes from one simulated month (`python -m stream.month`), each "
+        "with a known failure time and a risk label taken from the corpus. This validates "
+        "against the simulator's own physics, which follows the corpus rule of thumb. It "
+        "is not a check against real bearing failures. Full report: "
+        "`eval/results/sim_month.md`.",
+        "",
+        "| Metric | Result |",
+        "|---|---|",
+        f"| CNC life interval contains the true remaining life | {li['inside']} of "
+        f"{li['checked']} ({_pct(li['coverage'])}) |",
+        f"| Optimistic (promised more life than was left) | {li['optimistic']} |",
+        f"| Conservative | {li['conservative']} |",
+        f"| Median midpoint error | {li['median_midpoint_error_h']} h |",
+        f"| Risk call matches the corpus | {rk['correct']} of {rk['total']} "
+        f"({_pct(rk['accuracy'])}) |",
+        "",
+    ]
+    if rk["misses"]:
+        lines += ["Risk misses: " + "; ".join(
+            f"`{m['case']}` expected {m['expected']}, got {m['actual']}" for m in rk["misses"])
+            + ".", ""]
+    return lines
+
+
 def _routing_label(rt: dict | None) -> str:
     if not rt or not rt.get("enabled"):
         return "off: every call on one model"
@@ -263,7 +294,7 @@ def _economics_section() -> list[str]:
 
 
 def render(policy_result: dict, rag_result: dict, live_result: dict | None,
-           meta: dict) -> str:
+           meta: dict, sim_month: dict | None = None) -> str:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     header = [
         "# Evaluation scorecard",
@@ -288,6 +319,9 @@ def render(policy_result: dict, rag_result: dict, live_result: dict | None,
         f"| Live agent suite | "
         f"{'run, see below' if live_result else 'not run in this pass'} |",
         "| Cost to run | see unit economics below |",
+        *([f"| Simulated month: CNC life interval coverage | "
+           f"{_pct(sim_month['rul_interval']['coverage'])} of "
+           f"{sim_month['rul_interval']['checked']} estimates |"] if sim_month else []),
         "",
         "How to read this: the offline suites measure the parts of the system that are "
         "enforced in code, exhaustively and for free. The live suite measures what the "
@@ -302,6 +336,7 @@ def render(policy_result: dict, rag_result: dict, live_result: dict | None,
         + _rag_section(rag_result) + ["---", ""]
         + _live_section(live_result) + ["---", ""]
         + _economics_section()
+        + (["---", ""] + _sim_month_section(sim_month) if sim_month else [])
         + ["---", "",
            "Regenerate with `python -m eval.run_eval` (offline suites) or "
            "`python -m eval.run_eval --live` (adds the agent suite). "
@@ -329,14 +364,15 @@ def _write_badge(policy_result: dict) -> None:
 
 
 def write(policy_result: dict, rag_result: dict, live_result: dict | None,
-          meta: dict) -> tuple[Path, Path]:
+          meta: dict, sim_month: dict | None = None) -> tuple[Path, Path]:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    SCORECARD_MD.write_text(render(policy_result, rag_result, live_result, meta),
+    SCORECARD_MD.write_text(render(policy_result, rag_result, live_result, meta, sim_month),
                             encoding="utf-8")
     SCORECARD_JSON.write_text(
         json.dumps({"generated_utc": datetime.now(timezone.utc).isoformat(),
                     "datasets": meta, "policy": policy_result, "retrieval": rag_result,
-                    "live": live_result}, indent=2, default=str),
+                    "live": live_result,
+                    **({"sim_month": sim_month} if sim_month else {})}, indent=2, default=str),
         encoding="utf-8",
     )
     _write_badge(policy_result)

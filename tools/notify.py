@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from . import sim_clock
 
 
 def notify(
@@ -27,7 +27,7 @@ def notify(
       Risk tier: APPROVE (human sends or rejects)
     """
     return {
-        "notification_id": f"NOTIF-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+        "notification_id": f"NOTIF-{sim_clock.now().strftime('%Y%m%d%H%M%S')}",
         "status": "DRAFT_PENDING_SEND",
         "recipient_role": recipient_role,
         "subject": subject,
@@ -41,5 +41,6 @@ def notify(
             "decision_required_by_utc": decision_deadline_utc,
             "linked_work_order": work_order_id,
         },
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": sim_clock.now().isoformat(),
+        "time_basis": sim_clock.basis(),
     }

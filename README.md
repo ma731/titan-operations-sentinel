@@ -335,6 +335,42 @@ not an operations event.
 Spending model tokens to decide whether to spend model tokens is how an autonomous system
 quietly becomes expensive, so the gate is deliberately free.
 
+### One simulated month, with known answers
+
+```bash
+python -m stream.month                    # replay 30 days, score them (free, under a second)
+python -m stream.month --live --max-runs 3   # also run the agents on the key wakes
+```
+
+The CNC life estimate is a written rule. No public run-to-failure data exists for these
+spindles, so it had never been checked. The simulated month gives it something to be
+checked against. It covers 30 days of telemetry for the four CNC machining centres, one reading
+every 10 minutes, generated from a seed so it is the same every time. Seven events are
+scripted into it: three bearing failures (two fast, one slow), a heavier cut, a sensor
+stuck at its maximum, a feed loss on a healthy machine and a slow drift. Each failed
+machine is repaired and goes back into service mid-month. Eleven days have no event at all.
+
+Every event's answer is fixed before anything runs and taken from the corpus: when the
+bearing really fails, whether waking the agents is right, and what risk call is right.
+The numbers come from the simulator, not from a language model, so they are physically
+consistent and reproducible. Inside a simulated run the work order and notification
+drafts use the simulated time (`tools/sim_clock.py`), so the agents see one "now", not two.
+`sensor_query` serves the real 72 hour window before each wake, not just one reading, and
+`alert_triage` and the maintenance calendar show the plant as it was at that moment.
+
+What it found (`eval/results/sim_month.md`, and section 5 of the scorecard):
+
+- All three failures caught, 57 to 154 hours ahead. Nothing woke on the quiet days.
+- A heavier cut and a stuck sensor both wake the agents. The gate ignores motor current
+  and trusts a single sensor channel; the corpus says it should not.
+- The CNC life interval held the true remaining life in 4 of 24 checks, and was
+  optimistic in 15. The rule reads how high vibration is; the corpus says to read how fast
+  it is rising.
+
+**Limits.** This validates against the simulator's own physics, which follows the corpus
+rule of thumb. It is not a check against real bearings. It is also open loop: nothing the
+agents recommend changes the telemetry. See decision 013.
+
 ---
 
 ## Human approval, outside the app

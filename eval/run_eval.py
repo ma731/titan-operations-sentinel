@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from . import policy_eval, rag_eval, scorecard  # noqa: E402
+from . import policy_eval, rag_eval, scorecard, sim_month_eval  # noqa: E402
 from .scenarios import dataset_meta  # noqa: E402
 
 
@@ -80,6 +80,12 @@ def main(argv: list[str] | None = None) -> int:
         if not rag_result["modes"][mode].get("available"):
             print(f"  {mode}: not configured (set TOS_EMBEDDINGS to score it)")
 
+    print("Running the simulated-month suite ...")
+    sim_result = sim_month_eval.run()
+    li = sim_result["rul_interval"]
+    print(f"  CNC life interval coverage {li['inside']}/{li['checked']}, "
+          f"risk {sim_result['risk']['correct']}/{sim_result['risk']['total']}")
+
     live_result = None
     if args.live:
         print("Running the live agent suite (this costs tokens) ...")
@@ -96,7 +102,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  live suite could not run ({str(exc)[:160]}). "
                   "The offline results below are unaffected.")
 
-    md, js = scorecard.write(policy_result, rag_result, live_result, dataset_meta())
+    md, js = scorecard.write(policy_result, rag_result, live_result, dataset_meta(),
+                             sim_result)
     print(f"\nScorecard written to {md.relative_to(Path.cwd()) if md.is_relative_to(Path.cwd()) else md}")
     if not args.quiet:
         print(f"Raw results       {js.name}")

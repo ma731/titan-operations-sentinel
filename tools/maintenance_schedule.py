@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from .runtime_inputs import current
+
 DATA_DIR = Path(__file__).parent.parent / "data" / "assets"
 
 
@@ -17,6 +19,9 @@ def maintenance_schedule(plant_id: str, horizon: str = "7d") -> dict:
       Fallback: if scheduler unavailable, return last known window + staleness flag
       Risk tier: READ=autonomous, WRITE=APPROVE required
     """
+    view = (current().get("plant_view") or {}).get("schedule") or {}
+    if plant_id in view:                     # a run started from the simulated month
+        return {**view[plant_id], "horizon": horizon}
     schedule_file = DATA_DIR / "maintenance_schedule.json"
     if not schedule_file.exists():
         return {

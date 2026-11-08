@@ -1,0 +1,172 @@
+{
+  "dataset": "tos-sim-month",
+  "version": "1.0",
+  "description": "One simulated month of telemetry for the four CNC machining centres, at 10 minute resolution. Most of it is healthy noise. Seven scripted events sit inside it, each with an answer that is known before anything runs: when the bearing actually fails, and whether waking the agents is the right call. stream/month.py generates the readings from this file (seeded, so every run is identical) and scores the triage gate and the CNC life estimate against these answers.",
+  "labelling_note": "Every expected answer is taken from the reference corpus, not from running the code. Failure windows follow the fleet rule of thumb in tms-101-spindle-bearing-maintenance#S4 (a doubling inside 6 hours means roughly 40 to 80 hours left; a doubling over 24 to 72 hours means roughly 100 to 200). So the month checks the code against the plant's own written knowledge. It is not a validation against real bearing failures, because none are public for this asset class.",
+  "open_loop_note": "The month is the counterfactual where nobody acts: a degrading bearing runs to failure even if the agents recommend a repair. That is what makes the failure time a fixed answer the predictions can be scored against.",
+  "start": "2026-10-05T00:00:00+00:00",
+  "days": 30,
+  "seed": 11,
+  "events": [
+    {
+      "id": "M01-fast-bearing",
+      "machine_id": "CNC-07-LEI",
+      "kind": "bearing",
+      "title": "Friday afternoon bearing failure, fast regime",
+      "critical_at": "2026-10-09T14:30:00+00:00",
+      "doubling_h": 5,
+      "failure_window_h": 56,
+      "repair_downtime_h": 18,
+      "expected": {
+        "wake": true,
+        "detect_before_failure": true,
+        "failure_window_range_h": [
+          40,
+          80
+        ],
+        "why": "Vibration doubles in under 6 hours, so the bearing has roughly 40 to 80 hours left once it is critical.",
+        "source": "tms-101-spindle-bearing-maintenance#S4",
+        "risk": "HIGH",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S4"
+      }
+    },
+    {
+      "id": "M02-heavy-cut",
+      "machine_id": "CNC-02-AMS",
+      "kind": "heavy_cut",
+      "title": "Deeper cut on a hard alloy job: vibration rises with motor current",
+      "start_at": "2026-10-13T06:00:00+00:00",
+      "ramp_h": 1,
+      "hold_h": 4,
+      "vibration_factor": 2.2,
+      "current_factor": 1.45,
+      "expected": {
+        "wake": false,
+        "why": "Vibration tracks spindle current and temperature barely moves. That is a process effect, not a bearing finding.",
+        "source": "tms-101-spindle-bearing-maintenance#S2",
+        "risk": "LOW",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S2"
+      }
+    },
+    {
+      "id": "M03-healthy-feed-loss",
+      "machine_id": "CNC-08-LEI",
+      "kind": "dropout",
+      "title": "Telemetry feed drops overnight on a healthy machine",
+      "start_at": "2026-10-15T22:00:00+00:00",
+      "duration_h": 8,
+      "expected": {
+        "wake": false,
+        "why": "A healthy machine going quiet is an instrumentation ticket, not an operations event.",
+        "source": "tms-705-telemetry-data-quality-and-abstention#S6",
+        "risk": "LOW",
+        "risk_source": "tms-705-telemetry-data-quality-and-abstention#S6"
+      }
+    },
+    {
+      "id": "M04-sensor-rail",
+      "machine_id": "CNC-05-LEI",
+      "kind": "sensor_rail",
+      "title": "Vibration channel saturates at its rail value for 30 minutes",
+      "start_at": "2026-10-17T03:10:00+00:00",
+      "ticks": 3,
+      "rail_value": 25.4,
+      "expected": {
+        "wake": false,
+        "why": "One channel pinned at a rail value while temperature and current stay normal is a suspected sensor fault, raised against the instrumentation.",
+        "source": "tms-705-telemetry-data-quality-and-abstention#S6",
+        "risk": "ESCALATE",
+        "risk_source": "tms-705-telemetry-data-quality-and-abstention#S5"
+      }
+    },
+    {
+      "id": "M05-fast-bearing-feed-loss",
+      "machine_id": "CNC-02-AMS",
+      "kind": "bearing",
+      "title": "Fast bearing failure, and the feed drops 3 hours after it turns critical",
+      "critical_at": "2026-10-21T09:00:00+00:00",
+      "doubling_h": 4,
+      "failure_window_h": 70,
+      "repair_downtime_h": 18,
+      "dropout_after_critical_h": 3,
+      "dropout_duration_h": 10,
+      "expected": {
+        "wake": true,
+        "detect_before_failure": true,
+        "dropout_wake": true,
+        "failure_window_range_h": [
+          40,
+          80
+        ],
+        "why": "Fast regime, so 40 to 80 hours left. A feed that dies on a critical machine is a wake condition in its own right, and the right answer on it is an abstention.",
+        "source": "tms-101-spindle-bearing-maintenance#S4; tms-705-telemetry-data-quality-and-abstention#S5",
+        "risk": "HIGH",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S4",
+        "dropout_risk": "ESCALATE",
+        "dropout_risk_source": "tms-705-telemetry-data-quality-and-abstention#S5"
+      }
+    },
+    {
+      "id": "M06-medium-bearing",
+      "machine_id": "CNC-05-LEI",
+      "kind": "bearing",
+      "title": "Bearing wear over two days, medium regime",
+      "critical_at": "2026-10-24T08:00:00+00:00",
+      "doubling_h": 36,
+      "failure_window_h": 150,
+      "repair_downtime_h": 24,
+      "expected": {
+        "wake": true,
+        "detect_before_failure": true,
+        "failure_window_range_h": [
+          100,
+          200
+        ],
+        "why": "Vibration doubles over 24 to 72 hours, so roughly 100 to 200 hours are left once it is critical.",
+        "source": "tms-101-spindle-bearing-maintenance#S4",
+        "risk": "HIGH",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S4"
+      }
+    },
+    {
+      "id": "M07-slow-drift",
+      "machine_id": "CNC-08-LEI",
+      "kind": "slow_drift",
+      "title": "Slow wear all month, about 10 percent a week",
+      "weekly_growth": 0.1,
+      "expected": {
+        "wake": false,
+        "why": "Under 20 percent a week means more than 500 hours left. It is planned maintenance, not an emergency.",
+        "source": "tms-101-spindle-bearing-maintenance#S3; tms-101-spindle-bearing-maintenance#S4",
+        "risk": "LOW",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S4"
+      }
+    }
+  ],
+  "risk_note": "Risk labels use the policy's three values. HIGH: a bearing that will fail inside the corpus window. LOW: not a bearing finding. ESCALATE: the data cannot support an estimate, so abstain and route to a human (tms-705#S5).",
+  "maintenance_calendar": {
+    "LEI": {
+      "plant_name": "Titan Leipzig (Plant 7)",
+      "weekday": 5,
+      "start_hour": 7,
+      "hours": 8,
+      "technicians": [
+        "Müller",
+        "Becker",
+        "Schmidt",
+        "Hoffmann"
+      ]
+    },
+    "AMS": {
+      "plant_name": "Titan Amsterdam",
+      "weekday": 6,
+      "start_hour": 6,
+      "hours": 8,
+      "technicians": [
+        "de Vries",
+        "Jansen",
+        "Bakker"
+      ]
+    }
+  }
+}

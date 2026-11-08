@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # repo root →
 from langgraph.types import Command
 
 from graph import build_graph, configure_console_logging, make_initial_state
+from tools.sim_clock import sim_clock
 
 # Windows consoles default to cp1252 and can't encode the trace glyphs (→, ⏸, …).
 try:
@@ -97,12 +98,14 @@ def main():
     # recursion_limit headroom for agent-to-agent follow-ups (default 25 is too low).
     config = {"configurable": {"thread_id": state["run_id"]}, "recursion_limit": 50}
 
-    paused = drain(graph.stream(state, config))
+    # The scenario is set on 12 June; run the drafts on that clock, not today's.
+    with sim_clock(state["alert"].get("timestamp")):
+        paused = drain(graph.stream(state, config))
 
-    if paused is not None:
-        # Resume the paused graph with the human decision.
-        resume = {"decision": decision, "approver": "Plant Manager Schmidt (demo)"}
-        drain(graph.stream(Command(resume=resume), config))
+        if paused is not None:
+            # Resume the paused graph with the human decision.
+            resume = {"decision": decision, "approver": "Plant Manager Schmidt (demo)"}
+            drain(graph.stream(Command(resume=resume), config))
 
     final = graph.get_state(config).values
     print(f"\nFINAL STATUS: {final.get('status')}")

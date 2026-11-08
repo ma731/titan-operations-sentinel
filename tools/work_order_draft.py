@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from . import sim_clock
 
 
 def work_order_draft(
@@ -23,7 +23,7 @@ def work_order_draft(
       Fallback: if any required field missing, return partial WO with INCOMPLETE flag
       Risk tier: APPROVE (human must release before execution)
     """
-    wo_id = f"WO-{machine_id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M')}"
+    wo_id = f"WO-{machine_id}-{sim_clock.now().strftime('%Y%m%d%H%M')}"
     incomplete = not all([machine_id, plant_id, parts_required, proposed_window])
 
     return {
@@ -38,6 +38,7 @@ def work_order_draft(
         "technicians_required": technicians_required,
         "estimated_duration_hours": estimated_duration_hours,
         "actions": actions,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": sim_clock.now().isoformat(),
+        "time_basis": sim_clock.basis(),
         "approval_required_from": "plant_manager",
     }
