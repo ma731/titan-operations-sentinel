@@ -24,10 +24,11 @@ do not need the most expensive model, and most token spend cannot be traced to a
 ## How to measure it
 
 ```bash
-TOS_MODEL=azure_openai:<large deployment> python -m eval.run_eval --live
-TOS_MODEL=azure_openai:<large deployment> TOS_MODEL_SMALL=azure_openai:<small deployment> python -m eval.run_eval --live
+python -m eval.routing_compare          # checks the setup, estimates the cost, runs nothing
+python -m eval.routing_compare --run    # the same live scenarios with one model, then routed
 ```
 
-Compare cost per run AND the quality metrics (routing, risk, gate, tier consistency,
-groundedness). Routing is only worth keeping if the cost falls and the quality does not.
-Not yet run: it needs a key, and the numbers belong in the scorecard, not in this record.
+It runs each suite in a fresh process, compares cost per run and every quality metric (routing,
+risk, gate, status, halt, tier consistency, tool-call F1, citations, numeric groundedness), and
+writes `eval/results/routing_comparison.md` with a verdict: keep routing only if it is cheaper
+and nothing drops. Not yet run: it needs a key, and the numbers belong in that file.

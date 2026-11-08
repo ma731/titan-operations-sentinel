@@ -69,7 +69,7 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Red team | **19/19** prompt-injection attacks held, benign actions unaffected, 2 known paraphrase gaps reported ([report](eval/results/red_team.md)) |
 | Knowledge graph | **26** nodes, **37** edges across plants, machines, parts, stock, Tier-1 and Tier-2 suppliers, people |
 | Live cost and latency | instrumented per run, priced per agent by the model it ran on; model routing and provider benchmark not yet measured |
-| Tests | **397** passed, **4** provider-dependent tests skipped in the offline validation |
+| Tests | **403** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
 `python -m stream.run`. The scorecard is generated; this table is a summary.
@@ -432,8 +432,9 @@ stays on the main one. Set `TOS_MODEL_SMALL` to turn it on; unset, one model doe
 everything as before. Each agent is priced by the model it ran on, and the scorecard states
 the routing. The guarantees live in `policy.py`, so a cheaper model can write a weaker
 summary but cannot spend over 500 EUR or skip the safety gate.
-[Decision 011](docs/decisions/011-route-routine-steps-to-a-small-model.md) has the two live
-runs that measure it: cost per run must fall and the quality metrics must hold.
+`python -m eval.routing_compare --run` measures it on a live model (one model, then routed,
+same scenarios) and keeps routing only if cost per run falls and no quality metric drops
+([decision 011](docs/decisions/011-route-routine-steps-to-a-small-model.md)).
 
 ## Titan's tools over MCP
 
