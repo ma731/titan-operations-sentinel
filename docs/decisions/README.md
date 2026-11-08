@@ -17,3 +17,6 @@ Written for the next person who asks "why is it like this", and for us in six mo
 | [007](007-approval-gate-is-write-once.md) | Make the approval gate write-once | Accepted, fixes a real bug |
 | [008](008-label-every-rul-prediction-with-its-provenance.md) | Label every RUL prediction with its provenance | Accepted |
 | [009](009-apply-building-effective-agents.md) | Apply the patterns from Building Effective Agents | Accepted; parallel mode opt-in |
+| [010](010-expose-the-tools-over-mcp.md) | Expose the tools over MCP, without rewiring the agents | Accepted |
+| [011](011-route-routine-steps-to-a-small-model.md) | Route routine steps to a small model | Accepted; saving not yet measured live |
+| [012](012-titan-as-an-a2a-agent.md) | Publish Titan as an A2A agent | Accepted |

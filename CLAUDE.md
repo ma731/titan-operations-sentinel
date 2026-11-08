@@ -81,6 +81,8 @@ webapp/
   backend/main.py        # FastAPI SSE server wrapping graph.py
   frontend/              # React/Vite web console — live multi-agent trace + human approval gate
 policy.py                # the code-enforced decision rules (risk, ceiling, safety, routing, tiering)
+textnorm.py              # normalises disguised wording before policy/safety_gate read it (F-11)
+mcp_server.py            # the tools as an MCP server: read-only + draft-only (decision 010)
 observability.py         # per-agent tokens/cost/latency + optional Langfuse tracing
 rag/
   corpus/                # 12 technical reference documents, chunked by `## S<n>` section
@@ -104,6 +106,7 @@ stream/
   triage.py              # the wake gate: severity band + trend + per-machine cooldown
   run.py                 # the continuous loop (dry run by default)
 integrations/approval.py # Slack Block Kit / SMTP email / console approval routing
+integrations/a2a.py      # A2A Agent Card + message/send, 4 deterministic skills (decision 012)
 tests/
   conftest.py            # sandboxes case-memory and audit-log writes for EVERY test
   test_tools.py          # tool unit tests (offline)
@@ -239,6 +242,8 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 - Pass numeric tool args as plain numbers in prompts — Llama emits arithmetic expressions
   otherwise and Groq rejects the tool call (see `SHARED_FOOTER` in agents.py).
 - Do not change autonomy tiers / the €500 ceiling without updating §5 and the agent prompts.
+- Do not expose anything over MCP or A2A that sends, commits or approves. Outside callers get
+  read-only tools and drafts; re-run `python -m eval.red_team` after touching policy or safety.
 - Do not use `git add -A`/`git add .` — stage explicit paths to avoid committing `.env`.
 - Do not present a rule-derived RUL number as a measured one. Every prediction carries a
   `source` field; keep it accurate. See decision 008 and F-07/F-08.
@@ -274,3 +279,8 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 | Live evaluation suite scored against a provider | Needs a key: not yet run |
 | Dense / hybrid retrieval rows on the scorecard | Needs TOS_EMBEDDINGS: not yet run |
 | Slides | Done (webapp/frontend/public/deck.html) |
+| MCP server (read-only tools, draft-only work order, policy resource) | Done |
+| Knowledge graph / intelligence layer (tools/knowledge_graph.py) | Done |
+| Prompt-injection red team (eval/red_team.py, 19/19, 2 known gaps) | Done |
+| Model routing (TOS_MODEL_SMALL) | Built; saving not yet measured live |
+| A2A agent card + message/send | Done (no auth, no streaming) |

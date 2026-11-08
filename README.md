@@ -66,7 +66,9 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Retrieval | recall@4 **100%** on direct queries, **41.7%** on paraphrases (52 labelled queries) |
 | Triage gate | default 48 ticks: **192** readings, **1** wake, **0.52%** wake rate (dry run) |
 | RUL model | **RMSE 17.0 cycles** on **707** held-out engines (NASA C-MAPSS), against a mean-predictor baseline of 41.8 ([backtest](eval/results/rul_backtest.md)) |
-| Live cost and latency | instrumented per run; provider benchmark not yet measured |
+| Red team | **19/19** prompt-injection attacks held, benign actions unaffected, 2 known paraphrase gaps reported ([report](eval/results/red_team.md)) |
+| Knowledge graph | **26** nodes, **37** edges across plants, machines, parts, stock, Tier-1 and Tier-2 suppliers, people |
+| Live cost and latency | instrumented per run, priced per agent by the model it ran on; model routing and provider benchmark not yet measured |
 | Tests | **397** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
@@ -122,6 +124,7 @@ flowchart TB
       TRANS[("Shared transcript<br/>agents talk in plain language")]
       MEM[("Case memory<br/>past incidents, outcomes")]
       DOCS[("Technical corpus<br/>retrieval with citations")]
+      KG[("Knowledge graph<br/>plants, parts, suppliers, Tier-2")]
 
       ORCH --> REL & SUP & PRO & QUA & COM
       REL & SUP & PRO & QUA & COM --> ORCH
@@ -129,14 +132,24 @@ flowchart TB
       TRANS -.read.-> ORCH
       REL <-.precedent.-> MEM
       REL & COM <-.cited passages.-> DOCS
+      SUP <-.what a risk reaches.-> KG
     end
 
     POLICY["Code-enforced policy<br/>coverage · termination · 500 EUR ceiling · safety override"]
+    ROUTE["Model routing<br/>routine steps on a small model"]
+
+    subgraph OPEN["Open to other agents"]
+      direction LR
+      MCP["MCP server<br/>17 read-only tools, draft-only work order"]
+      A2A["A2A endpoint<br/>Agent Card, 4 skills"]
+    end
 
     STREAM --> TRIAGE -->|"only when it matters"| ORCH
     ORCH --> GATE{{"Human approval<br/>Slack · email · console"}}
     GATE --> PLAN["Tiered action plan<br/>AUTO · APPROVE · MONITOR, with ROI"]
     POLICY -. constrains .-> ORCH
+    ROUTE -. picks the model .-> ORCH
+    MCP & A2A -. same tools, same policy .-> POLICY
 ```
 
 The load-bearing idea is the split between the two kinds of decision:
@@ -147,6 +160,10 @@ The load-bearing idea is the split between the two kinds of decision:
   every cross-domain agent runs on a high-risk event, that the run terminates, that
   spending above 500 EUR reaches a human, that a safety HALT overrides everything, and
   that thin data produces an abstention rather than a confident guess.
+
+Other agents get in through two standard doors, MCP for Titan's tools and A2A for handing
+Titan a task, and both hit the same policy: nothing outside can spend, approve or skip the
+safety gate. The red team tests those guarantees with the text a fooled model could write.
 
 So the system is autonomous but cannot run away, and the guarantees are testable without
 a model. `eval/policy_eval.py` verifies the routing guarantee by enumerating every path
@@ -537,21 +554,23 @@ key in `.env`, or from the console's picker.
 ```
 graph.py              orchestration: supervisor, workers, shared transcript, approval gate
 policy.py             the code-enforced decision rules (coverage, ceiling, safety, abstention)
-observability.py      per-agent tokens, cost, latency; optional Langfuse tracing
-llm.py                provider-agnostic model factory
+textnorm.py           undoes disguised wording before the safety and tier rules read it
+observability.py      per-agent tokens, cost (priced by model), latency; optional Langfuse tracing
+llm.py                provider-agnostic model factory, model routing (TOS_MODEL_SMALL)
 audit_log.py          JSONL audit trail
+mcp_server.py         Titan's tools as an MCP server (decision 010)
 agents/               the 5 specialist ReAct agents
 tools/                22 domain tools plus the @tool wrappers (docs/tool_catalog.md); knowledge_graph.py
 rag/                  technical corpus, BM25 + optional embeddings, cited retrieval
-eval/                 labelled datasets, metric suites, generated scorecard, findings register
+eval/                 labelled datasets, metric suites, red team, generated scorecard, findings register
 ml/                  C-MAPSS loading, the RUL model, conformal bound, fitted serving
 models/              fitted RUL artifacts
 stream/              fleet simulator, triage gate, the continuous loop
-integrations/         Slack and email approval routing
+integrations/         Slack and email approval routing; the A2A endpoint (decision 012)
 prompts/              5 agent prompts plus supervisor, orchestrator, guardrails, self-eval
 data/                 simulated scenario data for all five challenges, plus case memory
 webapp/               React console and FastAPI SSE backend
-scripts/              run_demo.py, view_run.py, record_demo.py (regenerates the GIF)
+scripts/              run_demo.py, view_run.py, record_demo.py (the GIF), mcp_demo.py, a2a_demo.py
 tests/                offline tests, including all 34 cases through the actual LangGraph
 docs/                 brief, case study, tool catalog, architecture, appendix pack
 ```
@@ -576,6 +595,13 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
   prediction from a threshold someone wrote down are different kinds of claim. Keeping them
   visibly apart costs one field and removes the temptation to let the demo imply more than
   it earned.
+- **Why MCP and A2A sit beside the agents, not under them.** The agents keep calling their
+  tools directly, so the evaluation and the demo never depend on a protocol hop. Other
+  agents get the same tools (MCP) or hand over a task (A2A), read-only or draft-only, and
+  hit the same policy.
+- **Why a knowledge graph in plain Python.** The value is the model of the operation and
+  the path behind every answer, not the storage; it moves onto Neo4j or a client's graph
+  unchanged.
 - **Honest labelling.** The declared-threshold life estimate, the Replay recording, the
   design-stage learning parts, the corpus provenance and the open evaluation findings are
   all labelled as what they are, in the code, the docs, the console and the deck.
@@ -607,6 +633,13 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
   over-fired and under-fired. It now requires a defeating action *and* a hazard control.
   Both directions are pinned by adversarial scenarios ([F-02](eval/FINDINGS.md)).
 - Reflection replay and automatic signature down-weighting are designed, not live.
+- The red team holds 19/19, but keyword rules cannot anticipate every paraphrase: two are
+  listed in [F-11](eval/FINDINGS.md) with what still stands in their way (the Compliance
+  agent and human approval of every work order).
+- Model routing is built and tested offline; its cost saving and quality impact need two
+  live runs with a key ([decision 011](docs/decisions/011-route-routine-steps-to-a-small-model.md)).
+- The MCP server runs over stdio and the A2A endpoint has no authentication or streaming:
+  fine on one machine, not yet for a shared deployment.
 - The retrieval corpus is small and clean, so the direct-split recall says the corpus is
   well separated rather than that retrieval is solved. The
   [findings register](eval/FINDINGS.md) lists the suite's own blind spots.
