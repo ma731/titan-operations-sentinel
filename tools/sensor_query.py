@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from .runtime_inputs import current
+from .sim_window import serve as serve_history
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "sensors"
 
@@ -22,6 +23,8 @@ def sensor_query(machine_id: str, window: str, sensors: list[str]) -> dict:
     if inputs and inputs["machine_id"] == machine_id:
         if inputs["telemetry_status"] == "DATA_UNAVAILABLE":
             return {"error": "data_unavailable", "machine_id": machine_id, "window": window}
+        if inputs.get("history"):                    # a run started from the simulated month
+            return serve_history(inputs["history"], window, sensors)
         readings = {s: [v] for s, v in inputs["readings"].items() if s in sensors}
         return {"machine_id": machine_id, "window": window, "readings": readings,
                 "summary": {s: {"latest": vs[-1]} for s, vs in readings.items()},

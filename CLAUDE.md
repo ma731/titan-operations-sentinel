@@ -70,6 +70,7 @@ tools/
   quality_history, telemetry_correlate                              # quality (4)
   safety_gate, audit_assemble                                       # compliance & safety (5)
   sim_clock.py           # one plant-time clock for simulated runs (drafts read it)
+  sim_window.py          # serves sensor_query a window from the simulated month
   maintenance_schedule, work_order_draft, notify                    # shared / scheduling
 prompts/                 # supervisor + orchestrator + 5 agent prompts + guardrails + self_eval
 data/                    # scenario data: alerts/ sensors/ assets/ inventory/ suppliers/ production/ quality/ compliance/
@@ -101,6 +102,7 @@ eval/
   rag_eval.py            # recall@k / MRR / precision@k per retriever and difficulty split
   live_eval.py           # full-graph runs: tool-call correctness, citation rate, tokens
   run_eval.py            # CLI -> eval/results/scorecard.md
+  sim_month_eval.py      # offline: CNC life interval coverage + risk on the month's 27 wakes
   FINDINGS.md            # open findings, with why each is not simply patched to green
 stream/
   simulator.py           # seeded fleet sensor simulator with a degradation model
@@ -211,6 +213,7 @@ python -m eval.run_eval --live         # adds the live agent suite (costs tokens
 python -m stream.run                   # continuous alert stream, triage only, no model calls
 python -m stream.month                 # simulated month vs known answers -> eval/results/sim_month.md (free)
 python -m stream.month --live --max-runs 3   # also run the agents on the key wakes (tokens)
+python -m stream.month --write-cases   # regenerate eval/cases/sim_month_cases.json after editing the scenario
 TOS_PARALLEL=1 python scripts/run_demo.py  # supply chain + production in one step (decision 009)
 python -m eval.routing_compare --run     # live: one model vs routed, writes eval/results/routing_comparison.md (decision 011)
 python mcp_server.py                   # Titan's tools as an MCP server (stdio), decision 010

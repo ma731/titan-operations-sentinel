@@ -20,9 +20,14 @@
       "expected": {
         "wake": true,
         "detect_before_failure": true,
-        "failure_window_range_h": [40, 80],
+        "failure_window_range_h": [
+          40,
+          80
+        ],
         "why": "Vibration doubles in under 6 hours, so the bearing has roughly 40 to 80 hours left once it is critical.",
-        "source": "tms-101-spindle-bearing-maintenance#S4"
+        "source": "tms-101-spindle-bearing-maintenance#S4",
+        "risk": "HIGH",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S4"
       }
     },
     {
@@ -38,7 +43,9 @@
       "expected": {
         "wake": false,
         "why": "Vibration tracks spindle current and temperature barely moves. That is a process effect, not a bearing finding.",
-        "source": "tms-101-spindle-bearing-maintenance#S2"
+        "source": "tms-101-spindle-bearing-maintenance#S2",
+        "risk": "LOW",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S2"
       }
     },
     {
@@ -51,7 +58,9 @@
       "expected": {
         "wake": false,
         "why": "A healthy machine going quiet is an instrumentation ticket, not an operations event.",
-        "source": "tms-705-telemetry-data-quality-and-abstention#S6"
+        "source": "tms-705-telemetry-data-quality-and-abstention#S6",
+        "risk": "LOW",
+        "risk_source": "tms-705-telemetry-data-quality-and-abstention#S6"
       }
     },
     {
@@ -65,7 +74,9 @@
       "expected": {
         "wake": false,
         "why": "One channel pinned at a rail value while temperature and current stay normal is a suspected sensor fault, raised against the instrumentation.",
-        "source": "tms-705-telemetry-data-quality-and-abstention#S6"
+        "source": "tms-705-telemetry-data-quality-and-abstention#S6",
+        "risk": "ESCALATE",
+        "risk_source": "tms-705-telemetry-data-quality-and-abstention#S5"
       }
     },
     {
@@ -83,9 +94,16 @@
         "wake": true,
         "detect_before_failure": true,
         "dropout_wake": true,
-        "failure_window_range_h": [40, 80],
+        "failure_window_range_h": [
+          40,
+          80
+        ],
         "why": "Fast regime, so 40 to 80 hours left. A feed that dies on a critical machine is a wake condition in its own right, and the right answer on it is an abstention.",
-        "source": "tms-101-spindle-bearing-maintenance#S4; tms-705-telemetry-data-quality-and-abstention#S5"
+        "source": "tms-101-spindle-bearing-maintenance#S4; tms-705-telemetry-data-quality-and-abstention#S5",
+        "risk": "HIGH",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S4",
+        "dropout_risk": "ESCALATE",
+        "dropout_risk_source": "tms-705-telemetry-data-quality-and-abstention#S5"
       }
     },
     {
@@ -100,9 +118,14 @@
       "expected": {
         "wake": true,
         "detect_before_failure": true,
-        "failure_window_range_h": [100, 200],
+        "failure_window_range_h": [
+          100,
+          200
+        ],
         "why": "Vibration doubles over 24 to 72 hours, so roughly 100 to 200 hours are left once it is critical.",
-        "source": "tms-101-spindle-bearing-maintenance#S4"
+        "source": "tms-101-spindle-bearing-maintenance#S4",
+        "risk": "HIGH",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S4"
       }
     },
     {
@@ -110,12 +133,15 @@
       "machine_id": "CNC-08-LEI",
       "kind": "slow_drift",
       "title": "Slow wear all month, about 10 percent a week",
-      "weekly_growth": 0.10,
+      "weekly_growth": 0.1,
       "expected": {
         "wake": false,
         "why": "Under 20 percent a week means more than 500 hours left. It is planned maintenance, not an emergency.",
-        "source": "tms-101-spindle-bearing-maintenance#S3; tms-101-spindle-bearing-maintenance#S4"
+        "source": "tms-101-spindle-bearing-maintenance#S3; tms-101-spindle-bearing-maintenance#S4",
+        "risk": "LOW",
+        "risk_source": "tms-101-spindle-bearing-maintenance#S4"
       }
     }
-  ]
+  ],
+  "risk_note": "Risk labels use the policy's three values. HIGH: a bearing that will fail inside the corpus window. LOW: not a bearing finding. ESCALATE: the data cannot support an estimate, so abstain and route to a human (tms-705#S5)."
 }

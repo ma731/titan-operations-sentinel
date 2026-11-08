@@ -41,8 +41,10 @@ def _log(event: dict) -> None:
         pass
 
 
-def trigger_run(verdict: TriageVerdict, live: bool, auto_decision: str = "reject") -> dict:
-    """Start a graph run for a triaged alert, or describe what would have been started."""
+def trigger_run(verdict: TriageVerdict, live: bool, auto_decision: str = "reject",
+                history: dict | None = None) -> dict:
+    """Start a graph run for a triaged alert, or describe what would have been started.
+    `history` hands sensor_query the telemetry before the wake (tools/sim_window.py)."""
     alert = verdict.alert or {}
     mode = alert.get("suggested_mode", "happy")
     if not live:
@@ -70,7 +72,7 @@ def trigger_run(verdict: TriageVerdict, live: bool, auto_decision: str = "reject
 
     # Plant time, not today's date: the drafts must agree with the reading that woke us.
     with runtime_inputs(alert["machine_id"], readings,
-                        "INTERRUPTED" if mode == "escalation" else "OK"),             sim_clock(alert.get("timestamp")), observability.instrument_run() as usage:
+                        "INTERRUPTED" if mode == "escalation" else "OK", history=history),             sim_clock(alert.get("timestamp")), observability.instrument_run() as usage:
         for chunk in graph.stream(state, cfg):
             if "__interrupt__" in chunk:
                 interrupted = True

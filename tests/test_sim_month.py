@@ -170,3 +170,75 @@ def test_a_saturated_sensor_does_not_wake_the_agents(month):
 def test_the_first_estimate_on_a_fast_bearing_is_not_optimistic(month):
     firsts = month[3]["first_estimates"]
     assert firsts["M01-fast-bearing"] != "optimistic"
+
+
+# --- month windows for sensor_query --------------------------------------- #
+def test_a_month_run_serves_a_real_window_not_one_reading(month):
+    from tools.runtime_inputs import runtime_inputs
+    from tools.sensor_query import sensor_query
+
+    sim, wakes, _, _ = month
+    w = next(x for x in wakes if x["event"] == "M01-fast-bearing")
+    hist = sim.history(w["machine_id"], w["tick"])
+    with runtime_inputs(w["machine_id"], {"vibration": w["vibration"]}, history=hist):
+        r = sensor_query(w["machine_id"], "72h", ["vibration", "bearing_temp", "spindle_current"])
+    vib = r["readings"]["vibration"]
+    assert 20 <= len(vib) <= 37 and vib[-1]["v"] == w["vibration"]
+    assert vib[-1]["ts"] == w["at"]                       # ends at the wake: nothing from the future
+    assert r["sensor_status"] == "OK" and r["source"] == "simulation"
+    assert r["summary"]["vibration"]["trend"] == "rising"
+    assert set(r["readings"]) == {"vibration", "bearing_temp", "spindle_current"}
+
+
+def test_a_window_with_a_feed_gap_is_reported_as_interrupted(month):
+    from tools.sim_window import serve
+
+    sim, wakes, _, _ = month
+    w = next(x for x in wakes if x["kind"] == "dropout")
+    r = serve(sim.history(w["machine_id"], w["tick"]), "24h", ["vibration"])
+    assert r["sensor_status"] == "INTERRUPTED" and "missing" in r["sensor_status_detail"]
+    assert r["window"] == "24h"
+
+
+def test_the_recorded_fixture_path_is_unchanged_without_history():
+    from tools.sensor_query import sensor_query
+
+    r = sensor_query("CNC-07-LEI", "72h", ["vibration"])
+    assert r["data_timestamp"] == "2026-06-12T14:32:00Z" and len(r["readings"]["vibration"]) == 37
+
+
+# --- the labelled cases and the offline metric ----------------------------- #
+def test_the_committed_cases_match_the_month(month):
+    from stream.month import CASES, cases
+
+    sim, wakes, _, _ = month
+    committed = json.loads(CASES.read_text(encoding="utf-8"))
+    assert committed == json.loads(json.dumps(cases(sim, wakes))), \
+        "regenerate with: python -m stream.month --write-cases"
+
+
+def test_every_case_label_cites_the_corpus():
+    from stream.month import CASES
+
+    for c in json.loads(CASES.read_text(encoding="utf-8"))["cases"]:
+        assert c["expected"]["risk"] in {"HIGH", "LOW", "ESCALATE"}, c["id"]
+        doc, section = c["expected"]["source"].split("#")
+        assert f"## {section} " in (CORPUS / f"{doc}.md").read_text(encoding="utf-8"), c["id"]
+
+
+def test_the_offline_metric_agrees_with_the_month_report(month):
+    from eval.sim_month_eval import run
+
+    result = month[3]
+    r = run()
+    li = r["rul_interval"]
+    assert (li["checked"], li["inside"], li["optimistic"]) == \
+           (result["life_checks"], result["life_inside"], result["life_optimistic"])
+    assert r["basis"].startswith("simulated")
+
+
+def test_quiet_days_stay_quiet_and_a_machine_is_reset_mid_month(month):
+    result = month[3]
+    assert len(result["quiet_days"]) >= 3 and result["wakes_on_quiet_days"] == 0
+    assert any("2026-10-12" <= x["back_in_service"] <= "2026-10-25"
+               for x in result["maintenance_resets"])

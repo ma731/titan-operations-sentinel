@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-22T15:58:15.358330+00:00",
+  "generated_utc": "2026-11-08T20:59:21.759888+00:00",
   "datasets": {
     "scenarios": 34,
     "live_subset": 8,
@@ -3041,5 +3041,285 @@
     },
     "best_available_mode": "prf"
   },
-  "live": null
+  "live": null,
+  "sim_month": {
+    "cases": 27,
+    "basis": "simulated month: validates against the simulator's physics, not real failures",
+    "risk": {
+      "metric": "risk_on_simulated_wakes",
+      "correct": 24,
+      "total": 27,
+      "accuracy": 0.8889,
+      "misses": [
+        {
+          "case": "SM-M01-01",
+          "expected": "HIGH",
+          "actual": "LOW",
+          "note": "tms-101-spindle-bearing-maintenance#S4"
+        },
+        {
+          "case": "SM-M04-01",
+          "expected": "ESCALATE",
+          "actual": "HIGH",
+          "note": "tms-705-telemetry-data-quality-and-abstention#S5"
+        },
+        {
+          "case": "SM-M05-01",
+          "expected": "HIGH",
+          "actual": "LOW",
+          "note": "tms-101-spindle-bearing-maintenance#S4"
+        }
+      ]
+    },
+    "rul_interval": {
+      "checked": 24,
+      "inside": 4,
+      "optimistic": 15,
+      "conservative": 5,
+      "coverage": 0.1667,
+      "median_midpoint_error_h": 30.4,
+      "estimates": [
+        {
+          "case": "SM-M01-01",
+          "predicted_h": [
+            96,
+            144
+          ],
+          "true_h": 57.3,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M01-02",
+          "predicted_h": [
+            72,
+            120
+          ],
+          "true_h": 45.3,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M01-03",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 33.3,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M01-04",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 21.3,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M01-05",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 9.3,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M05-01",
+          "predicted_h": [
+            96,
+            144
+          ],
+          "true_h": 70.7,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M05-03",
+          "predicted_h": [
+            72,
+            120
+          ],
+          "true_h": 54.7,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M05-04",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 42.7,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M05-05",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 30.7,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M05-06",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 18.7,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M05-07",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 6.7,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-01",
+          "predicted_h": [
+            72,
+            120
+          ],
+          "true_h": 154.0,
+          "verdict": "conservative",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-02",
+          "predicted_h": [
+            72,
+            120
+          ],
+          "true_h": 142.0,
+          "verdict": "conservative",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-03",
+          "predicted_h": [
+            72,
+            120
+          ],
+          "true_h": 130.0,
+          "verdict": "conservative",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-04",
+          "predicted_h": [
+            72,
+            120
+          ],
+          "true_h": 118.0,
+          "verdict": "inside",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-05",
+          "predicted_h": [
+            72,
+            120
+          ],
+          "true_h": 106.0,
+          "verdict": "inside",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-06",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 94.0,
+          "verdict": "conservative",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-07",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 82.0,
+          "verdict": "conservative",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-08",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 70.0,
+          "verdict": "inside",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-09",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 58.0,
+          "verdict": "inside",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-10",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 46.0,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-11",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 34.0,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-12",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 22.0,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        },
+        {
+          "case": "SM-M06-13",
+          "predicted_h": [
+            52,
+            76
+          ],
+          "true_h": 10.0,
+          "verdict": "optimistic",
+          "source": "declared_thresholds"
+        }
+      ]
+    }
+  }
 }

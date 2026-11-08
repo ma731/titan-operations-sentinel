@@ -36,6 +36,7 @@ from stream.triage import VIB_CRITICAL, VIB_TRIP, TriageGate, TriageVerdict  # n
 ROOT = Path(__file__).resolve().parents[1]
 SCENARIO = ROOT / "data" / "sim_month" / "scenario.json"
 RESULTS = ROOT / "eval" / "results"
+CASES = ROOT / "eval" / "cases" / "sim_month_cases.json"
 
 TICKS_PER_HOUR = 60 // MINUTES_PER_TICK
 BASE_CURRENT_A = 12.0        # the recorded CNC-07 fixture runs at about 12 A
@@ -87,6 +88,7 @@ class MonthSimulator:
         self._rng = random.Random(scenario.get("seed", 11))
         self.truth = {e["id"]: self._truth(e) for e in scenario["events"]}
         self._last_temp: dict[str, float] = {}   # so a stopped spindle cools from where it was
+        self.samples: dict[str, dict[int, Reading]] = {}   # what was reported, by tick
 
     # --- timing ----------------------------------------------------------- #
     def hours(self, ts: str) -> float:
@@ -203,8 +205,26 @@ class MonthSimulator:
                 cur = BASE_CURRENT_A * sig["current_x"] + n_cur
                 self._last_temp[m.machine_id] = temp
             if sig["reporting"]:
-                out.append(Reading(m.machine_id, m.plant_id, ts, max(vib, 0.05), temp, cur, tick))
+                r = Reading(m.machine_id, m.plant_id, ts, max(vib, 0.05), temp, cur, tick)
+                out.append(r)
+                self.samples.setdefault(m.machine_id, {})[tick] = r
         return out, labels
+
+    def history(self, machine_id: str, end_tick: int, hours: int = 72) -> dict:
+        """The raw samples a run started at `end_tick` would have had, for sensor_query
+        (tools/sim_window.py). Only ticks already generated, so nothing from the future."""
+        rec = self.samples.get(machine_id, {})
+        first = max(0, end_tick - hours * TICKS_PER_HOUR)
+        rows = []
+        for t in range(first, end_tick + 1):
+            r = rec.get(t)
+            ts = self.at(t / TICKS_PER_HOUR)
+            rows.append({"ts": ts, "missing": True} if r is None else
+                        {"ts": ts, "vibration": round(r.vibration, 2),
+                         "bearing_temp": round(r.bearing_temp, 1),
+                         "spindle_current": round(r.spindle_current, 2)})
+        return {"machine_id": machine_id, "interval_min": MINUTES_PER_TICK, "hours": hours,
+                "samples": rows}
 
 
 # --- replay and scoring --------------------------------------------------- #
@@ -316,6 +336,14 @@ def score(sim: MonthSimulator, wakes: list[dict]) -> dict:
     life = [c for r in events for c in r.get("life", [])]
     firsts = [r["life"][0] for r in events if r.get("life")]
     noise = by_event.get(None, [])
+
+    # Quiet days: no scripted event anywhere in the fleet (the month-long slow drift
+    # should raise nothing either, so it does not make a day busy). They must stay silent.
+    busy = [sim.truth[e["id"]]["window"] for e in sim.scenario["events"]
+            if e["kind"] != "slow_drift"]
+    quiet = [d for d in range(sim.scenario["days"])
+             if not any(lo < (d + 1) * 24 and hi > d * 24 for lo, hi in busy)]
+    quiet_wakes = [w for w in wakes if int(w["hours"] // 24) in quiet]
     return {
         "scenario": {"start": sim.scenario["start"], "days": sim.scenario["days"],
                      "seed": sim.scenario.get("seed"), "machines": len(sim.machines),
@@ -325,12 +353,58 @@ def score(sim: MonthSimulator, wakes: list[dict]) -> dict:
         "answers_total": len(events),
         "wakes_total": len(wakes),
         "wakes_on_noise": len(noise),
+        "quiet_days": [sim.at(d * 24)[:10] for d in quiet],
+        "wakes_on_quiet_days": len(quiet_wakes),
+        "maintenance_resets": [{"machine_id": e["machine_id"], "event": e["id"],
+                                "back_in_service": sim.at(sim.truth[e["id"]]["back_h"])}
+                               for e in sim.scenario["events"] if e["kind"] == "bearing"],
         "life_checks": len(life),
         "life_inside": sum(c["verdict"] == "inside" for c in life),
         "life_optimistic": sum(c["verdict"] == "optimistic" for c in life),
         "life_conservative": sum(c["verdict"] == "conservative" for c in life),
         "first_estimates": {r["id"]: r["life"][0]["verdict"] for r in events if r.get("life")},
         "first_inside": sum(c["verdict"] == "inside" for c in firsts),
+    }
+
+
+def cases(sim: MonthSimulator, wakes: list[dict]) -> dict:
+    """Every wake as a labelled case: the alert, the true hours left, and the risk the
+    corpus says is right. eval/sim_month_eval.py scores these offline."""
+    events = {e["id"]: e for e in sim.scenario["events"]}
+    out, seen = [], {}
+    for w in wakes:
+        eid = w.get("event") or attribute(sim, w)
+        exp = events[eid]["expected"] if eid in events else {}
+        seen[eid] = seen.get(eid, 0) + 1
+        dropout = w["kind"] == "dropout"
+        fail = sim.truth.get(eid, {}).get("failure_h")
+        readings = {"vibration": w["vibration"]}
+        if w["bearing_temp"] is not None:
+            readings["bearing_temp"] = w["bearing_temp"]
+        key = "dropout_risk" if dropout and "dropout_risk" in exp else "risk"
+        out.append({
+            "id": f"SM-{(eid or 'NOISE').split('-')[0]}-{seen[eid]:02d}",
+            "event": eid, "machine_id": w["machine_id"], "at": w["at"], "wake_kind": w["kind"],
+            "alert": w["verdict"].alert,
+            "readings": readings,
+            "telemetry_status": "INTERRUPTED" if dropout else "OK",
+            "true_hours_to_failure": (round(fail - w["hours"], 1)
+                                      if fail is not None and w["hours"] < fail else None),
+            "expected": {"risk": exp.get(key, "LOW"),
+                         "source": exp.get(f"{key}_source", exp.get("source"))},
+            "history_ref": {"machine_id": w["machine_id"], "end_tick": w["tick"], "hours": 72},
+        })
+    return {
+        "dataset": "tos-sim-month-cases",
+        "version": "1.0",
+        "generated_by": "python -m stream.month --write-cases",
+        "description": ("Every wake in the simulated month as a labelled case. The true hours "
+                        "to failure come from the simulator; the expected risk comes from the "
+                        "corpus section cited on each case. history_ref rebuilds the 72h "
+                        "window the run would have had (MonthSimulator.history)."),
+        "limits": ("Simulated. These check the code against the simulator's physics, which "
+                   "follows the corpus rule of thumb. They are not real bearing failures."),
+        "cases": out,
     }
 
 
@@ -358,7 +432,8 @@ def run_live(sim: MonthSimulator, wakes: list[dict], limit: int, decision: str) 
     for w in pick_live(sim, wakes, limit):
         alert = w["verdict"].alert
         print(f"  live run: {w['event'] or 'noise'} at {w['at']} ({w['machine_id']})")
-        res = trigger_run(w["verdict"], live=True, auto_decision=decision)
+        res = trigger_run(w["verdict"], live=True, auto_decision=decision,
+                          history=sim.history(w["machine_id"], w["tick"]))
         out.append({"event": w["event"], "at": w["at"], "machine_id": w["machine_id"],
                     "mode": alert.get("suggested_mode", "happy"),
                     **{k: res.get(k) for k in ("run_id", "status", "risk", "reached_gate")},
@@ -385,7 +460,12 @@ def render(result: dict, live: list[dict] | None = None) -> str:
          f"- CNC life estimates checked against the true failure time: {result['life_checks']}. "
          f"Inside the predicted range: {result['life_inside']}. Optimistic (more life "
          f"promised than was left): {result['life_optimistic']}. Conservative: "
-         f"{result['life_conservative']}.", "",
+         f"{result['life_conservative']}.",
+         f"- Quiet days (no scripted event anywhere): {len(result['quiet_days'])}. "
+         f"Wakes on them: {result['wakes_on_quiet_days']}.",
+         "- Maintenance resets: " + "; ".join(
+             f"{x['machine_id']} back in service {_hm(x['back_in_service'])}"
+             for x in result["maintenance_resets"]) + ".", "",
          "## Events", "",
          "| Event | Machine | Should wake | Woke | First wake | Right? | Source |",
          "|---|---|---|---|---|---|---|"]
@@ -459,6 +539,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--live", action="store_true", help="run the agents on key wakes (tokens)")
     ap.add_argument("--max-runs", type=int, default=3)
     ap.add_argument("--decision", default="reject", choices=["approve", "reject"])
+    ap.add_argument("--write-cases", action="store_true",
+                    help=f"regenerate {CASES.relative_to(ROOT)} from the month")
     args = ap.parse_args(argv)
 
     sim = MonthSimulator(load_scenario(args.scenario))
@@ -475,20 +557,20 @@ def main(argv: list[str] | None = None) -> int:
     args.out.with_suffix(".json").write_text(json.dumps(_strip(payload), indent=1),
                                              encoding="utf-8")
 
-    print(f"month: {s_days(result)} | readings {gate.seen} | wakes {len(wakes)} "
+    sc = result["scenario"]
+    print(f"month: {sc['days']} days from {sc['start'][:10]}, {sc['machines']} machines | "
+          f"readings {gate.seen} | wakes {len(wakes)} "
           f"({result['wakes_on_noise']} on noise)")
     for r in result["events"]:
         print(f"  {'ok ' if r['pass'] else 'NO '} {r['id']:<28} woke {r['wakes']:>2}x  "
               f"first {_hm(r['first_wake_at'])}")
     print(f"life estimates: {result['life_inside']} inside, {result['life_optimistic']} "
           f"optimistic, {result['life_conservative']} conservative (of {result['life_checks']})")
+    if args.write_cases:
+        CASES.write_text(json.dumps(cases(sim, wakes), indent=1) + "\n", encoding="utf-8")
+        print(f"wrote {CASES.relative_to(ROOT)}")
     print(f"wrote {args.out}")
     return 0
-
-
-def s_days(result: dict) -> str:
-    s = result["scenario"]
-    return f"{s['days']} days from {s['start'][:10]}, {s['machines']} machines"
 
 
 if __name__ == "__main__":

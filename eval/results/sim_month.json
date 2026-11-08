@@ -410,6 +410,37 @@
  "answers_total": 7,
  "wakes_total": 27,
  "wakes_on_noise": 0,
+ "quiet_days": [
+  "2026-10-05",
+  "2026-10-06",
+  "2026-10-07",
+  "2026-10-08",
+  "2026-10-14",
+  "2026-10-18",
+  "2026-10-19",
+  "2026-10-20",
+  "2026-11-01",
+  "2026-11-02",
+  "2026-11-03"
+ ],
+ "wakes_on_quiet_days": 0,
+ "maintenance_resets": [
+  {
+   "machine_id": "CNC-07-LEI",
+   "event": "M01-fast-bearing",
+   "back_in_service": "2026-10-12T16:30:00+00:00"
+  },
+  {
+   "machine_id": "CNC-02-AMS",
+   "event": "M05-fast-bearing-feed-loss",
+   "back_in_service": "2026-10-25T01:00:00+00:00"
+  },
+  {
+   "machine_id": "CNC-05-LEI",
+   "event": "M06-medium-bearing",
+   "back_in_service": "2026-10-31T14:00:00+00:00"
+  }
+ ],
  "life_checks": 24,
  "life_inside": 4,
  "life_optimistic": 15,

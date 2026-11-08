@@ -20,3 +20,4 @@ Written for the next person who asks "why is it like this", and for us in six mo
 | [010](010-expose-the-tools-over-mcp.md) | Expose the tools over MCP, without rewiring the agents | Accepted |
 | [011](011-route-routine-steps-to-a-small-model.md) | Route routine steps to a small model | Accepted; saving not yet measured live |
 | [012](012-titan-as-an-a2a-agent.md) | Publish Titan as an A2A agent | Accepted |
+| [013](013-a-simulated-month-with-known-answers.md) | Check the CNC predictions against a simulated month | Accepted; three gaps found, not yet fixed |
