@@ -97,6 +97,31 @@ export const GUIDE = [
     a: 'It follows Anthropic\'s Building Effective Agents. Routing: a code-only gate decides which alerts wake the agents, then the orchestrator picks who goes next. Orchestrator-workers: one orchestrator, five specialists with their own tools and document search. Evaluator-optimizer: a check in code scores the final plan against the rules and sends it back once if it fails. Parallelisation: supply chain and production can run side by side, off by default. Guarantees stay in code, judgement in the model.',
   },
   {
+    id: 'mcp', q: 'What is MCP, and does Titan use it?',
+    k: ['mcp', 'protocol', 'connector', 'integration', 'integrate', 'claude desktop', 'copilot'],
+    a: 'MCP, the Model Context Protocol, is a standard way to plug tools into any AI agent: build the connector once and every agent can use it. Titan runs an MCP server with its read-only tools, plus one action that can only ever draft a work order. Claude Desktop or a Copilot can use them, and the €500 limit and the safety gate still apply, because those rules live in code. Titan\'s own agents still call their tools directly.',
+  },
+  {
+    id: 'a2a', q: 'Can other agents talk to Titan?',
+    k: ['a2a', 'agent to agent', 'other agents', 'delegate', 'agent card', 'interoperab'],
+    a: 'Yes, two ways. Through MCP, another agent uses Titan\'s tools. Through A2A, the agent to agent protocol, another vendor\'s agent hands Titan a whole task: it finds Titan\'s agent card and asks, say, what a supplier outage puts at risk. Titan can triage a plant, list what a machine depends on, size a supplier risk, or screen an action for safety. Nothing that comes in this way can spend or approve.',
+  },
+  {
+    id: 'graph', q: 'What is the knowledge graph?',
+    k: ['graph', 'knowledge', 'intelligence layer', 'dependencies', 'tier 2', 'tier-2', 'upstream'],
+    a: 'It is the intelligence layer: one connected model of plants, machines, parts, stock, suppliers and their own suppliers, technicians and robot cells. It answers questions no single file can. For example, the steel mill Ovako has a furnace outage: through Schaeffler that reaches CNC-07, about €180,000 of production a day, and the hydraulic seal set has no second supplier. Every answer shows the path it followed.',
+  },
+  {
+    id: 'redteam', q: 'Can someone trick the agents?',
+    k: ['trick', 'inject', 'injection', 'attack', 'hack', 'red team', 'security', 'jailbreak', 'manipulat'],
+    a: 'They might trick the model, so the model does not hold the rules: the safety gate, the €500 limit and the approval step are code. A red team throws 19 attacks at those rules, like disguised wording, fake approvals and orders split to stay under the limit. All 19 are stopped now; the first run broke nine, and those were fixed. Two paraphrases the keyword rules still miss are listed openly, and a person still approves every work order.',
+  },
+  {
+    id: 'routing', q: 'Does it use the most expensive model for everything?',
+    k: ['expensive', 'cost', 'cheap', 'token', 'tokens', 'routing', 'small model', 'model choice'],
+    a: 'It does not have to. With routing on, routine steps, like picking the next agent from a short list or summarising production and quality checks, run on a small model. Anything about money, safety or the final plan stays on the main model. Cost is tracked per agent, by the model it used. The saving has not been measured live yet: that needs two runs with an API key.',
+  },
+  {
     id: 'aiact', q: 'Is this compliant with the EU AI Act?',
     k: ['act', 'regulation', 'regulated', 'legal', 'law', 'compliant', 'gdpr', 'eu', 'governance', 'responsible'],
     a: 'My reading, not legal advice: as decision support that recommends maintenance actions, Titan most likely falls outside the AI Act high-risk list. That would change if it directly controlled machine safety functions, or allocated work to people based on their behaviour. It is built as if it were high-risk anyway: a person must approve spend over €500, safety-system actions are flagged for a safety officer, every step of a live run is logged, I tell you I am an AI assistant, and each prediction says where it came from.',
@@ -119,6 +144,11 @@ const norm = (s) => s.toLowerCase().replace(/[^a-z0-9€ ]/g, ' ').split(/\s+/).
 
 // Everyday phrasings people actually use, checked before the keywords.
 const PHRASES = [
+  [/\bmcp\b|model context protocol|claude desktop|\bcopilot\b/, 'mcp'],
+  [/\ba2a\b|agent[- ]to[- ]agent|agent card|other agents|another (vendor|company)'?s? agent/, 'a2a'],
+  [/knowledge graph|intelligence layer|\bgraph\b|tier[- ]?2|upstream (risk|supplier)/, 'graph'],
+  [/prompt injection|red[- ]?team|\b(trick|fool|hack|jailbreak|manipulat\w*)\b|\battack/, 'redteam'],
+  [/model routing|small(er)? model|cheaper model|(most )?expensive model|tokenomics|token cost/, 'routing'],
   [/\b(agent |design )?patterns?\b|building effective agents|evaluator|optimi[sz]er|parallel|orchestrator[- ]workers?|how (is|was) it (built|designed)|architecture/, 'patterns'],
   [/\bai act\b|\beu (ai )?(act|law|regulation)|\b(legal|lawful|regulat\w*|gdpr)\b|compliant with|high[- ]risk/, 'aiact'],
   [/how much|what('?s| is) it worth|does it (pay|save)|business case|return on/, 'value'],

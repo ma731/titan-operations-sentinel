@@ -114,3 +114,27 @@ by default, because in sequence production can read supply chain's report). Tool
 numeric arguments accept arithmetic strings instead of failing. Guarantees in code,
 judgement in the model. Building the plan check exposed a word-matching bug in the tier
 rules ("buys" read as "buy"), now fixed (FINDINGS F-10).
+
+Open to other agents. MCP (Model Context Protocol): mcp_server.py exposes 17 read-only tools,
+the knowledge graph queries, and one action, draft_work_order, which only ever drafts; the
+approver comes from policy.py, so the 500 EUR ceiling and the safety escalation hold for any
+outside agent (decision 010). Titan's own agents still call their tools directly. A2A
+(Agent2Agent): an Agent Card at /.well-known/agent-card.json and message/send at /a2a; four
+skills (plant triage, machine dependencies, supplier impact, safety screening) that need no
+model key; an unclear request comes back input-required; nothing over A2A spends or approves
+(decision 012).
+
+Knowledge graph (the intelligence layer): tools/knowledge_graph.py links plants, machines,
+failure modes, parts, stock, Tier-1 and Tier-2 suppliers, technicians, robot cells and
+operators (26 nodes, 37 edges), and every answer carries its path. Example: the Tier-2 steel
+mill Ovako reaches CNC-07 through Schaeffler, about 180,000 EUR of production a day; the
+hydraulic seal set has no second supplier.
+
+Red team (eval/red_team.py, FINDINGS F-11): 19 prompt-injection attacks on the code
+guarantees (disguised wording, claimed approvals, split orders, bad costs); all 19 held after
+fixing the nine the first run broke. Two paraphrases are still missed by the keyword gate;
+say so if asked, and that human approval of every work order stands behind them.
+
+Model routing (decision 011): with TOS_MODEL_SMALL set, routine steps (supervisor routing,
+Production, Quality) run on a small model; money, safety and the final plan stay on the main
+model; cost is tracked per agent. The saving has not been measured live yet.
