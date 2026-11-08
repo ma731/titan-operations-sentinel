@@ -40,6 +40,39 @@ PRICE_EUR_PER_M = {
 }
 
 
+# Per model, when the deployment or model name says which one it is (Azure deployment
+# names are free text, so this matches families by substring, most specific first).
+# Indicative EUR per 1M tokens (input, output), same caveat as above.
+PRICE_EUR_PER_M_MODEL = [
+    ("gpt-4.1-nano", (0.09, 0.37)), ("gpt-4.1-mini", (0.37, 1.47)), ("gpt-4.1", (1.84, 7.36)),
+    ("gpt-4o-mini", (0.14, 0.55)), ("gpt-4o", (2.30, 9.20)),
+    ("o4-mini", (1.01, 4.05)), ("gpt-5-mini", (0.23, 1.84)), ("gpt-5-nano", (0.05, 0.37)), ("gpt-5", (1.15, 9.20)),
+    ("haiku", (0.74, 3.70)), ("sonnet", (2.76, 13.80)), ("opus", (4.60, 23.00)),
+]
+
+
+def price_for(model_str: str | None) -> tuple[float, float]:
+    """(input, output) EUR per 1M tokens for 'provider:model'."""
+    if not model_str:
+        return (0.0, 0.0)
+    provider, _, name = model_str.partition(":")
+    if PRICE_EUR_PER_M.get(provider) == (0.0, 0.0):
+        return (0.0, 0.0)                     # free tiers stay free whatever the model
+    low = name.lower()
+    for key, price in PRICE_EUR_PER_M_MODEL:
+        if key in low:
+            return price
+    return PRICE_EUR_PER_M.get(provider, (0.0, 0.0))
+
+
+def _model_of(agent: str) -> str | None:
+    try:
+        import llm
+        return llm.model_for(agent)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 @dataclass
 class AgentUsage:
     calls: int = 0
@@ -77,9 +110,15 @@ class RunUsage:
     def total_tokens(self) -> int:
         return self.prompt_tokens + self.completion_tokens
 
+    def agent_cost_eur(self, name: str) -> float:
+        a = self.by_agent[name]
+        model = _model_of(name)
+        pin, pout = price_for(model) if model else PRICE_EUR_PER_M.get(self.provider, (0.0, 0.0))
+        return (a.prompt_tokens * pin + a.completion_tokens * pout) / 1_000_000
+
     def cost_eur(self) -> float:
-        pin, pout = PRICE_EUR_PER_M.get(self.provider, (0.0, 0.0))
-        return (self.prompt_tokens * pin + self.completion_tokens * pout) / 1_000_000
+        """Each agent priced by the model it ran on, so routing shows up in the cost."""
+        return sum(self.agent_cost_eur(n) for n in self.by_agent)
 
     def to_dict(self) -> dict:
         return {
@@ -90,8 +129,11 @@ class RunUsage:
             "total_tokens": self.total_tokens,
             "estimated_cost_eur": round(self.cost_eur(), 6),
             "wall_seconds": round(self.wall_seconds, 2),
+            "routing": _routing(),
             "by_agent": {
                 name: {
+                    "model": _model_of(name),
+                    "estimated_cost_eur": round(self.agent_cost_eur(name), 6),
                     "model_calls": a.calls,
                     "prompt_tokens": a.prompt_tokens,
                     "completion_tokens": a.completion_tokens,
@@ -101,6 +143,14 @@ class RunUsage:
                 for name, a in sorted(self.by_agent.items())
             },
         }
+
+
+def _routing() -> dict:
+    try:
+        import llm
+        return llm.routing()
+    except Exception:  # noqa: BLE001
+        return {"enabled": False}
 
 
 def _extract_tokens(response) -> tuple[int, int]:

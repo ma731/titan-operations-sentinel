@@ -53,8 +53,38 @@ def _has_key(p) -> bool:
     return any(os.getenv(k) for k in p["keys"])
 
 
-def resolve_model() -> str | None:
-    """'provider:model' from TOS_MODEL, else auto-detected from whichever key is present."""
+# --- Model routing (decision 011) ---------------------------------------------------
+# Not every call needs the strongest model. The supervisor picks from a list policy.py has
+# already narrowed; Production and Quality mostly read tool results and summarise. Those
+# can run on a small model. Anything that spends money, touches safety or writes the final
+# plan stays on the main one. Set TOS_MODEL_SMALL to turn routing on; unset, every call
+# uses TOS_MODEL exactly as before.
+SMALL_ROUTES = {"supervisor", "production", "quality"}
+
+
+def route_for(agent: str | None) -> str:
+    """'small' or 'large' for a node or agent name."""
+    return "small" if os.getenv("TOS_MODEL_SMALL", "").strip() and agent in SMALL_ROUTES else "large"
+
+
+def model_for(agent: str | None) -> str | None:
+    """The 'provider:model' a node or agent actually runs on."""
+    return resolve_model(route_for(agent))
+
+
+def routing() -> dict:
+    small = os.getenv("TOS_MODEL_SMALL", "").strip() or None
+    return {"enabled": bool(small), "large": resolve_model(), "small": small,
+            "small_routes": sorted(SMALL_ROUTES) if small else []}
+
+
+def resolve_model(tier: str = "large") -> str | None:
+    """'provider:model' from TOS_MODEL (or TOS_MODEL_SMALL for the small tier), else
+    auto-detected from whichever key is present."""
+    if tier == "small":
+        small = os.getenv("TOS_MODEL_SMALL", "").strip()
+        if small:
+            return small
     forced = os.getenv("TOS_MODEL", "").strip()
     if forced:
         return forced
@@ -145,10 +175,10 @@ class _ChatLLM:
         return resp.content if hasattr(resp, "content") else str(resp)
 
 
-@lru_cache(maxsize=1)
-def get_llm():
+@lru_cache(maxsize=2)
+def get_llm(tier: str = "large"):
     """Object with .complete(system, user) -> str and .available bool. Used by graph nodes."""
-    model_str = resolve_model()
+    model_str = resolve_model(tier)
     if not model_str:
         print("[llm] No provider key found — using offline stub. Drop any supported key in .env.")
         return _StubLLM()
@@ -161,10 +191,10 @@ def get_llm():
         return _StubLLM()
 
 
-@lru_cache(maxsize=1)
-def get_chat_model():
+@lru_cache(maxsize=2)
+def get_chat_model(tier: str = "large"):
     """Raw LangChain chat model for the ReAct agents (real tool-calling required — no stub)."""
-    model_str = resolve_model()
+    model_str = resolve_model(tier)
     if not model_str:
         raise RuntimeError(
             "No model provider configured. Drop any supported key in .env "
@@ -181,7 +211,7 @@ def get_chat_model():
 def complete(system: str, user: str, agent: str = "orchestrator") -> str:
     """Convenience wrapper used by graph nodes. Degrades to the stub on runtime errors
     (dead network / rate limit mid-demo) so a node never hard-crashes."""
-    llm = get_llm()
+    llm = get_llm(route_for(agent))
     try:
         return llm.complete(system, user, agent=agent)
     except Exception as exc:  # noqa: BLE001

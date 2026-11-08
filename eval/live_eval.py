@@ -240,6 +240,7 @@ def run(scenarios: list[Scenario] | None = None, limit: int | None = None) -> di
             "estimated_cost_eur_per_run": round(total_cost / n, 6),
             "seconds_per_run": round(total_seconds / n, 2),
             "total_tokens": int(total_tokens),
+            "routing": runs[0]["usage"].get("routing") if runs else None,
         },
         "per_run": [
             {k: v for k, v in r.items() if k not in ("reports", "final_plan")} for r in runs

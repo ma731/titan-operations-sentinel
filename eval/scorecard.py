@@ -195,9 +195,16 @@ def _live_section(r: dict | None) -> list[str]:
         f"| tokens | {r['efficiency']['tokens_per_run']:.0f} |",
         f"| estimated cost | EUR {r['efficiency']['estimated_cost_eur_per_run']:.4f} |",
         f"| wall time | {r['efficiency']['seconds_per_run']:.1f} s |",
+        f"| model routing | {_routing_label(r['efficiency'].get('routing'))} |",
         "",
     ]
     return lines
+
+
+def _routing_label(rt: dict | None) -> str:
+    if not rt or not rt.get("enabled"):
+        return "off: every call on one model"
+    return f"on: {', '.join(rt['small_routes'])} on {rt['small']}; the rest on {rt['large']}"
 
 
 def _economics_section() -> list[str]:

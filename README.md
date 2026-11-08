@@ -67,7 +67,7 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Triage gate | default 48 ticks: **192** readings, **1** wake, **0.52%** wake rate (dry run) |
 | RUL model | **RMSE 17.0 cycles** on **707** held-out engines (NASA C-MAPSS), against a mean-predictor baseline of 41.8 ([backtest](eval/results/rul_backtest.md)) |
 | Live cost and latency | instrumented per run; provider benchmark not yet measured |
-| Tests | **391** passed, **4** provider-dependent tests skipped in the offline validation |
+| Tests | **397** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
 `python -m stream.run`. The scorecard is generated; this table is a summary.
@@ -406,6 +406,17 @@ letters, spacing, "byp4ss"), claimed approvals, split orders under the ceiling, 
 as text or negative, and an MCP caller trying to lower the cost it is judged on. Benign
 actions still pass. The first run broke nine of them; [F-11](eval/FINDINGS.md) has what
 broke and how it was fixed, and the two paraphrases that keyword rules still miss.
+
+## Model routing: pay for the model a step needs
+
+Routine steps (the supervisor's pick from an already-narrowed list, Production, Quality) can
+run on a small model; anything that spends money, touches safety or writes the final plan
+stays on the main one. Set `TOS_MODEL_SMALL` to turn it on; unset, one model does
+everything as before. Each agent is priced by the model it ran on, and the scorecard states
+the routing. The guarantees live in `policy.py`, so a cheaper model can write a weaker
+summary but cannot spend over 500 EUR or skip the safety gate.
+[Decision 011](docs/decisions/011-route-routine-steps-to-a-small-model.md) has the two live
+runs that measure it: cost per run must fall and the quality metrics must hold.
 
 ## Titan's tools over MCP
 

@@ -85,11 +85,13 @@ def _prompt(name: str) -> str:
 
 @lru_cache(maxsize=1)
 def build_agents() -> dict:
-    """Construct all five specialist ReAct agents once, sharing one chat model."""
-    model = get_chat_model()
+    """Construct all five specialist ReAct agents once. Each runs on the model its route
+    says (decision 011): with TOS_MODEL_SMALL unset, all five share the main model."""
+    from llm import route_for
+
     agents = {}
     for name, (prompt_file, tools, footer) in AGENT_SPECS.items():
         agents[name] = create_react_agent(
-            model, tools, prompt=_prompt(prompt_file) + footer + SHARED_FOOTER, name=name
+            get_chat_model(route_for(name)), tools, prompt=_prompt(prompt_file) + footer + SHARED_FOOTER, name=name
         )
     return agents
