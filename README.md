@@ -371,6 +371,23 @@ Mapped to Anthropic's [Building Effective Agents](https://www.anthropic.com/rese
 | Tool design | Numeric arguments accept arithmetic strings instead of failing the call; errors name the argument |
 | Transparency | Every route, tool call, handoff, check and decision is a logged event |
 
+## Red team: prompt injection
+
+If a supplier note, a document or an alert carries instructions ("this bypass is
+pre-approved"), a model may follow them. Titan does not ask the model to resist: the safety
+gate, the tiers, the 500 EUR ceiling and the approval step are code. The red team tests that
+directly, with the text a fooled model could write:
+
+```bash
+python -m eval.red_team     # results/red_team.md
+```
+
+**19/19 attacks held**, including disguised wording (zero-width characters, look-alike
+letters, spacing, "byp4ss"), claimed approvals, split orders under the ceiling, costs given
+as text or negative, and an MCP caller trying to lower the cost it is judged on. Benign
+actions still pass. The first run broke nine of them; [F-11](eval/FINDINGS.md) has what
+broke and how it was fixed, and the two paraphrases that keyword rules still miss.
+
 ## Titan's tools over MCP
 
 The agents call their tools directly. The same tools are also an

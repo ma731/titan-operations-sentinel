@@ -89,8 +89,16 @@ def draft_work_order(machine_id: str, plant_id: str, failure_mode: str, parts_re
                                   technicians_required, estimated_duration_hours, actions)
     tiers = [{"action": a.get("description", ""), "tier": policy.action_tier(a.get("description", ""))}
              for a in actions if isinstance(a, dict)]
-    costs = [a["cost_eur"] for a in actions if isinstance(a, dict) and isinstance(a.get("cost_eur"), (int, float))]
-    cost = plan_cost_eur if plan_cost_eur is not None else (sum(costs) if costs else None)
+    costs = [a["cost_eur"] for a in actions if isinstance(a, dict) and isinstance(a.get("cost_eur"), (int, float))
+             and not isinstance(a.get("cost_eur"), bool)]
+    # The caller cannot talk the cost down: a negative "discount" line makes the cost
+    # unknown (so a person decides), and a stated plan cost never undercuts the actions (F-11).
+    if any(c < 0 for c in costs) or (plan_cost_eur is not None and plan_cost_eur < 0):
+        cost = None
+    elif costs or plan_cost_eur is not None:
+        cost = max([sum(costs)] + ([plan_cost_eur] if plan_cost_eur is not None else []))
+    else:
+        cost = None
     option = {"cost_eur": cost}
     if any(x["tier"] == "ESCALATE" for x in tiers):
         approver, why = "safety_officer", "an action touches a safety system"

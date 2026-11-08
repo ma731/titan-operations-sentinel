@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from textnorm import variants
+
 DATA_DIR = Path(__file__).parent.parent / "data" / "compliance"
 
 # Most restrictive first, so a HALT always outranks an ESCALATE and an ESCALATE an OK.
@@ -53,9 +55,10 @@ def safety_gate(action_description: str) -> dict:
     with open(f, encoding="utf-8") as fh:
         rules = json.load(fh).get("rules", [])
 
-    text = (action_description or "").lower()
+    # Raw or normalised: an obfuscated "byp\u200bass" or "byp4ss" must not slip past (F-11).
+    texts = variants(action_description)
     matched = sorted(
-        (r for r in rules if _matches(r, text)),
+        (r for r in rules if any(_matches(r, t) for t in texts)),
         key=lambda r: SEVERITY.get(r["verdict"], 3),
     )
     if not matched:
