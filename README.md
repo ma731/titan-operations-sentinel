@@ -67,7 +67,7 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Triage gate | default 48 ticks: **192** readings, **1** wake, **0.52%** wake rate (dry run) |
 | RUL model | **RMSE 17.0 cycles** on **707** held-out engines (NASA C-MAPSS), against a mean-predictor baseline of 41.8 ([backtest](eval/results/rul_backtest.md)) |
 | Live cost and latency | instrumented per run; provider benchmark not yet measured |
-| Tests | **372** passed, **4** provider-dependent tests skipped in the offline validation |
+| Tests | **379** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
 `python -m stream.run`. The scorecard is generated; this table is a summary.
@@ -371,6 +371,25 @@ Mapped to Anthropic's [Building Effective Agents](https://www.anthropic.com/rese
 | Tool design | Numeric arguments accept arithmetic strings instead of failing the call; errors name the argument |
 | Transparency | Every route, tool call, handoff, check and decision is a logged event |
 
+## The intelligence layer: a knowledge graph
+
+Each data file answers one question alone: what a machine needs, what is in stock, who
+supplies a part, who supplies the supplier. The questions that matter cross them.
+[`tools/knowledge_graph.py`](tools/knowledge_graph.py) builds one typed graph from the same
+files (plants, machines, failure modes, parts, stock, Tier-1 and Tier-2 suppliers,
+technicians, robot cells, operators: 26 nodes, 37 edges in the demo data), and every
+answer carries the path that produced it.
+
+| Query | Example answer |
+|---|---|
+| `supplier_impact("Ovako")` | a Tier-2 steel mill with a furnace outage reaches CNC-07 through Schaeffler: EUR 180,000 of production a day exposed; the hydraulic seal set has no second source |
+| `trace_dependency("Ovako", "CNC-07-LEI")` | Schaeffler depends on Ovako, supplies the bearing kit, which the spindle-bearing failure mode requires, on CNC-07 (4 hops; sharing a site is not counted as a dependency) |
+| `single_points_of_failure()` | seal set: 1 on site, 2 needed, one supplier; one single-source Tier-2; one operator on two robot cells |
+
+The Supply Chain agent calls the first two when Tier-2 risk is elevated; all four, and the
+whole graph as `titan://graph`, are on the MCP server. Plain Python, no graph database: the
+model is the point, and it swaps onto Neo4j or a client's own graph unchanged.
+
 ## Titan's tools over MCP
 
 The agents call their tools directly. The same tools are also an
@@ -479,7 +498,7 @@ observability.py      per-agent tokens, cost, latency; optional Langfuse tracing
 llm.py                provider-agnostic model factory
 audit_log.py          JSONL audit trail
 agents/               the 5 specialist ReAct agents
-tools/                20 domain tools plus the @tool wrappers (docs/tool_catalog.md)
+tools/                22 domain tools plus the @tool wrappers (docs/tool_catalog.md); knowledge_graph.py
 rag/                  technical corpus, BM25 + optional embeddings, cited retrieval
 eval/                 labelled datasets, metric suites, generated scorecard, findings register
 ml/                  C-MAPSS loading, the RUL model, conformal bound, fitted serving

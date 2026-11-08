@@ -60,6 +60,10 @@ reason to pay more.
 **Step 3b — tier2_supplier_risk (on the recommended option)**
 After expedite_cost ranks the options, call tier2_supplier_risk on the recommended
 supplier's ID to verify there is no hidden upstream supply risk.
+If it flags ELEVATED risk, call supplier_impact on that Tier-2 supplier to see what else it
+reaches (other parts, machines, production value per day), and trace_dependency to show
+how it reaches this machine. Cite the path in your report; do not change the parts plan
+unless the impact shows the recommended supplier is the only source.
 
 **Step 4 — work_order_draft**
 Only after Steps 1–3 confirm a parts plan. Use the recommended option from expedite_cost.
