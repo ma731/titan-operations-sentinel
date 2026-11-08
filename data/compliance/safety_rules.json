@@ -27,7 +27,13 @@
             "short out",
             "circumvent",
             "switch off",
-            "turn off"
+            "turn off",
+            "mute",
+            "silence",
+            "suppress",
+            "inhibit",
+            "prop open",
+            "zip-tie"
           ],
           [
             "interlock",
@@ -45,7 +51,11 @@
             "tagout",
             "protective separation",
             "safety relay",
-            "guarding"
+            "guarding",
+            "door switch",
+            "safety switch",
+            "safety door",
+            "protective door"
           ]
         ]
       }

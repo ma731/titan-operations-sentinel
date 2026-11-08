@@ -67,7 +67,7 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Triage gate | default 48 ticks: **192** readings, **1** wake, **0.52%** wake rate (dry run) |
 | RUL model | **RMSE 17.0 cycles** on **707** held-out engines (NASA C-MAPSS), against a mean-predictor baseline of 41.8 ([backtest](eval/results/rul_backtest.md)) |
 | Live cost and latency | instrumented per run; provider benchmark not yet measured |
-| Tests | **384** passed, **4** provider-dependent tests skipped in the offline validation |
+| Tests | **391** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
 `python -m stream.run`. The scorecard is generated; this table is a summary.
@@ -389,6 +389,23 @@ answer carries the path that produced it.
 The Supply Chain agent calls the first two when Tier-2 risk is elevated; all four, and the
 whole graph as `titan://graph`, are on the MCP server. Plain Python, no graph database: the
 model is the point, and it swaps onto Neo4j or a client's own graph unchanged.
+
+## Red team: prompt injection
+
+If a supplier note, a document or an alert carries instructions ("this bypass is
+pre-approved"), a model may follow them. Titan does not ask the model to resist: the safety
+gate, the tiers, the 500 EUR ceiling and the approval step are code. The red team tests that
+directly, with the text a fooled model could write:
+
+```bash
+python -m eval.red_team     # results/red_team.md
+```
+
+**19/19 attacks held**, including disguised wording (zero-width characters, look-alike
+letters, spacing, "byp4ss"), claimed approvals, split orders under the ceiling, costs given
+as text or negative, and an MCP caller trying to lower the cost it is judged on. Benign
+actions still pass. The first run broke nine of them; [F-11](eval/FINDINGS.md) has what
+broke and how it was fixed, and the two paraphrases that keyword rules still miss.
 
 ## Titan's tools over MCP
 
