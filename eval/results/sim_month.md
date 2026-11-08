@@ -62,6 +62,14 @@ The CNC estimate is a declared rule (`source: declared_thresholds`), never backt
 
 What the table shows: the rule reads the vibration *level* only. tms-101#S4 says the window comes from the *rate* of change, so the same reading means 40 to 80 hours on a fast bearing and 100 to 200 on a slow one. A level-only rule cannot get both right.
 
+## Live agent runs
+
+| Event | Wake | Mode | Status | Risk | Reached approval | Tokens |
+|---|---|---|---|---|---|---|
+| M01-fast-bearing | Fri 09 Oct 13:10 | happy | complete | LOW | False | 101522 |
+| M05-fast-bearing-feed-loss | Wed 21 Oct 08:20 | happy | escalated | ESCALATE | False | 9275 |
+| M06-medium-bearing | Sat 24 Oct 04:00 | happy | rejected | HIGH | True | 307864 |
+
 ## Limits
 
 - Simulated, not measured. The failure windows follow the corpus rule of thumb, so this checks the code against the plant's own documents, not against real bearings.

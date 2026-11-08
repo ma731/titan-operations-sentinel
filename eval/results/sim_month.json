@@ -782,5 +782,40 @@
    "bearing_temp": 72.0,
    "event": "M06-medium-bearing"
   }
+ ],
+ "live": [
+  {
+   "event": "M01-fast-bearing",
+   "at": "2026-10-09T13:10:00+00:00",
+   "machine_id": "CNC-07-LEI",
+   "mode": "happy",
+   "run_id": "RUN-20261108-220518-49039b",
+   "status": "complete",
+   "risk": "LOW",
+   "reached_gate": false,
+   "tokens": 101522
+  },
+  {
+   "event": "M05-fast-bearing-feed-loss",
+   "at": "2026-10-21T08:20:00+00:00",
+   "machine_id": "CNC-02-AMS",
+   "mode": "happy",
+   "run_id": "RUN-20261108-220628-dcc6ab",
+   "status": "escalated",
+   "risk": "ESCALATE",
+   "reached_gate": false,
+   "tokens": 9275
+  },
+  {
+   "event": "M06-medium-bearing",
+   "at": "2026-10-24T04:00:00+00:00",
+   "machine_id": "CNC-05-LEI",
+   "mode": "happy",
+   "run_id": "RUN-20261108-220645-5fe4fe",
+   "status": "rejected",
+   "risk": "HIGH",
+   "reached_gate": true,
+   "tokens": 307864
+  }
  ]
 }
