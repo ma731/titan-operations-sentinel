@@ -43,6 +43,8 @@ Three gaps showed up in one live run:
 - The CNC life interval contains the true remaining life in 4 of 24 checks, and is
   optimistic in 15. It reads the vibration level; tms-101#S4 says the window comes from
   the rate of change.
+  Follow-up (F-13): the rule now reads the rate and holds 24 of 24, with ranges about four
+  times wider. That check is circular, since the simulator follows S4 too.
 
 All three gaps are pinned as strict xfails in `tests/test_sim_month.py`. Fixing one turns
 its test red until the xfail is removed, so a fix cannot go unnoticed. None is fixed here:

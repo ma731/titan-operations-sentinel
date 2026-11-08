@@ -165,9 +165,8 @@ def test_a_saturated_sensor_does_not_wake_the_agents(month):
     assert _event(month[3], "M04-sensor-rail")["pass"]
 
 
-@pytest.mark.xfail(strict=True, reason="the CNC rule reads vibration level, not rate, "
-                   "so it promises a fast bearing more life than it has (tms-101#S4)")
 def test_the_first_estimate_on_a_fast_bearing_is_not_optimistic(month):
+    """Fixed by reading the rate (tms-101#S4). Circular: the simulator follows S4 too."""
     firsts = month[3]["first_estimates"]
     assert firsts["M01-fast-bearing"] != "optimistic"
 

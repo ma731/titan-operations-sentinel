@@ -364,8 +364,9 @@ What it found (`eval/results/sim_month.md`, and section 5 of the scorecard):
 - A heavier cut and a stuck sensor both wake the agents. The gate ignores motor current
   and trusts a single sensor channel; the corpus says it should not.
 - The CNC life interval held the true remaining life in 4 of 24 checks, and was
-  optimistic in 15. The rule reads how high vibration is; the corpus says to read how fast
-  it is rising.
+  optimistic in 15. The rule read how high vibration is; the corpus says to read how fast
+  it is rising. It now reads the rate and holds 24 of 24, but that is circular: the
+  simulator follows the same corpus rule (F-13 in `eval/FINDINGS.md`).
 
 **Limits.** This validates against the simulator's own physics, which follows the corpus
 rule of thumb. It is not a check against real bearings. It is also open loop: nothing the

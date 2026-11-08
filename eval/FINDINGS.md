@@ -470,3 +470,52 @@ behaviour is pinned. The gate stays as strict as it is.
   stale. Fix: one simulated clock per run (the scenario's own time) that the draft tools use.
 - `audit_assemble` is called by Compliance before Compliance's own gate calls are logged, so
   the assembled trail stops at the routing step. The model flagged this too.
+
+## F-13 (fixed 2026-11-08) The CNC life rule read the vibration level, not the rate
+
+**Status:** fixed in the rule. The check that shows the fix is circular, so read the new
+number as "the code follows the corpus", not as accuracy.
+
+**What the month found.** Scored against the simulated month (decision 013), the CNC life
+range held the true remaining life in 4 of 24 checks and was optimistic in 15. The rule
+mapped the vibration *level* to a window. tms-101#S4 says the window comes from the *rate*:
+a doubling in 6 h or less means 40 to 80 h, a doubling over 24 to 72 h means 100 to 200 h,
+under 20% a week means more than 500 h and planned maintenance. The same 7 mm/s reading
+means 50 hours on one bearing and 150 on another, and a level rule cannot get both.
+
+**Fix.** `tools/rul_predictor.py` takes an optional trend: `current_readings["series"]`
+(sensor_query's `readings` block), or the simulated-month window when one is in scope. From
+Warning up it reads the fastest doubling time inside any clean stretch of 4 h or more, picks
+the S4 window, and takes off the hours already spent in Critical (S4 counts from there).
+Guards, each pinned in `tests/test_rul_rate.py`:
+- A rise that tracks spindle current is a heavier cut, not a bearing (S2), so it stays with
+  the level rule. This is what keeps SM-M02-01 at LOW.
+- No rate across a feed gap (tms-705#S4). Under 4 h of clean telemetry is low confidence,
+  which the policy escalates. An old flat stretch cannot vouch for a short new one.
+- S4 leaves gaps (6 to 24 h, and 72 h up to 20% a week). Each takes the shorter neighbouring
+  window, so a gap never buys life.
+- A slow trend under a Critical reading keeps the level window. S3 still calls Critical an
+  emergency, and a pinned channel looks exactly like that.
+
+Without a series the call is unchanged, so the 34 policy scenarios and every number already
+published stay where they were (policy suite 208/208, routing check included). `source`
+stays `declared_thresholds`; the result also says `estimate_basis: vibration_rate`.
+
+**Result.** Coverage 24 of 24, optimistic 0, median midpoint error 3 h (was 30.4 h). Risk
+on the month's wakes 26 of 27 (was 24): both first wakes on a fast bearing are now HIGH.
+The one miss left is the pinned sensor (SM-M04-01), a data-quality call the gate should
+make, not the life rule.
+
+**Why the 24 of 24 is weak evidence.**
+- **Circular.** The simulator writes each failure from the same S4 rule: the doubling time
+  sets the regime and the failure lands inside the S4 window. The rule now reads the same
+  section back. A perfect score says the two agree with each other and with the corpus. It
+  says nothing about real bearings, and there is still no public run-to-failure data for
+  this asset class (decision 008).
+- **Wider ranges.** Median width went from 24 h to 100 h. Five late checks on the medium
+  bearing get 0 to 128 h, because the Critical crossing is older than the 72 h window and
+  only an upper bound is known. A wide range is easier to land in.
+- **One seed, three bearings.** Small, and the noise model is the simulator's own.
+
+The number to want is coverage on data the rule did not come from. Until that exists, the
+honest claim is: the CNC rule now does what tms-101#S4 says.

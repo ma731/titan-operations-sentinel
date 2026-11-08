@@ -38,8 +38,8 @@ Per-agent tool map (`tools/lc.py` groups):
 
 ### 2. `rul_predictor`
 - **What it does:** Estimates Remaining Useful Life (hours) + confidence from real readings; matches historical failure pattern.
-- **Inputs:** `machine_id: str`, `current_readings: dict`
-- **Outputs:** `rul_hours{min,max}`, `confidence`, `failure_mode`, `matched_historical_event`, `low_confidence_flag`
+- **Inputs:** `machine_id: str`, `current_readings: dict` (optional `series`: sensor_query's `readings` block; with it the CNC rule reads the vibration rate, tms-101#S4)
+- **Outputs:** `rul_hours{min,max}`, `confidence`, `failure_mode`, `matched_historical_event`, `low_confidence_flag`, `estimate_basis`, `trend` (when a series was read)
 - **Use when:** After `sensor_query` confirms an anomaly.
 - **Do NOT use:** With assumed/default readings — only real sensor output.
 - **Risk if misused:** Hallucinated timeline drives a bad decision.
