@@ -55,6 +55,24 @@ def _sse(payload: dict) -> str:
     return f"data: {json.dumps(payload)}\n\n"
 
 
+# --- A2A: Titan as a peer agent other vendors' agents can delegate to --------- #
+@app.get("/.well-known/agent-card.json")
+@app.get("/.well-known/agent.json")
+def a2a_agent_card(request: Request):
+    from integrations.a2a import agent_card
+    return agent_card(str(request.base_url))
+
+
+@app.post("/a2a")
+async def a2a_rpc(request: Request):
+    from integrations.a2a import handle
+    try:
+        payload = await request.json()
+    except Exception:  # noqa: BLE001
+        return {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}}
+    return handle(payload)
+
+
 @app.get("/api/health")
 def health():
     """Liveness plus what is actually wired up, so a demo can show the integrations are

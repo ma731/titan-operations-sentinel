@@ -67,7 +67,7 @@ engine follows fixed steps. Neither reasons across the silos, which is the actua
 | Triage gate | default 48 ticks: **192** readings, **1** wake, **0.52%** wake rate (dry run) |
 | RUL model | **RMSE 17.0 cycles** on **707** held-out engines (NASA C-MAPSS), against a mean-predictor baseline of 41.8 ([backtest](eval/results/rul_backtest.md)) |
 | Live cost and latency | instrumented per run; provider benchmark not yet measured |
-| Tests | **379** passed, **4** provider-dependent tests skipped in the offline validation |
+| Tests | **384** passed, **4** provider-dependent tests skipped in the offline validation |
 
 These are measured snapshots from `python -m eval.run_eval`, `python -m pytest`, and
 `python -m stream.run`. The scorecard is generated; this table is a summary.
@@ -420,6 +420,21 @@ To use it from Claude Desktop, add to `claude_desktop_config.json`:
 Then ask: *"Which machine at Leipzig is at risk, do we have the parts, and who has to approve
 the fix?"* The ceiling holds here too: a EUR 3,200 expedite comes back as a draft for the
 plant manager, because the rule lives in `policy.py`, not in a prompt.
+
+
+### And as an A2A agent
+
+MCP lets another agent use Titan's tools. [A2A](https://a2a-protocol.org) is the other
+direction: another vendor's agent delegates a task to Titan as a peer, without knowing its
+tools. The API serves an Agent Card at `/.well-known/agent-card.json` and takes
+`message/send` at `/a2a`: four skills (plant triage, machine dependencies, supplier impact,
+safety screening) that answer without a model key. An unclear request comes back
+`input-required` with the options. Nothing over A2A can spend or approve.
+[Decision 012](docs/decisions/012-titan-as-an-a2a-agent.md)
+
+```bash
+python scripts/a2a_demo.py      # another agent reads the card and sends three tasks
+```
 
 ## The learning loop
 
