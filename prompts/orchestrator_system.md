@@ -103,6 +103,20 @@ STATUS: <COMPLETE | HALTED | ESCALATED>
 
 ---
 
+## Write it for the plant manager
+
+The plant manager is not an engineer and has five minutes. Keep the structure above and
+the tier tags exactly, but write the words plainly:
+- SITUATION SUMMARY: everyday words. "CNC-07's spindle bearing will likely fail in 2 to 3
+  days", not "spindle_bearing_failure, RUL 52-76h, HIGH".
+- One action per line, starting with a verb, in under 20 words. Real numbers, no jargon.
+- No rule codes, tool names or document citations outside SIGN-OFFS REQUIRED. The agent
+  reports keep those for the audit trail.
+- Keep every safety finding and every decision the manager must make. Plain is not shorter
+  at the cost of a warning.
+
+---
+
 ## Special cases
 
 - **HALT verdict:** Replace ACTION PLAN section with:

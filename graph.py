@@ -70,11 +70,14 @@ MAX_VISITS = policy.MAX_VISITS
 
 # Token budget: the 6-agent transcript is re-sent to every later agent and on every routing
 # call, so its size drives cost on the Groq free tier (~100k tokens/day). These caps bound
-# that growth while leaving normal-length assessments fully intact.
-PEER_REPORT_CHARS = 1400    # how much of each prior agent's report the next agent sees
+# that growth while leaving normal-length assessments fully intact. Stronger models write
+# longer reports, and 1400 chars can cut the parts list off before Supply Chain reads it,
+# so both caps can be raised from .env (TOS_PEER_REPORT_CHARS, TOS_REPORT_STORE_CHARS).
+DEFAULT_PEER_REPORT_CHARS, DEFAULT_REPORT_STORE_CHARS = 1400, 2000
+PEER_REPORT_CHARS = int(os.getenv("TOS_PEER_REPORT_CHARS") or DEFAULT_PEER_REPORT_CHARS)  # what the next agent sees
 ROUTE_DIGEST_CHARS = 180    # the supervisor only needs a glance to pick the next agent
-REPORT_STORE_CHARS = 2000   # cap a single agent's stored report so one runaway reply
-                            # can't bloat the context for everyone downstream
+REPORT_STORE_CHARS = int(os.getenv("TOS_REPORT_STORE_CHARS") or DEFAULT_REPORT_STORE_CHARS)  # cap one stored report so a
+                            # runaway reply can't bloat the context for everyone downstream
 
 
 def _prompt(name: str) -> str:
@@ -186,10 +189,10 @@ def _tool_events(messages, agent, rid):
 def _agent_report(messages) -> str:
     """All of the agent's spoken (non-tool) text, joined — so the full assessment reaches
     the transcript, not just the final one-liner (fixes the terse-report bug)."""
-    parts = [m.content for m in messages
-             if m.__class__.__name__ == "AIMessage"
-             and isinstance(m.content, str) and m.content.strip()]
-    return "\n".join(parts).strip()
+    from llm import text_of
+
+    parts = [text_of(m) for m in messages if m.__class__.__name__ == "AIMessage"]
+    return "\n".join(p for p in parts if p.strip()).strip()
 
 
 def _detect_followup(report: str, sender: str) -> str | None:
@@ -414,6 +417,16 @@ def _make_worker_seq(name: str):
                 or policy.halt_from_safety(s) for s in safety
             )
             log.info("  ↳ compliance verdict: %s", "HALT" if update["halt"] else "cleared")
+            # The agent assembles the trail mid-step, before its own gate calls are logged
+            # (F-12). Its events are written now, so assemble again for the record.
+            from tools.audit_assemble import audit_assemble
+            trail = audit_assemble(rid)
+            if "error" not in trail:
+                update["trace"].append(_ev(
+                    rid, "decision", "orchestrator",
+                    message=(f"Audit trail re-assembled after the safety checks: "
+                             f"{trail['event_count']} events, including {len(safety)} "
+                             f"safety-gate decision(s).")))
         return update
     return node
 

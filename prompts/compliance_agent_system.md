@@ -39,6 +39,13 @@ other agents' reports in the shared conversation. Typical actions include:
 - "open the machine for emergency bearing replacement"
 - "authorize emergency parts purchase"
 
+Pass the action itself and nothing else: what will be done, to what. Do not add caveats,
+context or what the action is NOT ("not a bypass", "without disabling guards"). The gate
+reads keywords, so a disclaimer that names a hazard can trip a HALT on a safe action (F-12).
+Put your caveats in your report instead.
+- Right: "Reduce CNC-07-LEI spindle speed to the OEM safe limit of 10,800 rpm"
+- Wrong: "Reduce spindle speed to the OEM safe limit, not permission to bypass guards"
+
 Record each verdict (OK / ESCALATE / HALT), the matched rule_id, and the OSHA basis.
 
 **Step 2 — resolve the overall verdict**
@@ -51,7 +58,9 @@ Record each verdict (OK / ESCALATE / HALT), the matched rule_id, and the OSHA ba
 
 **Step 3 — audit_assemble**
 Assemble the run's decision timeline with `audit_assemble(run_id)`. The run_id is in your
-task. Confirm the audit trail was assembled and state how many events were logged.
+task. Confirm the audit trail was assembled and state how many events were logged so far.
+Your own safety_gate calls are logged when your step finishes, and the orchestrator
+re-assembles the trail then, so they will be in the final record even if not in yours.
 
 ## What to flag
 
