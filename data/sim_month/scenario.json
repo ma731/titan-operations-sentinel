@@ -143,5 +143,30 @@
       }
     }
   ],
-  "risk_note": "Risk labels use the policy's three values. HIGH: a bearing that will fail inside the corpus window. LOW: not a bearing finding. ESCALATE: the data cannot support an estimate, so abstain and route to a human (tms-705#S5)."
+  "risk_note": "Risk labels use the policy's three values. HIGH: a bearing that will fail inside the corpus window. LOW: not a bearing finding. ESCALATE: the data cannot support an estimate, so abstain and route to a human (tms-705#S5).",
+  "maintenance_calendar": {
+    "LEI": {
+      "plant_name": "Titan Leipzig (Plant 7)",
+      "weekday": 5,
+      "start_hour": 7,
+      "hours": 8,
+      "technicians": [
+        "Müller",
+        "Becker",
+        "Schmidt",
+        "Hoffmann"
+      ]
+    },
+    "AMS": {
+      "plant_name": "Titan Amsterdam",
+      "weekday": 6,
+      "start_hour": 6,
+      "hours": 8,
+      "technicians": [
+        "de Vries",
+        "Jansen",
+        "Bakker"
+      ]
+    }
+  }
 }

@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from .runtime_inputs import current
+
 DATA_DIR = Path(__file__).parent.parent / "data" / "alerts"
 
 
@@ -16,6 +18,9 @@ def alert_triage(plant_id: str) -> dict:
       Fallback: if stream unavailable, returns {"error": "alert_stream_unavailable"}
       Risk tier: READ (autonomous)
     """
+    view = (current().get("plant_view") or {}).get("triage") or {}
+    if plant_id in view:                     # a run started from the simulated month
+        return view[plant_id]
     f = DATA_DIR / "alert_stream.json"
     if not f.exists():
         return {"error": "alert_stream_unavailable", "plant_id": plant_id}

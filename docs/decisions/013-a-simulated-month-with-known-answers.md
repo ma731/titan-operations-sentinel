@@ -27,6 +27,10 @@ Three gaps showed up in one live run:
   The audit log keeps the wall clock, because it records when the software ran.
 - **Real windows.** A run started from the month hands `sensor_query` the 72 hours before
   the wake (`tools/sim_window.py`), with gaps reported as an interrupted feed.
+- **One plant, not two.** The first live month run showed `alert_triage` and
+  `maintenance_schedule` still serving the June scenario, so an October run on CNC-05 drifted
+  to June's CNC-07. A month run now also hands those two tools the plant as it was at the
+  wake: the last 24 hours of triage and the calendar from that date (`plant_view`).
 - **Separate cases file.** The 27 wakes are labelled in `eval/cases/sim_month_cases.json`
   and scored by `eval/sim_month_eval.py` as section 5 of the scorecard. They are kept out
   of `scenarios.json` so the 34 policy scenarios, and every number already published,

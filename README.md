@@ -355,7 +355,8 @@ bearing really fails, whether waking the agents is right, and what risk call is 
 The numbers come from the simulator, not from a language model, so they are physically
 consistent and reproducible. Inside a simulated run the work order and notification
 drafts use the simulated time (`tools/sim_clock.py`), so the agents see one "now", not two.
-`sensor_query` serves the real 72 hour window before each wake, not just one reading.
+`sensor_query` serves the real 72 hour window before each wake, not just one reading, and
+`alert_triage` and the maintenance calendar show the plant as it was at that moment.
 
 What it found (`eval/results/sim_month.md`, and section 5 of the scorecard):
 

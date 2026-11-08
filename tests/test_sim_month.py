@@ -242,3 +242,44 @@ def test_quiet_days_stay_quiet_and_a_machine_is_reset_mid_month(month):
     assert len(result["quiet_days"]) >= 3 and result["wakes_on_quiet_days"] == 0
     assert any("2026-10-12" <= x["back_in_service"] <= "2026-10-25"
                for x in result["maintenance_resets"])
+
+
+# --- one plant: triage and the calendar follow the month ------------------- #
+def test_month_runs_see_the_months_triage_not_the_june_stream(month):
+    from stream.month import plant_view
+    from tools.alert_triage import alert_triage
+    from tools.runtime_inputs import runtime_inputs
+
+    sim, wakes, _, _ = month
+    w = next(x for x in wakes if x["event"] == "M05-fast-bearing-feed-loss")
+    with runtime_inputs(w["machine_id"], {"vibration": w["vibration"]},
+                        plant_view=plant_view(sim, w)):
+        ams = alert_triage("AMS")
+    ids = [a["alert_id"] for a in ams["critical_alerts_ranked"]]
+    assert w["verdict"].alert["alert_id"] in ids
+    assert {a["machine_id"] for a in ams["critical_alerts_ranked"]} <= {"CNC-02-AMS"}
+    assert ams["data_timestamp"] == w["at"] and ams["source"] == "simulation"
+    assert all(a["last_seen"] <= w["at"] for a in ams["critical_alerts_ranked"])
+
+
+def test_month_runs_see_a_calendar_from_their_own_date(month):
+    from stream.month import plant_view
+    from tools.maintenance_schedule import maintenance_schedule
+    from tools.runtime_inputs import runtime_inputs
+
+    sim, wakes, _, _ = month
+    w = next(x for x in wakes if x["event"] == "M06-medium-bearing")
+    with runtime_inputs(w["machine_id"], {"vibration": w["vibration"]},
+                        plant_view=plant_view(sim, w)):
+        lei = maintenance_schedule("LEI", "7d")
+    assert lei["horizon"] == "7d" and lei["source"] == "simulation"
+    assert lei["existing_windows"] and all(x["start"] > w["at"] for x in lei["existing_windows"])
+    assert 0 < lei["next_available_slot"]["days_from_now"] <= 7
+
+
+def test_without_a_month_the_june_triage_and_calendar_are_unchanged():
+    from tools.alert_triage import alert_triage
+    from tools.maintenance_schedule import maintenance_schedule
+
+    assert alert_triage("LEI")["critical_alerts_ranked"][0]["alert_id"] == "ALT-22847"
+    assert maintenance_schedule("LEI")["data_timestamp"].startswith("2026-06-12")

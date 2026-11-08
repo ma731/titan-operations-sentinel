@@ -16,12 +16,15 @@ def current() -> dict:
 
 @contextmanager
 def runtime_inputs(machine_id: str, readings: dict, telemetry_status: str = "OK",
-                   sourcing: dict | None = None, history: dict | None = None):
+                   sourcing: dict | None = None, history: dict | None = None,
+                   plant_view: dict | None = None):
     """`history` is optional raw simulated telemetry (tools/sim_window.py) so sensor_query
-    can serve a real window instead of the single reading."""
+    can serve a real window instead of the single reading. `plant_view` is the simulated
+    plant at the same moment ({"triage": {plant: ...}, "schedule": {plant: ...}}), so
+    alert_triage and maintenance_schedule agree with that window."""
     token = _INPUTS.set(deepcopy({"machine_id": machine_id, "readings": readings,
                                "telemetry_status": telemetry_status, "sourcing": sourcing,
-                               "history": history}))
+                               "history": history, "plant_view": plant_view}))
     try:
         yield
     finally:

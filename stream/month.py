@@ -24,6 +24,7 @@ import json
 import math
 import random
 import sys
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -227,12 +228,100 @@ class MonthSimulator:
                 "samples": rows}
 
 
+# --- the plant at a moment, for alert_triage and maintenance_schedule ------- #
+_SEVERITY = {"elevated": "info", "warning": "warning", "critical": "critical", "trip": "critical"}
+
+
+def _triage_view(sim: MonthSimulator, plant: str, tick: int, recent, wake_alert: dict) -> dict:
+    """The last 24h at one plant, shaped like data/alerts/alert_stream.json: counts by
+    severity, then one entry per machine that reached the warning band, highest first."""
+    counts = {"info": 0, "warning": 0, "critical": 0}
+    per_machine: dict[str, dict] = {}
+    for t, v, r in recent:
+        if not any(m.machine_id == v.machine_id and m.plant_id == plant for m in sim.machines):
+            continue
+        sev = _SEVERITY.get(v.band.value)
+        if sev:
+            counts[sev] += 1
+        if v.band.value not in ("warning", "critical", "trip"):
+            continue
+        dropout = (v.alert or {}).get("trend") == "feed_lost"
+        prev = per_machine.get(v.machine_id)
+        first_value = prev["_first"] if prev else (r.vibration if r else None)
+        value = round(r.vibration, 2) if r else (v.alert or {}).get("value")
+        per_machine[v.machine_id] = {
+            "alert_id": f"ALT-{v.machine_id}-{t}", "machine_id": v.machine_id,
+            "sensor": "vibration", "value": value, "unit": "mm/s_RMS", "threshold": 6.0,
+            "trend": "feed_lost" if dropout else (
+                "rising" if first_value and value and value > first_value * 1.05 else "stable"),
+            "priority_score": max(v.priority, prev["priority_score"] if prev else 0.0),
+            "band": v.band.value, "last_seen": sim.at(t / TICKS_PER_HOUR),
+            "reason": v.reason, "_first": first_value,
+        }
+    mid = wake_alert.get("machine_id")
+    if mid in per_machine:                   # same id and trend as the alert that woke the run
+        per_machine[mid]["alert_id"] = wake_alert.get("alert_id")
+        per_machine[mid]["trend"] = wake_alert.get("trend", per_machine[mid]["trend"])
+    ranked = sorted(per_machine.values(), key=lambda a: a["priority_score"], reverse=True)
+    for a in ranked:
+        a.pop("_first", None)
+    return {
+        "plant_id": plant,
+        "data_timestamp": sim.at(tick / TICKS_PER_HOUR),
+        "total_alerts_today": sum(counts.values()),
+        "by_severity": counts,
+        "deduplicated_critical_count": len(ranked),
+        "critical_alerts_ranked": ranked,
+        "source": "simulation",
+        "note": (f"Simulated month: readings above normal at {plant} over the last 24h, "
+                 "deduplicated to one entry per machine."),
+    }
+
+
+def schedule_view(sim: MonthSimulator, hours: float, horizon_days: int = 14) -> dict:
+    """Each plant's maintenance calendar seen from `hours` into the month, from the
+    weekly windows in the scenario. Open loop: repairs after a failure are not on it."""
+    now = sim.start + timedelta(hours=hours)
+    out = {}
+    for plant, cal in (sim.scenario.get("maintenance_calendar") or {}).items():
+        windows = []
+        day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        for d in range(horizon_days + 1):
+            date = day + timedelta(days=d)
+            start = date + timedelta(hours=cal["start_hour"])
+            if date.weekday() != cal["weekday"] or start <= now:
+                continue
+            windows.append({
+                "window_id": f"MW-{plant}-{start:%Y-%m-%d}",
+                "start": start.isoformat(),
+                "end": (start + timedelta(hours=cal["hours"])).isoformat(),
+                "duration_hours": cal["hours"], "type": "scheduled_preventive",
+                "technicians_available": cal["technicians"], "status": "confirmed"})
+        nxt = windows[0] if windows else None
+        emergency = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=12)
+        out[plant] = {
+            "plant_id": plant, "plant_name": cal["plant_name"],
+            "existing_windows": windows,
+            "next_available_slot": nxt and {
+                "window_id": nxt["window_id"], "start": nxt["start"],
+                "days_from_now": round((_parse(nxt["start"]) - now).total_seconds() / 86400, 1)},
+            "emergency_window_slots": [{
+                "earliest_possible": emergency.isoformat(), "duration_available_hours": 8,
+                "technicians_available": cal["technicians"][:2], "requires_approval": True,
+                "approval_authority": "plant_manager"}],
+            "data_timestamp": now.isoformat(),
+            "source": "simulation",
+        }
+    return out
+
+
 # --- replay and scoring --------------------------------------------------- #
 def replay(sim: MonthSimulator, gate: TriageGate | None = None,
            export: Path | None = None) -> tuple[list[dict], TriageGate]:
     """Run the whole month through the wake gate. Returns every wake."""
     gate = gate or TriageGate()
     wakes = []
+    recent: deque = deque()                 # (tick, verdict, reading) over the last 24h
     fh = open(export, "w", encoding="utf-8") if export else None
     try:
         for tick in range(sim.ticks):
@@ -249,6 +338,11 @@ def replay(sim: MonthSimulator, gate: TriageGate | None = None,
             by_id = {r.machine_id: r for r in batch}
             verdicts = [gate.observe(r) for r in batch] + gate.check_dropouts(tick)
             for v in verdicts:
+                r = by_id.get(v.machine_id)
+                recent.append((tick, v, r))
+            while recent and recent[0][0] <= tick - 24 * TICKS_PER_HOUR:
+                recent.popleft()
+            for v in verdicts:
                 if not v.wake:
                     continue
                 r = by_id.get(v.machine_id)
@@ -263,6 +357,9 @@ def replay(sim: MonthSimulator, gate: TriageGate | None = None,
                     "bearing_temp": round(r.bearing_temp, 1) if r and not dropout else None,
                     "verdict": TriageVerdict(v.machine_id, True, v.band, v.reason, v.priority,
                                              alert=alert),
+                    # What alert_triage would have shown at this moment, per plant.
+                    "triage_view": {p: _triage_view(sim, p, tick, recent, alert)
+                                    for p in sorted({m.plant_id for m in sim.machines})},
                 })
     finally:
         if fh:
@@ -425,6 +522,11 @@ def pick_live(sim: MonthSimulator, wakes: list[dict], limit: int) -> list[dict]:
     return picked
 
 
+def plant_view(sim: MonthSimulator, wake: dict) -> dict:
+    """Triage and calendar at the wake, so every tool in the run sees the same plant."""
+    return {"triage": wake["triage_view"], "schedule": schedule_view(sim, wake["hours"])}
+
+
 def run_live(sim: MonthSimulator, wakes: list[dict], limit: int, decision: str) -> list[dict]:
     from stream.run import trigger_run
 
@@ -433,7 +535,8 @@ def run_live(sim: MonthSimulator, wakes: list[dict], limit: int, decision: str) 
         alert = w["verdict"].alert
         print(f"  live run: {w['event'] or 'noise'} at {w['at']} ({w['machine_id']})")
         res = trigger_run(w["verdict"], live=True, auto_decision=decision,
-                          history=sim.history(w["machine_id"], w["tick"]))
+                          history=sim.history(w["machine_id"], w["tick"]),
+                          plant_view=plant_view(sim, w))
         out.append({"event": w["event"], "at": w["at"], "machine_id": w["machine_id"],
                     "mode": alert.get("suggested_mode", "happy"),
                     **{k: res.get(k) for k in ("run_id", "status", "risk", "reached_gate")},
@@ -551,7 +654,8 @@ def main(argv: list[str] | None = None) -> int:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(render(result, live), encoding="utf-8")
     payload = {**result, "gate": gate.stats(),
-               "wakes": [{k: v for k, v in w.items() if k != "verdict"} for w in wakes]}
+               "wakes": [{k: v for k, v in w.items() if k not in ("verdict", "triage_view")}
+                         for w in wakes]}
     if live is not None:
         payload["live"] = live
     args.out.with_suffix(".json").write_text(json.dumps(_strip(payload), indent=1),

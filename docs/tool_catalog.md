@@ -23,7 +23,7 @@ Per-agent tool map (`tools/lc.py` groups):
 
 ### `alert_triage`
 - **What it does:** Triages the raw plant alert stream (22k/day) down to the few deduplicated critical alerts.
-- **Inputs:** `plant_id: str` · **Outputs:** counts by severity + ranked critical alerts
+- **Inputs:** `plant_id: str` · **Outputs:** counts by severity + ranked critical alerts (in a simulated-month run: the last 24h at that plant, `source: simulation`)
 - **Use when:** First, to find which machine actually needs attention. **Do NOT use:** to assess a specific machine. **Auth:** READ.
 
 ### `sensor_query`
@@ -61,7 +61,7 @@ Per-agent tool map (`tools/lc.py` groups):
 
 ### 4. `maintenance_schedule`
 - **What it does:** Returns plant maintenance windows, next available slot, and emergency slots.
-- **Inputs:** `plant_id: str`, `horizon: str` · **Outputs:** `existing_windows`, `next_available_slot`, `emergency_window_slots`
+- **Inputs:** `plant_id: str`, `horizon: str` · **Outputs:** `existing_windows`, `next_available_slot`, `emergency_window_slots` (in a simulated-month run: the plant's calendar from the run's own date)
 - **Use when:** Comparing the RUL window against available downtime.
 - **Do NOT use:** To commit a schedule change (WRITE = APPROVE tier). **Fallback:** staleness flag. **Auth:** READ.
 
