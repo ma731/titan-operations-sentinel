@@ -13,6 +13,7 @@ import operator
 
 from langchain_core.tools import tool
 
+from . import knowledge_graph as _kg
 from .alert_triage import alert_triage as _alert_triage
 from .asset_profile import asset_profile as _asset_profile
 from .audit_assemble import audit_assemble as _audit_assemble
@@ -204,6 +205,36 @@ def notify(recipient_role: str, subject: str, situation_summary: str,
                    decision_deadline_utc, work_order_id)
 
 
+# --- Intelligence layer: the knowledge graph ------------------------------ #
+@tool
+def supplier_impact(supplier_id: str) -> dict:
+    """Everything that depends on a supplier, Tier-1 or Tier-2: parts, failure modes,
+    machines, plants, production value exposed per day, and which parts have no other
+    source. Call when tier2_supplier_risk flags ELEVATED, to size what the risk reaches."""
+    return _kg.supplier_impact(supplier_id)
+
+
+@tool
+def trace_dependency(source: str, target: str) -> dict:
+    """The chain of relationships linking two things, e.g. a Tier-2 supplier and a machine.
+    Use it to explain HOW a risk reaches a machine, and cite the path in your report."""
+    return _kg.trace_dependency(source, target)
+
+
+@tool
+def machine_dependencies(machine_id: str) -> dict:
+    """What one machine depends on: parts per failure mode with stock and suppliers (and
+    their Tier-2 risk), technicians, its robot cell and operators, equivalent machines."""
+    return _kg.machine_dependencies(machine_id)
+
+
+@tool
+def single_points_of_failure() -> dict:
+    """Plant-wide weak spots: parts short on site with one supplier, single-source Tier-2
+    dependencies, operators assigned to several cells."""
+    return _kg.single_points_of_failure()
+
+
 # --- Production & Human-Robot (challenge 3) ------------------------------- #
 @tool
 def job_reroute(machine_id: str, jobs: list[str]) -> dict:
@@ -259,7 +290,7 @@ def audit_assemble(run_id: str) -> dict:
 RELIABILITY_TOOLS = [alert_triage, sensor_query, rul_predictor, recall_similar_cases,
                      asset_profile, maintenance_schedule, search_technical_docs]
 SUPPLY_CHAIN_TOOLS = [parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk,
-                      work_order_draft, notify]
+                      supplier_impact, trace_dependency, work_order_draft, notify]
 PRODUCTION_TOOLS = [job_reroute, robot_cell_status, shift_conflict_check]
 QUALITY_TOOLS = [quality_history, telemetry_correlate]
 COMPLIANCE_TOOLS = [safety_gate, audit_assemble, search_technical_docs]

@@ -1,6 +1,6 @@
 # Tool Catalog — Titan Operations Sentinel
 
-Pre-submission deliverable (assignment brief §8). 20 tools across 5 specialist agents
+Pre-submission deliverable (assignment brief §8). 22 tools across 5 specialist agents
 (one agent per TMC challenge). Each tool is a pure Python function in `tools/`, exposed to
 the agents as a LangChain `@tool` in `tools/lc.py`. The **agents decide** which tool to call
 (autonomous ReAct); the **tools act** (fetch data / compute / draft). Tools never make
@@ -11,7 +11,7 @@ Per-agent tool map (`tools/lc.py` groups):
 | Agent | Challenge | Tools |
 |---|---|---|
 | Reliability | 1 Predictive maintenance | alert_triage, sensor_query, rul_predictor, recall_similar_cases, asset_profile, maintenance_schedule, search_technical_docs |
-| Supply Chain | 2 Supply volatility | parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk, work_order_draft, notify |
+| Supply Chain | 2 Supply volatility | parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk, supplier_impact, trace_dependency, work_order_draft, notify |
 | Production & Human-Robot | 3 Coordination | job_reroute, robot_cell_status, shift_conflict_check |
 | Quality & Traceability | 4 Quality | quality_history, telemetry_correlate |
 | Compliance & Safety | 5 Safety/audit | safety_gate, audit_assemble, search_technical_docs |
@@ -103,6 +103,18 @@ Per-agent tool map (`tools/lc.py` groups):
 - **What it does:** Reveals a Tier-1 supplier's own (Tier-2) dependencies and their risk — the visibility gap in challenge 2.
 - **Inputs:** `supplier_ids: list[str]` · **Outputs:** per-supplier Tier-2 deps, single-source flags, overall risk
 - **Use when:** Sanity-checking a chosen sourcing option for hidden upstream risk. **Auth:** READ.
+
+### `supplier_impact`
+- **What it does:** Walks the knowledge graph (`tools/knowledge_graph.py`) from a Tier-1 or Tier-2 supplier to every part, failure mode, machine and plant that depends on it, with production value exposed per day and parts that have no other source.
+- **Inputs:** `supplier_id: str` (id or name fragment) · **Outputs:** parts, machines, plants, value exposed, alternatives, risk flags, the paths
+- **Use when:** `tier2_supplier_risk` flags ELEVATED: size what the risk reaches. **Do NOT use:** to choose a supplier (that is `expedite_cost`). **Auth:** READ.
+
+### `trace_dependency`
+- **What it does:** Shortest chain of relationships linking two entities in the knowledge graph, e.g. a steel mill and a machine. Plants and warehouses are not used as stepping stones, so sharing a site is not mistaken for a dependency.
+- **Inputs:** `source: str`, `target: str` · **Outputs:** `path` (one edge per line), `hops`, `connected`
+- **Use when:** Explaining how an upstream risk reaches a machine; cite the path. **Auth:** READ.
+
+Also in the knowledge graph, exposed over MCP but not bound to an agent: `machine_dependencies` and `single_points_of_failure`.
 
 ---
 
