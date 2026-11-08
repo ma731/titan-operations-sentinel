@@ -44,6 +44,14 @@ PRICE_EUR_PER_M = {
 # names are free text, so this matches families by substring, most specific first).
 # Indicative EUR per 1M tokens (input, output), same caveat as above.
 PRICE_EUR_PER_M_MODEL = [
+    # Azure Global Standard, short context (Nov 2026 price page, USD x 0.92). Newest first,
+    # since "gpt-5" would otherwise match "gpt-5.4-mini".
+    ("gpt-6.1-sol", (1.84, 9.20)), ("gpt-6.1-terra", (0.92, 4.60)),
+    ("gpt-6-astra", (9.20, 46.00)), ("gpt-6-sol", (1.84, 9.20)), ("gpt-6-luna", (0.09, 0.46)),
+    ("gpt-5.6-sol", (3.68, 18.40)), ("gpt-5.6-terra", (1.84, 11.04)), ("gpt-5.6-luna", (0.18, 1.10)),
+    ("gpt-5.5", (4.60, 27.60)),
+    ("gpt-5.4-mini", (0.69, 4.14)), ("gpt-5.4-nano", (0.18, 1.15)), ("gpt-5.4", (2.30, 13.80)),
+    ("gpt-5.2", (1.61, 12.88)), ("gpt-5.1", (1.15, 9.20)),
     ("gpt-4.1-nano", (0.09, 0.37)), ("gpt-4.1-mini", (0.37, 1.47)), ("gpt-4.1", (1.84, 7.36)),
     ("gpt-4o-mini", (0.14, 0.55)), ("gpt-4o", (2.30, 9.20)),
     ("o4-mini", (1.01, 4.05)), ("gpt-5-mini", (0.23, 1.84)), ("gpt-5-nano", (0.05, 0.37)), ("gpt-5", (1.15, 9.20)),

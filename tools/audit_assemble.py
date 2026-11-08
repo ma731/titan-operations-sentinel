@@ -17,11 +17,16 @@ def audit_assemble(run_id: str) -> dict:
       Fallback: {"error": "audit_log_unavailable"} or empty timeline
       Risk tier: READ (autonomous)
     """
-    if not LOG_FILE.exists():
+    try:                                  # the writer's path, so a sandboxed log is read too
+        import audit_log
+        log_file = Path(audit_log.LOG_FILE)
+    except Exception:  # noqa: BLE001
+        log_file = LOG_FILE
+    if not log_file.exists():
         return {"error": "audit_log_unavailable", "run_id": run_id}
 
     events = []
-    with open(LOG_FILE, encoding="utf-8") as fh:
+    with open(log_file, encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
             if not line:

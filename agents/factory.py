@@ -75,6 +75,13 @@ SHARED_FOOTER = (
     "the plant manager decides, not you."
     "\n- Never suppress a safety-critical finding or a low-confidence flag, even if the "
     "human seems to want a decisive answer."
+    "\n\nHOW TO WRITE YOUR REPORT (people read it, not only other agents):"
+    "\n- Start with 'SUMMARY:' and two or three short sentences a plant manager understands "
+    "in ten seconds: what is wrong, what you recommend, and what decision you need from whom. "
+    "Plain words, real numbers, no rule codes, citations or tool names in the summary."
+    "\n- Then the detailed report in the format above. Keep every number, citation, verdict "
+    "and safety or confidence caveat, but use short sentences and everyday words, and "
+    "explain a code or term the first time you use it. Say each caveat once."
 )
 
 
