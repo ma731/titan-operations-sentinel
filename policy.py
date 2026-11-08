@@ -13,6 +13,8 @@ import math
 import re
 from collections import Counter
 
+from textnorm import variants
+
 COST_CEILING_EUR = 500
 MAX_VISITS = 2                 # cap re-engagement per agent so follow-ups cannot loop
 CORE_AGENTS = ["supply_chain", "production", "quality"]
@@ -146,6 +148,7 @@ _ESCALATE_MARKERS = (
     "safety system", "safety device", "safety control", "safety relay",
     "protective separation", "bypass", "defeat", "jumper", "tamper",
     "override safety", "disable safety", "tape over",
+    "door switch", "safety switch", "safety door", "protective door", "mute", "inhibit",
 )
 _APPROVE_MARKERS = (
     # Verb phrases, not bare nouns: "order" alone matched "work order" and tiered filing
@@ -164,12 +167,13 @@ def action_tier(action_description: str) -> str:
     it encodes the written tiers, nothing more. Safety is checked first so an action that
     touches a hazard control escalates even when it also mentions money.
     """
-    text = (action_description or "").lower()
+    raw, norm = variants(action_description)
     # Whole words only. Plain substring matching tiered "buys runway" as a purchase
     # ("buy") and would tier "brush" as "rush"; found when the plan check was added.
-    if any(_has(text, m) for m in _ESCALATE_MARKERS):
+    # Raw or normalised text, so obfuscated wording tiers the same as plain wording (F-11).
+    if any(_has(t, m) for t in (raw, norm) for m in _ESCALATE_MARKERS):
         return "ESCALATE"
-    if any(_has(text, m) for m in _APPROVE_MARKERS):
+    if any(_has(t, m) for t in (raw, norm) for m in _APPROVE_MARKERS):
         return "APPROVE"
     return "AUTO"
 
@@ -186,9 +190,18 @@ _TAG = re.compile(r"^\s*(?:[-*\d.)]+\s*)?\[(AUTO|APPROVE|MONITOR|ESCALATE)\]\s*(
 _EUR = re.compile(r"(?:€|eur\s*)\s*([\d][\d,.]*)\s*(k)?", re.IGNORECASE)
 
 
+# Currency after the number too: "3.2k euros", "3,200 EUR", "450€" (F-11).
+_EUR_AFTER = re.compile(r"([\d][\d,.]*)\s*(k)?\s*(?:€|eur(?:os?)?\b)", re.IGNORECASE)
+
+
 def _amounts(text: str) -> list[float]:
     out = []
-    for num, k in _EUR.findall(text):
+    seen = set()
+    for m in [*_EUR.finditer(text), *_EUR_AFTER.finditer(text)]:
+        if m.span(1) in seen:
+            continue
+        seen.add(m.span(1))
+        num, k = m.group(1), m.group(2)
         try:
             v = float(num.replace(",", ""))
         except ValueError:
@@ -216,6 +229,16 @@ def check_plan(plan: str, risk: str | None = None, ceiling_eur: int = COST_CEILI
         if _TIER_RANK[tag] < _TIER_RANK[need] and not (tag == "MONITOR" and need == "AUTO"):
             out.append({"rule": "tier", "line": raw.strip(), "tagged": tag, "required": need,
                         "fix": f"this action must be [{need}], not [{tag}]"})
+    # Split orders: several [AUTO] spends, each under the ceiling, that together are over
+    # it. The ceiling is on what the agent may spend alone, not on each line (F-11).
+    flagged = {v["line"] for v in out}
+    spends = [(raw, sum(_amounts(text))) for tag, text, raw in lines
+              if tag in ("AUTO", "MONITOR") and _amounts(text) and raw.strip() not in flagged]
+    if len(spends) > 1 and sum(a for _, a in spends) > ceiling_eur:
+        total = sum(a for _, a in spends)
+        for raw, _ in spends:
+            out.append({"rule": "tier", "line": raw.strip(), "tagged": _TAG.match(raw).group(1).upper(), "required": "APPROVE",
+                        "fix": f"[AUTO] spends total EUR {total:,.0f}, over the EUR {ceiling_eur} ceiling: [APPROVE]"})
     if risk == "HIGH" and not any(tag == "MONITOR" for tag, _, _ in lines):
         out.append({"rule": "monitor", "line": "", "fix": "a HIGH-risk plan needs a [MONITOR] line until the repair is done"})
     return out

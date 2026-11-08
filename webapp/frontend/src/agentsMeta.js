@@ -24,6 +24,8 @@ export const AGENTS = [
       ['supplier_catalog', 'suppliers, lead times and prices'],
       ['expedite_cost', 'downtime each option avoids, and what it costs'],
       ['tier2_supplier_risk', "checks the supplier's own suppliers"],
+      ['supplier_impact', 'knowledge graph: everything a risky supplier reaches, in euros per day'],
+      ['trace_dependency', 'knowledge graph: how an upstream risk reaches this machine'],
       ['work_order_draft', 'drafts the maintenance work order'],
       ['notify', 'prepares the message for the plant manager'],
     ],

@@ -208,6 +208,7 @@ TOS_PARALLEL=1 python scripts/run_demo.py  # supply chain + production in one st
 TOS_MODEL_SMALL=azure_openai:<small> python -m eval.run_eval --live   # model routing (decision 011)
 python mcp_server.py                   # Titan's tools as an MCP server (stdio), decision 010
 python scripts/mcp_demo.py             # MCP client demo: discover tools, investigate, draft a work order
+python scripts/a2a_demo.py             # A2A: another agent reads the Agent Card and delegates tasks (decision 012)
 python -m stream.run --live            # let the stream actually trigger agent runs
 python -m ruff check .                 # lint (CI runs this)
 docker compose up --build              # console on :5173, API on :8000, no key needed

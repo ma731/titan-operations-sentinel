@@ -37,6 +37,7 @@ EXPOSED = [
     lc.parts_inventory, lc.supplier_catalog, lc.expedite_cost, lc.tier2_supplier_risk,
     lc.job_reroute, lc.robot_cell_status, lc.shift_conflict_check,
     lc.quality_history, lc.telemetry_correlate, lc.safety_gate,
+    lc.supplier_impact, lc.trace_dependency, lc.machine_dependencies, lc.single_points_of_failure,
 ]
 
 SESSION_RUN = "MCP-SESSION"
@@ -89,8 +90,16 @@ def draft_work_order(machine_id: str, plant_id: str, failure_mode: str, parts_re
                                   technicians_required, estimated_duration_hours, actions)
     tiers = [{"action": a.get("description", ""), "tier": policy.action_tier(a.get("description", ""))}
              for a in actions if isinstance(a, dict)]
-    costs = [a["cost_eur"] for a in actions if isinstance(a, dict) and isinstance(a.get("cost_eur"), (int, float))]
-    cost = plan_cost_eur if plan_cost_eur is not None else (sum(costs) if costs else None)
+    costs = [a["cost_eur"] for a in actions if isinstance(a, dict) and isinstance(a.get("cost_eur"), (int, float))
+             and not isinstance(a.get("cost_eur"), bool)]
+    # The caller cannot talk the cost down: a negative "discount" line makes the cost
+    # unknown (so a person decides), and a stated plan cost never undercuts the actions (F-11).
+    if any(c < 0 for c in costs) or (plan_cost_eur is not None and plan_cost_eur < 0):
+        cost = None
+    elif costs or plan_cost_eur is not None:
+        cost = max([sum(costs)] + ([plan_cost_eur] if plan_cost_eur is not None else []))
+    else:
+        cost = None
     option = {"cost_eur": cost}
     if any(x["tier"] == "ESCALATE" for x in tiers):
         approver, why = "safety_officer", "an action touches a safety system"
@@ -119,6 +128,16 @@ def policy_resource() -> str:
         "AUTO": "throttle within OEM limits, reroute jobs, update logs, draft a work order",
         "APPROVE": "any purchase, or a maintenance window that affects production: plant manager",
         "ESCALATE": "anything touching a safety system: safety officer"}}, indent=1)
+
+
+@server.resource("titan://graph", name="knowledge graph", description="The intelligence layer: every plant, machine, part, supplier and dependency, as nodes and edges.",
+                 mime_type="application/json")
+def graph_resource() -> str:
+    from tools import knowledge_graph as kg
+    g = kg.build()
+    return json.dumps({"stats": g.stats(), "nodes": list(g.nodes.values()),
+                       "edges": [{"from": a, "rel": r, "to": b, **attrs} for a, lst in g.out.items() for r, b, attrs in lst]},
+                      ensure_ascii=False, default=str)
 
 
 @server.prompt(name="investigate_plant", description="A standard first look at a plant: alert, evidence, parts, plan.")
