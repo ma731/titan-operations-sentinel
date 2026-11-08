@@ -438,6 +438,7 @@ def _llm_route(state: OpsState, allowed: list[str]) -> str:
         f"Alert: {json.dumps(state['alert'])}\nAgents already done: {state.get('visited', [])}\n"
         f"Conversation so far:\n{_conversation(state, per_msg=ROUTE_DIGEST_CHARS)}\n\nChoose the NEXT agent to run. "
         f"Respond with exactly one of: {allowed}",
+        agent="supervisor",
     ).lower()
     for a in allowed:
         if a.lower() in resp:

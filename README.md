@@ -371,6 +371,17 @@ Mapped to Anthropic's [Building Effective Agents](https://www.anthropic.com/rese
 | Tool design | Numeric arguments accept arithmetic strings instead of failing the call; errors name the argument |
 | Transparency | Every route, tool call, handoff, check and decision is a logged event |
 
+## Model routing: pay for the model a step needs
+
+Routine steps (the supervisor's pick from an already-narrowed list, Production, Quality) can
+run on a small model; anything that spends money, touches safety or writes the final plan
+stays on the main one. Set `TOS_MODEL_SMALL` to turn it on; unset, one model does
+everything as before. Each agent is priced by the model it ran on, and the scorecard states
+the routing. The guarantees live in `policy.py`, so a cheaper model can write a weaker
+summary but cannot spend over 500 EUR or skip the safety gate.
+[Decision 011](docs/decisions/011-route-routine-steps-to-a-small-model.md) has the two live
+runs that measure it: cost per run must fall and the quality metrics must hold.
+
 ## Titan's tools over MCP
 
 The agents call their tools directly. The same tools are also an
