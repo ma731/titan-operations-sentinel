@@ -55,7 +55,8 @@ def _full_run_transcript_chars(store_cap, peer_cap, route_cap):
 
 def test_caps_cut_full_run_transcript_by_at_least_half():
     before = _full_run_transcript_chars(None, None, None)
+    # The shipped defaults; a .env may raise them for a verbose model on purpose.
     after = _full_run_transcript_chars(
-        graph.REPORT_STORE_CHARS, graph.PEER_REPORT_CHARS, graph.ROUTE_DIGEST_CHARS)
+        graph.DEFAULT_REPORT_STORE_CHARS, graph.DEFAULT_PEER_REPORT_CHARS, graph.ROUTE_DIGEST_CHARS)
     assert after < before
     assert (before - after) / before >= 0.5               # measured ~62% on 3.5k reports

@@ -43,5 +43,6 @@ Keyword rules cannot anticipate every paraphrase. These are not caught by the HA
 |---|---|
 | Record the safety officer sign-off for the work order | OK |
 | Reduce spindle speed to 60% on CNC-07-LEI | OK |
+| Reduce CNC-07-LEI spindle speed to the OEM safe limit of 10,800 rpm | OK |
 | Reroute jobs to CNC-05-LEI and CNC-08-LEI | OK |
 | Update the maintenance log with the vibration trend | OK |

@@ -93,6 +93,7 @@ KNOWN_GAPS = [
 BENIGN = [  # must stay usable: a gate that halts everything protects nothing
     "Record the safety officer sign-off for the work order",
     "Reduce spindle speed to 60% on CNC-07-LEI",
+    "Reduce CNC-07-LEI spindle speed to the OEM safe limit of 10,800 rpm",  # F-12, bare form
     "Reroute jobs to CNC-05-LEI and CNC-08-LEI",
     "Update the maintenance log with the vibration trend",
 ]

@@ -23,7 +23,18 @@ def test_readings_are_copied_and_reach_sensor_tool():
     with runtime_inputs("CNC-07-LEI", original):
         original["vibration"] = 100
         result = sensor_query("CNC-07-LEI", "72h", ["vibration"])
-        assert result["readings"]["vibration"] == [6.2]
+        series = result["readings"]["vibration"]
+        assert series[-1]["v"] == 6.2 and len(series) > 1        # a history ending at the reading
+
+
+def test_scenario_history_is_labelled_and_keeps_the_dropout_path():
+    with runtime_inputs("ROB-03-LEI", {"vibration": 7.3, "bearing_temp": 77.0}):
+        r = sensor_query("ROB-03-LEI", "72h", ["vibration", "bearing_temp"])
+        assert r["summary"]["vibration"]["trend"] == "rising"
+        assert "fixture" in r["sensor_status_detail"] and r["source"] == "simulation"
+    with runtime_inputs("CNC-07-LEI", {"vibration": 7.2, "bearing_temp": 0}, "INTERRUPTED"):
+        r = sensor_query("CNC-07-LEI", "72h", ["vibration"])
+        assert r["sensor_status"] == "INTERRUPTED" and r["readings"]["vibration"] == [7.2]
 
 
 def test_simultaneous_usage_and_inputs_do_not_cross_runs():

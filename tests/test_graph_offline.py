@@ -37,7 +37,8 @@ class ScriptedAgent:
         results = []
         if self.name == "reliability":
             sensor = sensor_query(mid, "72h", list(s.readings))
-            readings = {k: v[-1] for k, v in sensor.get("readings", {}).items()}
+            readings = {k: (v[-1]["v"] if isinstance(v[-1], dict) else v[-1])
+                        for k, v in sensor.get("readings", {}).items()}
             results = [("sensor_query", sensor), ("rul_predictor", rul_predictor(mid, readings))]
         elif self.name == "supply_chain":
             quotes = supplier_catalog([])["combined_options"]
@@ -141,3 +142,19 @@ def test_live_harness_uses_fixture_inputs_without_modifying_memory(monkeypatch, 
     assert result["status"] == "complete"
     assert not result["reached_approval_gate"]
     assert isolate_case_library.read_bytes() == before
+
+
+def test_audit_trail_is_reassembled_after_the_safety_checks(monkeypatch, offline):
+    """F-12: the agent assembles the trail mid-step, before its own gate calls are logged.
+    The graph assembles it again once they are, so the record includes them."""
+    class Agent:
+        def invoke(self, *a, **k):
+            return {"messages": messages([("safety_gate", {"verdict": "OK"}),
+                                          ("safety_gate", {"verdict": "OK"})])}
+    monkeypatch.setattr(graph, "build_agents", lambda: {"compliance_safety": Agent()})
+    alert = load_scenarios()[0].alert
+    state = graph.make_initial_state("happy", alert)
+    state.update(machine_id=alert["machine_id"], plant_id=alert.get("plant_id", "LEI"))  # set by perceive
+    update = graph._make_worker("compliance_safety")(state)
+    note = [e for e in update["trace"] if "re-assembled" in str(e.get("message", ""))]
+    assert note and "2 safety-gate decision(s)" in note[0]["message"]

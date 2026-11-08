@@ -21,6 +21,7 @@ tools, and tests still run end-to-end offline (CI / development).
 from __future__ import annotations
 
 import os
+import re
 from functools import lru_cache
 
 from dotenv import load_dotenv
@@ -117,22 +118,55 @@ def _key_error(model_str: str) -> str:
             f"Supported: {', '.join(PROVIDER_BY_ID)} (+ ollama).")
 
 
+_REASONING = re.compile(r"(^|[/:_-])(gpt-([5-9]|\d{2})|o[1-9])", re.I)
+
+
+def _temperature(model_str: str) -> dict:
+    """Reasoning models (gpt-5, o-series) reject temperature=0, so leave it at their default.
+    Azure deployment names are free text: set TOS_REASONING=1 if yours does not say."""
+    if os.getenv("TOS_REASONING") == "1" or _REASONING.search(model_str.split(":", 1)[-1]):
+        return {}
+    return {"temperature": 0}
+
+
+def text_of(msg) -> str:
+    """A message's text. The Responses API returns content as a list of blocks
+    (reasoning, text) instead of a string; keep only the text."""
+    c = getattr(msg, "content", msg)
+    if isinstance(c, str):
+        return c
+    if isinstance(c, list):
+        return "".join(b if isinstance(b, str) else b.get("text", "") for b in c
+                       if isinstance(b, str) or (isinstance(b, dict) and b.get("type") in ("text", "output_text")))
+    return str(c)
+
+
 def _build(model_str: str):
     """Construct a LangChain chat model for 'provider:model' (handles OpenRouter + retries)."""
     from langchain.chat_models import init_chat_model
 
+    t = _temperature(model_str)
     if model_str.startswith("openrouter:"):
         name = model_str.split(":", 1)[1]
-        return init_chat_model(name, model_provider="openai", temperature=0, max_retries=MAX_RETRIES,
-                               base_url=OPENROUTER_BASE, api_key=os.getenv("OPENROUTER_API_KEY"))
+        return init_chat_model(name, model_provider="openai", max_retries=MAX_RETRIES,
+                               base_url=OPENROUTER_BASE, api_key=os.getenv("OPENROUTER_API_KEY"), **t)
     if model_str.startswith("azure_openai:"):
         deployment = model_str.split(":", 1)[1]            # the Azure DEPLOYMENT name
-        return init_chat_model(deployment, model_provider="azure_openai", temperature=0, max_retries=MAX_RETRIES,
+        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+        if "/openai/v1" in endpoint:
+            # Azure's v1 API (what Foundry shows for newer models): the plain OpenAI client
+            # with base_url, no api_version. Reasoning models refuse tools + reasoning on
+            # chat completions, so they go through the Responses API.
+            return init_chat_model(deployment, model_provider="openai", max_retries=MAX_RETRIES, **t,
+                                   base_url=endpoint.rstrip("/") + "/",
+                                   api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+                                   use_responses_api=not t)
+        return init_chat_model(deployment, model_provider="azure_openai", max_retries=MAX_RETRIES, **t,
                                azure_deployment=deployment,
                                api_version=os.getenv("OPENAI_API_VERSION", "2024-10-21"),
                                azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
                                api_key=os.getenv("AZURE_OPENAI_API_KEY"))
-    return init_chat_model(model_str, temperature=0, max_retries=MAX_RETRIES)
+    return init_chat_model(model_str, max_retries=MAX_RETRIES, **t)
 
 
 class _StubLLM:
@@ -172,7 +206,7 @@ class _ChatLLM:
         resp = self._model.invoke(
             [SystemMessage(content=system), HumanMessage(content=user)], config=config or None
         )
-        return resp.content if hasattr(resp, "content") else str(resp)
+        return text_of(resp)
 
 
 @lru_cache(maxsize=2)

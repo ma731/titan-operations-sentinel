@@ -424,6 +424,35 @@ as text or negative, and an MCP caller trying to lower the cost it is judged on.
 actions still pass. The first run broke nine of them; [F-11](eval/FINDINGS.md) has what
 broke and how it was fixed, and the two paraphrases that keyword rules still miss.
 
+## What a stronger model found
+
+On 8 November 2026 the full Friday Cascade ran live on GPT-6.1 Sol (Azure), with GPT-6 Luna
+doing the routing. Every agent called its tools, cited the standards and talked to the
+others. Then the plan stopped with a HALT, and the reason was in Titan, not in the model.
+
+In plain terms:
+
+1. The Compliance agent asked the safety gate about one action: slow the spindle down to the
+   manufacturer's safe speed. That is a normal, safe thing to do.
+2. Being careful, the model added a note to the request: "this is **not** permission to
+   bypass guards".
+3. The safety gate works on keywords. It saw "bypass guards", did not notice the "not", and
+   stopped the whole plan.
+4. The model saw the contradiction and reported it ("not evidence that a bypass was
+   proposed"), but it did not override the stop. Only the safety officer can.
+
+So a more careful model was punished for being careful. The gate failed in the safe
+direction, which is what it is built to do, but it was still a false stop. It also shows
+something the scripted tests could not: what the guardrails do when a real model writes the
+text.
+
+The same run found two smaller things. The scenario is simulated and set on 12 June 2026,
+but the work-order and notification drafts were stamped with the real date (November), so
+the model saw two different "nows" and flagged the data as stale. The data is fine; the run
+needs one simulated clock that every tool uses. And the audit trail is assembled before
+Compliance's own safety checks are logged, so it misses them. Details and the fix in
+[F-12](eval/FINDINGS.md).
+
 ## Model routing: pay for the model a step needs
 
 Routine steps (the supervisor's pick from an already-narrowed list, Production, Quality) can
@@ -435,6 +464,16 @@ summary but cannot spend over 500 EUR or skip the safety gate.
 `python -m eval.routing_compare --run` measures it on a live model (one model, then routed,
 same scenarios) and keeps routing only if cost per run falls and no quality metric drops
 ([decision 011](docs/decisions/011-route-routine-steps-to-a-small-model.md)).
+
+**First measurement (8 Nov 2026, GPT-6.1 Sol with GPT-6 Luna, 8 scenarios each way):**
+routing cut cost per run by 10% (EUR 0.31 to 0.28), with no errors either way. The rule
+still says "do not keep it yet", because one metric (halt decision) fell from 62% to 50%.
+That drop is not evidence against routing: Luna never decides a halt, the Compliance agent
+does, on Sol, in both runs. Of the 9 halted runs across both suites, 7 were the false stop
+in [F-12](eval/FINDINGS.md) (a disclaimer like "without bypassing interlocks" on a safe
+action); the other 2 were the real interlock-bypass scenario, correctly halted both times.
+With one run per scenario, a single flip moves a metric by 12 points. The honest reading is: cheaper, quality not yet measurable at this sample size.
+[Full table](eval/results/routing_comparison.md).
 
 ## Titan's tools over MCP
 
@@ -637,8 +676,9 @@ docs/                 brief, case study, tool catalog, architecture, appendix pa
 - The red team holds 19/19, but keyword rules cannot anticipate every paraphrase: two are
   listed in [F-11](eval/FINDINGS.md) with what still stands in their way (the Compliance
   agent and human approval of every work order).
-- Model routing is built and tested offline; its cost saving and quality impact need two
-  live runs with a key ([decision 011](docs/decisions/011-route-routine-steps-to-a-small-model.md)).
+- Model routing was measured live once: 10% cheaper, quality effect not yet separable from
+  run-to-run noise and the F-12 false stops. It needs a re-run after the F-12 fix, with
+  repeats per scenario ([decision 011](docs/decisions/011-route-routine-steps-to-a-small-model.md)).
 - The MCP server runs over stdio and the A2A endpoint has no authentication or streaming:
   fine on one machine, not yet for a shared deployment.
 - The retrieval corpus is small and clean, so the direct-split recall says the corpus is

@@ -23,7 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "eval" / "results"
-TOKENS_PER_SCENARIO = 35_000      # from earlier live runs: three scenarios used about 100k tokens
+TOKENS_PER_SCENARIO = 150_000     # measured on GPT-6.1 Sol, 8 Nov 2026 (Llama used about 35k)
 INPUT_SHARE = 0.9                  # agent runs are mostly prompt (transcript, tool results)
 # The live suite's own metric names (eval/live_eval.py).
 QUALITY = ["routing_coverage", "routing_order", "risk_classification", "gate_decision", "terminal_status",
