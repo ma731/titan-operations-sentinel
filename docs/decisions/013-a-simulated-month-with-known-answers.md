@@ -48,6 +48,12 @@ All three gaps are pinned as strict xfails in `tests/test_sim_month.py`. Fixing 
 its test red until the xfail is removed, so a fix cannot go unnoticed. None is fixed here:
 each one is a change to a rule, and it belongs in its own PR with the eval re-run.
 
+Update: the two wake-gate gaps are fixed in `stream/triage.py`. A load check reads spindle
+current against the machine's own baseline (tms-101#S2), and a sensor-fault check raises a
+channel on its rail or flatlined exactly as an instrumentation case (tms-705#S6). The month
+now scores 7 of 7 wake decisions with 25 wakes, and the bearing wakes are unchanged. The
+life estimate gap is still open.
+
 ## Cost
 
 The validation is circular in one place: the simulator follows the same rule of thumb the

@@ -566,6 +566,9 @@ def render(result: dict, live: list[dict] | None = None) -> str:
          f"{result['life_conservative']}.",
          f"- Quiet days (no scripted event anywhere): {len(result['quiet_days'])}. "
          f"Wakes on them: {result['wakes_on_quiet_days']}.",
+         "- Instrumentation cases (suspected sensor faults, no wake): " + ("; ".join(
+             f"{c['machine_id']} {c['fault']} at {c['value']} mm/s, {_hm(c['timestamp'])}"
+             for c in result.get("instrumentation_cases", [])) or "none") + ".",
          "- Maintenance resets: " + "; ".join(
              f"{x['machine_id']} back in service {_hm(x['back_in_service'])}"
              for x in result["maintenance_resets"]) + ".", "",
@@ -649,6 +652,7 @@ def main(argv: list[str] | None = None) -> int:
     sim = MonthSimulator(load_scenario(args.scenario))
     wakes, gate = replay(sim, export=args.export)
     result = score(sim, wakes)
+    result["instrumentation_cases"] = gate.instrumentation_cases
     live = run_live(sim, wakes, args.max_runs, args.decision) if args.live else None
 
     args.out.parent.mkdir(parents=True, exist_ok=True)

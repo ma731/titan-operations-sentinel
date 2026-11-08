@@ -1,6 +1,6 @@
 # Evaluation scorecard
 
-Generated 2026-11-08 20:59 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
+Generated 2026-11-08 22:30 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
 
 Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
 
@@ -106,7 +106,7 @@ The value side (EUR 180,000 a day of production at risk, 22,431 alerts a day) is
 
 ## 5. Simulated month (no key, no tokens, deterministic)
 
-27 wakes from one simulated month (`python -m stream.month`), each with a known failure time and a risk label taken from the corpus. This validates against the simulator's own physics, which follows the corpus rule of thumb. It is not a check against real bearing failures. Full report: `eval/results/sim_month.md`.
+25 wakes from one simulated month (`python -m stream.month`), each with a known failure time and a risk label taken from the corpus. This validates against the simulator's own physics, which follows the corpus rule of thumb. It is not a check against real bearing failures. Full report: `eval/results/sim_month.md`.
 
 | Metric | Result |
 |---|---|
@@ -114,9 +114,9 @@ The value side (EUR 180,000 a day of production at risk, 22,431 alerts a day) is
 | Optimistic (promised more life than was left) | 15 |
 | Conservative | 5 |
 | Median midpoint error | 30.4 h |
-| Risk call matches the corpus | 24 of 27 (88.9%) |
+| Risk call matches the corpus | 23 of 25 (92.0%) |
 
-Risk misses: `SM-M01-01` expected HIGH, got LOW; `SM-M04-01` expected ESCALATE, got HIGH; `SM-M05-01` expected HIGH, got LOW.
+Risk misses: `SM-M01-01` expected HIGH, got LOW; `SM-M05-01` expected HIGH, got LOW.
 
 ---
 
