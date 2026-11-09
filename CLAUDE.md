@@ -47,8 +47,9 @@ specialist directly (honoured by the supervisor, capped at `MAX_VISITS` to preve
 graph pauses for a human approve/reject. Checkpointer also = **episodic memory**.
 
 **Framework:** LangGraph (NOT direct Anthropic SDK). Migrated 2026-06-13; expanded to 6 agents 2026-06-13.
-**Model:** Groq / `llama-3.3-70b-versatile` (free tier) via `init_chat_model`, set by `TOS_MODEL`;
-one-line swap to `ollama:...` offline. `llm.complete()` (used for routing/synthesis only) degrades
+**Model:** any provider via `init_chat_model`, set by `TOS_MODEL`. Main setup since 2026-11-08:
+Azure `gpt-6.1-sol`, with `gpt-6-luna` as `TOS_MODEL_SMALL` (v1 endpoint, Responses API, see
+`llm.py`). Groq / `llama-3.3-70b-versatile` remains the free option; `ollama:...` offline. `llm.complete()` (used for routing/synthesis only) degrades
 to a templated stub with no provider; the ReAct agents need a real tool-calling model (`get_chat_model`).
 
 ---
@@ -285,11 +286,11 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 | RUL model on real run-to-failure data (C-MAPSS, 707 held-out units) | Done |
 | Provenance on every RUL prediction (fitted_model vs declared_thresholds) | Done |
 | Backtested predictions for the CNC demo asset | No real run-to-failure data. Checked against a simulated month instead (`stream/month.py`): 4 of 24 inside on the level rule, 24 of 24 since it reads the rate (tms-101#S4). Circular, see F-13 |
-| Live evaluation suite scored against a provider | Needs a key: not yet run |
+| Live evaluation suite scored against a provider | Run 2026-11-08 on GPT-6.1 Sol (8 scenarios, 0 errors); see F-12 for the false HALTs it exposed |
 | Dense / hybrid retrieval rows on the scorecard | Needs TOS_EMBEDDINGS: not yet run |
 | Slides | Done (webapp/frontend/public/deck.html) |
 | MCP server (read-only tools, draft-only work order, policy resource) | Done |
 | Knowledge graph / intelligence layer (tools/knowledge_graph.py) | Done |
 | Prompt-injection red team (eval/red_team.py, 19/19, 2 known gaps) | Done |
-| Model routing (TOS_MODEL_SMALL) | Built; saving not yet measured live |
+| Model routing (TOS_MODEL_SMALL) | Measured once live: 10% cheaper; quality effect not yet separable from noise (re-run after F-12 fix) |
 | A2A agent card + message/send | Done (no auth, no streaming) |
