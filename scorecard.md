@@ -1,6 +1,6 @@
 # Evaluation scorecard
 
-Generated 2026-09-22 08:57 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
+Generated 2026-11-09 10:42 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
 
 Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
 
@@ -13,6 +13,7 @@ Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retr
 | Retrieval recall@4 (lexical) | 86.5% |
 | Live agent suite | not run in this pass |
 | Cost to run | see unit economics below |
+| Simulated month: CNC life interval coverage | 16.7% of 24 estimates |
 
 How to read this: the offline suites measure the parts of the system that are enforced in code, exhaustively and for free. The live suite measures what the model does, on a subset, and costs tokens. A claim backed only by the live suite is a sample; a claim backed by the offline suite is a check.
 
@@ -100,6 +101,22 @@ Cost per run, and at the plant's rate of 3 actionable alerts a day:
 Runs per day comes from the case study's 3 deduplicated critical alerts, not from scaling the wake rate against raw alert volume: a reading and an alert are different units. As a cross-check, the simulated fleet independently triggered 2 runs in 24 hours, the same order of magnitude.
 
 The value side (EUR 180,000 a day of production at risk, 22,431 alerts a day) is an input from the case study, not a result this system produced.
+
+---
+
+## 5. Simulated month (no key, no tokens, deterministic)
+
+27 wakes from one simulated month (`python -m stream.month`), each with a known failure time and a risk label taken from the corpus. This validates against the simulator's own physics, which follows the corpus rule of thumb. It is not a check against real bearing failures. Full report: `eval/results/sim_month.md`.
+
+| Metric | Result |
+|---|---|
+| CNC life interval contains the true remaining life | 4 of 24 (16.7%) |
+| Optimistic (promised more life than was left) | 15 |
+| Conservative | 5 |
+| Median midpoint error | 30.4 h |
+| Risk call matches the corpus | 24 of 27 (88.9%) |
+
+Risk misses: `SM-M01-01` expected HIGH, got LOW; `SM-M04-01` expected ESCALATE, got HIGH; `SM-M05-01` expected HIGH, got LOW.
 
 ---
 
