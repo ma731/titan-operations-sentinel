@@ -93,7 +93,9 @@ def sensor_query(machine_id: str, window: str, sensors: list[str]) -> dict:
 @tool
 def rul_predictor(machine_id: str, current_readings: dict) -> dict:
     """Estimate Remaining Useful Life (hours) + confidence from REAL sensor readings.
-    Pass the latest values from sensor_query as current_readings. Never guess readings."""
+    Pass the latest values from sensor_query as current_readings. Never guess readings.
+    Optionally add current_readings["series"] = sensor_query's "readings" block so the
+    estimate reads the vibration rate, not only the level."""
     return _rul_predictor(machine_id, current_readings)
 
 

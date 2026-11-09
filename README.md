@@ -365,8 +365,9 @@ What it found (`eval/results/sim_month.md`, and section 5 of the scorecard):
   (tms-101#S2) and raises a channel pinned at its rail as an instrumentation case
   (tms-705#S6). The first version woke on both; 7 of 7 wake decisions are now right.
 - The CNC life interval held the true remaining life in 4 of 24 checks, and was
-  optimistic in 15. The rule reads how high vibration is; the corpus says to read how fast
-  it is rising.
+  optimistic in 15. The rule read how high vibration is; the corpus says to read how fast
+  it is rising. It now reads the rate and holds 24 of 24, but that is circular: the
+  simulator follows the same corpus rule (F-13 in `eval/FINDINGS.md`).
 
 **Limits.** This validates against the simulator's own physics, which follows the corpus
 rule of thumb. It is not a check against real bearings. It is also open loop: nothing the

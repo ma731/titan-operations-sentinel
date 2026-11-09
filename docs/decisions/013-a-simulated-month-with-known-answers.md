@@ -51,8 +51,10 @@ each one is a change to a rule, and it belongs in its own PR with the eval re-ru
 Update: the two wake-gate gaps are fixed in `stream/triage.py`. A load check reads spindle
 current against the machine's own baseline (tms-101#S2), and a sensor-fault check raises a
 channel on its rail or flatlined exactly as an instrumentation case (tms-705#S6). The month
-now scores 7 of 7 wake decisions with 25 wakes, and the bearing wakes are unchanged. The
-life estimate gap is still open.
+now scores 7 of 7 wake decisions with 25 wakes, and the bearing wakes are unchanged.
+
+Update (F-13): the life rule now reads the rate and holds 24 of 24, with ranges about four
+times wider. That check is circular, since the simulator follows S4 too. No xfails are left.
 
 ## Cost
 

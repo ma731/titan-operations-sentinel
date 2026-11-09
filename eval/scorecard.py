@@ -211,8 +211,9 @@ def _sim_month_section(r: dict | None) -> list[str]:
         f"{r['cases']} wakes from one simulated month (`python -m stream.month`), each "
         "with a known failure time and a risk label taken from the corpus. This validates "
         "against the simulator's own physics, which follows the corpus rule of thumb. It "
-        "is not a check against real bearing failures. Full report: "
-        "`eval/results/sim_month.md`.",
+        "is not a check against real bearing failures. Since the CNC rule reads the "
+        "vibration rate (tms-101#S4), rule and simulator follow the same section, so the "
+        "coverage below is circular (F-13). Full report: `eval/results/sim_month.md`.",
         "",
         "| Metric | Result |",
         "|---|---|",
@@ -221,6 +222,7 @@ def _sim_month_section(r: dict | None) -> list[str]:
         f"| Optimistic (promised more life than was left) | {li['optimistic']} |",
         f"| Conservative | {li['conservative']} |",
         f"| Median midpoint error | {li['median_midpoint_error_h']} h |",
+        f"| Median width of the predicted range | {li.get('median_width_h')} h |",
         f"| Risk call matches the corpus | {rk['correct']} of {rk['total']} "
         f"({_pct(rk['accuracy'])}) |",
         "",

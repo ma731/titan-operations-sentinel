@@ -1,8 +1,8 @@
 """
 Offline suite over the simulated month (eval/cases/sim_month_cases.json).
 
-No model, no key. For every wake in the month it runs the real rul_predictor and the real
-risk rule, then asks two questions:
+No model, no key. For every wake in the month it runs the real rul_predictor (with the 72h
+window each case's history_ref rebuilds) and the real risk rule, then asks two questions:
 
   1. Does the predicted interval contain the true remaining life?
   2. Is the risk call the one the corpus says is right?
@@ -21,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import policy  # noqa: E402
+from stream.month import MonthSimulator, load_scenario, replay, series  # noqa: E402
 from tools.rul_predictor import rul_predictor  # noqa: E402
 
 from .metrics import Tally  # noqa: E402
@@ -40,8 +41,12 @@ def run(path: Path | str = CASES_PATH) -> dict:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     risk = Tally("risk_on_simulated_wakes")
     life, errors = [], []
+    sim = MonthSimulator(load_scenario())
+    replay(sim)                           # rebuilds the samples each history_ref points at
     for c in data["cases"]:
-        rp = rul_predictor(c["machine_id"], c["readings"])
+        ref = c["history_ref"]
+        rp = rul_predictor(c["machine_id"], {**c["readings"], "series": series(
+            sim, ref["machine_id"], ref["end_tick"], ref["hours"])})
         got = policy.classify_risk(rp, _evidence(c["telemetry_status"]))
         risk.add(got == c["expected"]["risk"], c["id"], c["expected"]["risk"], got,
                  note=c["expected"].get("source", ""))
@@ -68,6 +73,9 @@ def run(path: Path | str = CASES_PATH) -> dict:
             "coverage": round(count["inside"] / n, 4) if n else None,
             # positive = the midpoint promised more life than was left
             "median_midpoint_error_h": round(statistics.median(errors), 1) if errors else None,
+            # coverage alone rewards a wide range, so report how wide the ranges were
+            "median_width_h": (statistics.median(x["predicted_h"][1] - x["predicted_h"][0]
+                                                 for x in life) if life else None),
             "estimates": life,
         },
     }

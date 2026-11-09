@@ -1,6 +1,6 @@
 # Evaluation scorecard
 
-Generated 2026-11-08 22:30 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
+Generated 2026-11-09 11:07 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
 
 Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
 
@@ -13,7 +13,7 @@ Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retr
 | Retrieval recall@4 (lexical) | 86.5% |
 | Live agent suite | not run in this pass |
 | Cost to run | see unit economics below |
-| Simulated month: CNC life interval coverage | 16.7% of 24 estimates |
+| Simulated month: CNC life interval coverage | 100.0% of 24 estimates |
 
 How to read this: the offline suites measure the parts of the system that are enforced in code, exhaustively and for free. The live suite measures what the model does, on a subset, and costs tokens. A claim backed only by the live suite is a sample; a claim backed by the offline suite is a check.
 
@@ -106,17 +106,16 @@ The value side (EUR 180,000 a day of production at risk, 22,431 alerts a day) is
 
 ## 5. Simulated month (no key, no tokens, deterministic)
 
-25 wakes from one simulated month (`python -m stream.month`), each with a known failure time and a risk label taken from the corpus. This validates against the simulator's own physics, which follows the corpus rule of thumb. It is not a check against real bearing failures. Full report: `eval/results/sim_month.md`.
+25 wakes from one simulated month (`python -m stream.month`), each with a known failure time and a risk label taken from the corpus. This validates against the simulator's own physics, which follows the corpus rule of thumb. It is not a check against real bearing failures. Since the CNC rule reads the vibration rate (tms-101#S4), rule and simulator follow the same section, so the coverage below is circular (F-13). Full report: `eval/results/sim_month.md`.
 
 | Metric | Result |
 |---|---|
-| CNC life interval contains the true remaining life | 4 of 24 (16.7%) |
-| Optimistic (promised more life than was left) | 15 |
-| Conservative | 5 |
-| Median midpoint error | 30.4 h |
-| Risk call matches the corpus | 23 of 25 (92.0%) |
-
-Risk misses: `SM-M01-01` expected HIGH, got LOW; `SM-M05-01` expected HIGH, got LOW.
+| CNC life interval contains the true remaining life | 24 of 24 (100.0%) |
+| Optimistic (promised more life than was left) | 0 |
+| Conservative | 0 |
+| Median midpoint error | 3.0 h |
+| Median width of the predicted range | 100.0 h |
+| Risk call matches the corpus | 25 of 25 (100.0%) |
 
 ---
 

@@ -257,7 +257,7 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 - Do not add a feature to `ml/` computed from a unit's full history. That is F-07, and
   `tests/test_rul_model.py::test_features_do_not_use_the_future` exists to catch it.
 - Do not edit `data/sim_month/scenario.json` answers to match the code. Each one cites the
-  corpus; the known gap left (life estimate reads level, not rate) is a strict xfail in `tests/test_sim_month.py`.
+  corpus. Its life check is circular (the simulator follows tms-101#S4 too), see F-13.
 - Do not hardcode machine IDs or part numbers in agent code — they come from alerts/tool outputs.
 
 ---
@@ -284,7 +284,7 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 | Live Groq run verified (happy path end-to-end) | Done |
 | RUL model on real run-to-failure data (C-MAPSS, 707 held-out units) | Done |
 | Provenance on every RUL prediction (fitted_model vs declared_thresholds) | Done |
-| Backtested predictions for the CNC demo asset | No real run-to-failure data. Checked against a simulated month instead (`stream/month.py`): 4 of 24 estimates inside the range, 15 optimistic |
+| Backtested predictions for the CNC demo asset | No real run-to-failure data. Checked against a simulated month instead (`stream/month.py`): 4 of 24 inside on the level rule, 24 of 24 since it reads the rate (tms-101#S4). Circular, see F-13 |
 | Live evaluation suite scored against a provider | Needs a key: not yet run |
 | Dense / hybrid retrieval rows on the scorecard | Needs TOS_EMBEDDINGS: not yet run |
 | Slides | Done (webapp/frontend/public/deck.html) |
