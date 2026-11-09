@@ -102,11 +102,11 @@ eval/
   rag_eval.py            # recall@k / MRR / precision@k per retriever and difficulty split
   live_eval.py           # full-graph runs: tool-call correctness, citation rate, tokens
   run_eval.py            # CLI -> eval/results/scorecard.md
-  sim_month_eval.py      # offline: CNC life interval coverage + risk on the month's 27 wakes
+  sim_month_eval.py      # offline: CNC life interval coverage + risk on the month's 25 wakes
   FINDINGS.md            # open findings, with why each is not simply patched to green
 stream/
   simulator.py           # seeded fleet sensor simulator with a degradation model
-  triage.py              # the wake gate: severity band + trend + per-machine cooldown
+  triage.py              # the wake gate: load + sensor-fault checks, severity band, trend, cooldown
   run.py                 # the continuous loop (dry run by default)
   month.py               # one simulated month with known answers; scores triage + CNC life estimate
 integrations/approval.py # Slack Block Kit / SMTP email / console approval routing
@@ -257,7 +257,7 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 - Do not add a feature to `ml/` computed from a unit's full history. That is F-07, and
   `tests/test_rul_model.py::test_features_do_not_use_the_future` exists to catch it.
 - Do not edit `data/sim_month/scenario.json` answers to match the code. Each one cites the
-  corpus; the three known gaps are pinned as strict xfails in `tests/test_sim_month.py`.
+  corpus. Its life check is circular (the simulator follows tms-101#S4 too), see F-13.
 - Do not hardcode machine IDs or part numbers in agent code — they come from alerts/tool outputs.
 
 ---

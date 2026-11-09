@@ -13,8 +13,16 @@ from stream.simulator import AlertSimulator, MachineProfile, Reading
 from stream.triage import Band, TriageGate, severity_band
 
 
-def _reading(machine="CNC-07-LEI", vib=3.0, temp=55.0, tick=0):
-    return Reading(machine, "LEI", "2026-06-12T08:00:00+00:00", vib, temp, 42.0, tick)
+def _reading(machine="CNC-07-LEI", vib=3.0, temp=55.0, tick=0, current=42.0):
+    return Reading(machine, "LEI", "2026-06-12T08:00:00+00:00", vib, temp, current, tick)
+
+
+def _warm(gate, ticks=6, vib=2.9, temp=55.0, current=42.0):
+    """A few healthy readings so the gate has its baselines. Tiny steps keep them from
+    reading as a flatline."""
+    for t in range(ticks):
+        gate.observe(_reading(vib=vib + 0.01 * t, temp=temp, current=current, tick=t))
+    return ticks
 
 
 # --- severity bands -------------------------------------------------------- #
@@ -92,6 +100,102 @@ def test_the_cooldown_expires():
     gate = TriageGate(cooldown_ticks=5)
     gate.observe(_reading(vib=7.2, temp=78, tick=0))
     assert gate.observe(_reading(vib=7.4, temp=79, tick=6)).wake is True
+
+
+# --- load check (tms-101-spindle-bearing-maintenance#S2) --------------------- #
+def test_a_heavier_cut_with_flat_temperature_does_not_wake():
+    gate = TriageGate()
+    t = _warm(gate)
+    v = gate.observe(_reading(vib=6.4, temp=57.0, current=61.0, tick=t))
+    assert v.wake is False
+    assert "process load" in v.reason
+    assert gate.stats()["explained_by_load"] == 1
+
+
+def test_the_same_rise_with_flat_current_and_rising_temperature_wakes():
+    """The defect signature the load check must never hide."""
+    gate = TriageGate()
+    t = _warm(gate)
+    assert gate.observe(_reading(vib=6.4, temp=63.0, current=42.0, tick=t)).wake is True
+
+
+def test_a_defect_under_a_heavier_cut_still_wakes_when_the_bearing_heats():
+    gate = TriageGate()
+    t = _warm(gate)
+    assert gate.observe(_reading(vib=6.4, temp=62.0, current=61.0, tick=t)).wake is True
+
+
+def test_a_rise_the_load_cannot_explain_still_wakes():
+    gate = TriageGate()
+    t = _warm(gate)
+    v = gate.observe(_reading(vib=9.0, temp=57.0, current=54.6, tick=t))   # load x1.3
+    assert v.wake is True and "spindle load" in v.reason
+
+
+def test_the_trip_band_wakes_whatever_the_load():
+    gate = TriageGate()
+    t = _warm(gate)
+    assert gate.observe(_reading(vib=11.5, temp=57.0, current=61.0, tick=t)).wake is True
+
+
+def test_a_long_heavier_cut_does_not_become_the_new_baseline():
+    gate = TriageGate()
+    t = _warm(gate)
+    for i in range(200):
+        gate.observe(_reading(vib=6.4 + 0.001 * i, temp=57.0, current=61.0, tick=t + i))
+    st = gate._state["CNC-07-LEI"]
+    assert abs(st.current_baseline - 42.0) < 0.5
+
+
+# --- sensor-fault check (tms-705-telemetry-data-quality-and-abstention#S6) --- #
+def test_a_channel_on_its_rail_is_an_instrumentation_case_not_a_wake():
+    gate = TriageGate()
+    t = _warm(gate)
+    verdicts = [gate.observe(_reading(vib=25.4, temp=55.0, tick=t + i)) for i in range(3)]
+    assert not any(v.wake for v in verdicts)
+    assert verdicts[0].instrumentation_case["fault"] == "rail"
+    assert verdicts[0].instrumentation_case["route"] == "instrumentation"
+    assert all(v.instrumentation_case is None for v in verdicts[1:])   # one case per fault
+    assert gate.stats()["instrumentation_cases"] == 1
+    assert verdicts[0].band is Band.NORMAL          # band of the last valid reading
+
+
+def test_a_rail_reading_with_a_hot_bearing_still_wakes():
+    """If temperature agrees, it is not just the vibration channel."""
+    gate = TriageGate()
+    t = _warm(gate)
+    v = gate.observe(_reading(vib=25.4, temp=78.0, tick=t))
+    assert v.wake is True and v.instrumentation_case is None
+
+
+def test_a_channel_that_flatlines_exactly_is_raised_once():
+    gate = TriageGate()
+    t = _warm(gate)
+    verdicts = [gate.observe(_reading(vib=3.10, temp=55.0, tick=t + i)) for i in range(5)]
+    cases = [v.instrumentation_case for v in verdicts if v.instrumentation_case]
+    assert len(cases) == 1 and cases[0]["fault"] == "flatline"
+    assert not any(v.wake for v in verdicts)
+
+
+def test_after_a_rail_the_feed_is_trusted_again():
+    gate = TriageGate()
+    t = _warm(gate)
+    for i in range(3):
+        gate.observe(_reading(vib=25.4, temp=55.0, tick=t + i))
+    v = gate.observe(_reading(vib=7.2, temp=78.0, tick=t + 3))
+    assert v.wake is True and v.instrumentation_case is None
+
+
+def test_a_gradual_bearing_failure_is_not_mistaken_for_a_sensor_fault():
+    gate = TriageGate()
+    vib, temp, woke = 2.9, 55.0, []
+    for tick in range(60):
+        vib *= 2 ** (1 / 24)                     # doubling every 4 hours, flat current
+        temp = 55.0 + max(0.0, vib - 4.0) * 3.2
+        v = gate.observe(_reading(vib=vib, temp=temp, tick=tick))
+        assert v.instrumentation_case is None
+        woke.append(v.wake)
+    assert any(woke)
 
 
 # --- telemetry dropouts ---------------------------------------------------- #

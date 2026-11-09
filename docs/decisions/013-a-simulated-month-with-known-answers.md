@@ -43,12 +43,18 @@ Three gaps showed up in one live run:
 - The CNC life interval contains the true remaining life in 4 of 24 checks, and is
   optimistic in 15. It reads the vibration level; tms-101#S4 says the window comes from
   the rate of change.
-  Follow-up (F-13): the rule now reads the rate and holds 24 of 24, with ranges about four
-  times wider. That check is circular, since the simulator follows S4 too.
 
 All three gaps are pinned as strict xfails in `tests/test_sim_month.py`. Fixing one turns
 its test red until the xfail is removed, so a fix cannot go unnoticed. None is fixed here:
 each one is a change to a rule, and it belongs in its own PR with the eval re-run.
+
+Update: the two wake-gate gaps are fixed in `stream/triage.py`. A load check reads spindle
+current against the machine's own baseline (tms-101#S2), and a sensor-fault check raises a
+channel on its rail or flatlined exactly as an instrumentation case (tms-705#S6). The month
+now scores 7 of 7 wake decisions with 25 wakes, and the bearing wakes are unchanged.
+
+Update (F-13): the life rule now reads the rate and holds 24 of 24, with ranges about four
+times wider. That check is circular, since the simulator follows S4 too. No xfails are left.
 
 ## Cost
 

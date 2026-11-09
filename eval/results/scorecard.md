@@ -1,6 +1,6 @@
 # Evaluation scorecard
 
-Generated 2026-11-08 22:33 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
+Generated 2026-11-09 11:07 UTC by `python -m eval.run_eval`. Do not edit by hand: it is overwritten on every run.
 
 Datasets: **34** labelled scenarios (8 in the live subset), **52** labelled retrieval queries (40 direct, 12 paraphrase).
 
@@ -106,7 +106,7 @@ The value side (EUR 180,000 a day of production at risk, 22,431 alerts a day) is
 
 ## 5. Simulated month (no key, no tokens, deterministic)
 
-27 wakes from one simulated month (`python -m stream.month`), each with a known failure time and a risk label taken from the corpus. This validates against the simulator's own physics, which follows the corpus rule of thumb. It is not a check against real bearing failures. Since the CNC rule reads the vibration rate (tms-101#S4), rule and simulator follow the same section, so the coverage below is circular (F-13). Full report: `eval/results/sim_month.md`.
+25 wakes from one simulated month (`python -m stream.month`), each with a known failure time and a risk label taken from the corpus. This validates against the simulator's own physics, which follows the corpus rule of thumb. It is not a check against real bearing failures. Since the CNC rule reads the vibration rate (tms-101#S4), rule and simulator follow the same section, so the coverage below is circular (F-13). Full report: `eval/results/sim_month.md`.
 
 | Metric | Result |
 |---|---|
@@ -115,9 +115,7 @@ The value side (EUR 180,000 a day of production at risk, 22,431 alerts a day) is
 | Conservative | 0 |
 | Median midpoint error | 3.0 h |
 | Median width of the predicted range | 100.0 h |
-| Risk call matches the corpus | 26 of 27 (96.3%) |
-
-Risk misses: `SM-M04-01` expected ESCALATE, got HIGH.
+| Risk call matches the corpus | 25 of 25 (100.0%) |
 
 ---
 

@@ -489,7 +489,8 @@ Warning up it reads the fastest doubling time inside any clean stretch of 4 h or
 the S4 window, and takes off the hours already spent in Critical (S4 counts from there).
 Guards, each pinned in `tests/test_rul_rate.py`:
 - A rise that tracks spindle current is a heavier cut, not a bearing (S2), so it stays with
-  the level rule. This is what keeps SM-M02-01 at LOW.
+  the level rule. On the 27-wake month this kept SM-M02-01 at LOW; since the gate's
+  load check (#40) that wake no longer happens.
 - No rate across a feed gap (tms-705#S4). Under 4 h of clean telemetry is low confidence,
   which the policy escalates. An old flat stretch cannot vouch for a short new one.
 - S4 leaves gaps (6 to 24 h, and 72 h up to 20% a week). Each takes the shorter neighbouring
@@ -502,9 +503,8 @@ published stay where they were (policy suite 208/208, routing check included). `
 stays `declared_thresholds`; the result also says `estimate_basis: vibration_rate`.
 
 **Result.** Coverage 24 of 24, optimistic 0, median midpoint error 3 h (was 30.4 h). Risk
-on the month's wakes 26 of 27 (was 24): both first wakes on a fast bearing are now HIGH.
-The one miss left is the pinned sensor (SM-M04-01), a data-quality call the gate should
-make, not the life rule.
+on the month's wakes 25 of 25: both first wakes on a fast bearing are now HIGH (they were
+the two misses left once the gate stopped waking on the heavier cut and the pinned sensor).
 
 **Why the 24 of 24 is weak evidence.**
 - **Circular.** The simulator writes each failure from the same S4 rule: the doubling time

@@ -102,12 +102,12 @@
    "kind": "heavy_cut",
    "title": "Deeper cut on a hard alloy job: vibration rises with motor current",
    "expected_wake": false,
-   "wakes": 1,
+   "wakes": 0,
    "source": "tms-101-spindle-bearing-maintenance#S2",
    "why": "Vibration tracks spindle current and temperature barely moves. That is a process effect, not a bearing finding.",
-   "first_wake_at": "2026-10-13T06:40:00+00:00",
-   "first_reason": "vibration up 2.0x over the trend window",
-   "pass": false
+   "first_wake_at": null,
+   "first_reason": null,
+   "pass": true
   },
   {
    "id": "M03-healthy-feed-loss",
@@ -128,12 +128,12 @@
    "kind": "sensor_rail",
    "title": "Vibration channel saturates at its rail value for 30 minutes",
    "expected_wake": false,
-   "wakes": 1,
+   "wakes": 0,
    "source": "tms-705-telemetry-data-quality-and-abstention#S6",
    "why": "One channel pinned at a rail value while temperature and current stay normal is a suspected sensor fault, raised against the instrumentation.",
-   "first_wake_at": "2026-10-17T03:10:00+00:00",
-   "first_reason": "trip band (25.4 mm/s, 51 C); vibration up 9.6x over the trend window",
-   "pass": false
+   "first_wake_at": null,
+   "first_reason": null,
+   "pass": true
   },
   {
    "id": "M05-fast-bearing-feed-loss",
@@ -454,9 +454,9 @@
    "pass": true
   }
  ],
- "answers_right": 5,
+ "answers_right": 7,
  "answers_total": 7,
- "wakes_total": 27,
+ "wakes_total": 25,
  "wakes_on_noise": 0,
  "quiet_days": [
   "2026-10-05",
@@ -499,11 +499,28 @@
   "M06-medium-bearing": "inside"
  },
  "first_inside": 3,
+ "instrumentation_cases": [
+  {
+   "case_id": "INS-CNC-05-LEI-1747",
+   "machine_id": "CNC-05-LEI",
+   "plant_id": "LEI",
+   "sensor": "vibration",
+   "value": 25.4,
+   "fault": "rail",
+   "timestamp": "2026-10-17T03:10:00+00:00",
+   "bearing_temp_c": 51.1,
+   "spindle_current_a": 11.99,
+   "route": "instrumentation",
+   "source": "tms-705-telemetry-data-quality-and-abstention#S6"
+  }
+ ],
  "gate": {
   "readings_seen": 17172,
-  "runs_triggered": 27,
-  "suppressed_by_cooldown": 1584,
-  "wake_rate": 0.00157
+  "runs_triggered": 25,
+  "suppressed_by_cooldown": 1555,
+  "explained_by_load": 28,
+  "instrumentation_cases": 1,
+  "wake_rate": 0.00146
  },
  "wakes": [
   {
@@ -565,30 +582,6 @@
    "vibration": 10.57,
    "bearing_temp": 78.6,
    "event": "M01-fast-bearing"
-  },
-  {
-   "tick": 1192,
-   "hours": 198.66666666666666,
-   "at": "2026-10-13T06:40:00+00:00",
-   "machine_id": "CNC-02-AMS",
-   "band": "warning",
-   "reason": "vibration up 2.0x over the trend window",
-   "kind": "reading",
-   "vibration": 5.91,
-   "bearing_temp": 57.9,
-   "event": "M02-heavy-cut"
-  },
-  {
-   "tick": 1747,
-   "hours": 291.1666666666667,
-   "at": "2026-10-17T03:10:00+00:00",
-   "machine_id": "CNC-05-LEI",
-   "band": "trip",
-   "reason": "trip band (25.4 mm/s, 51 C); vibration up 9.6x over the trend window",
-   "kind": "reading",
-   "vibration": 25.4,
-   "bearing_temp": 51.1,
-   "event": "M04-sensor-rail"
   },
   {
    "tick": 2354,
