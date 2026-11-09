@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-11-08T20:59:21.759888+00:00",
+  "generated_utc": "2026-11-08T22:30:13.968474+00:00",
   "datasets": {
     "scenarios": 34,
     "live_subset": 8,
@@ -3043,25 +3043,19 @@
   },
   "live": null,
   "sim_month": {
-    "cases": 27,
+    "cases": 25,
     "basis": "simulated month: validates against the simulator's physics, not real failures",
     "risk": {
       "metric": "risk_on_simulated_wakes",
-      "correct": 24,
-      "total": 27,
-      "accuracy": 0.8889,
+      "correct": 23,
+      "total": 25,
+      "accuracy": 0.92,
       "misses": [
         {
           "case": "SM-M01-01",
           "expected": "HIGH",
           "actual": "LOW",
           "note": "tms-101-spindle-bearing-maintenance#S4"
-        },
-        {
-          "case": "SM-M04-01",
-          "expected": "ESCALATE",
-          "actual": "HIGH",
-          "note": "tms-705-telemetry-data-quality-and-abstention#S5"
         },
         {
           "case": "SM-M05-01",

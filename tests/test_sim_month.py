@@ -152,19 +152,21 @@ def test_export_writes_a_labelled_line_per_machine_per_tick(tmp_path):
     assert any(r.get("missing") for r in rows) and all("truth" in r for r in rows)
 
 
-# --- known gaps, pinned so a fix shows up -------------------------------- #
-@pytest.mark.xfail(strict=True, reason="the gate ignores spindle current, so a heavier "
-                   "cut reads like a defect (tms-101#S2)")
 def test_a_heavier_cut_does_not_wake_the_agents(month):
     assert _event(month[3], "M02-heavy-cut")["pass"]
 
 
-@pytest.mark.xfail(strict=True, reason="the gate trusts a single channel pinned at its "
-                   "rail value (tms-705#S6)")
 def test_a_saturated_sensor_does_not_wake_the_agents(month):
     assert _event(month[3], "M04-sensor-rail")["pass"]
 
 
+def test_the_saturated_sensor_is_raised_against_the_instrumentation(month):
+    _, _, gate, _ = month
+    assert [(c["machine_id"], c["fault"]) for c in gate.instrumentation_cases] == \
+           [("CNC-05-LEI", "rail")]
+
+
+# --- known gap, pinned so a fix shows up --------------------------------- #
 @pytest.mark.xfail(strict=True, reason="the CNC rule reads vibration level, not rate, "
                    "so it promises a fast bearing more life than it has (tms-101#S4)")
 def test_the_first_estimate_on_a_fast_bearing_is_not_optimistic(month):
