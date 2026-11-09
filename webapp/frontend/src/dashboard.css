@@ -396,6 +396,16 @@
 .ch-bubble.err { border-color: color-mix(in srgb, var(--red) 45%, var(--line)); }
 .ch-tag-live { margin-left: 8px; font-family: var(--d-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
 .ch-text { margin-top: 4px; }
+/* plain summary first, audit detail on request (reportText.jsx) */
+.rt-sum { font-weight: 600; color: var(--ink); line-height: 1.55; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.rt-more { all: unset; cursor: pointer; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--accent); padding: 4px 2px; transition: opacity .15s; }
+.rt-more::after { content: "›"; transition: transform .2s cubic-bezier(.23,1,.32,1); }
+.rt-more[aria-expanded="true"]::after { transform: rotate(90deg); }
+.rt-more:hover { opacity: .8; }
+.rt-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.rt-detail { margin-top: 8px; white-space: pre-wrap; color: var(--ink-2); font-size: 13px; line-height: 1.55; }
+.ch-dl { margin: 12px 0 0; }
+@media (prefers-reduced-motion: reduce) { .rt-more::after { transition: none; } }
 .ch-think { margin-top: 4px; display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-style: italic; font-size: 13px; }
 .ch-dots { display: inline-flex; gap: 3px; }
 .ch-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.4; animation: ch-dot 1.1s var(--ease-out) infinite; }
