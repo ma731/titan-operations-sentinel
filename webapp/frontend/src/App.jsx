@@ -250,6 +250,12 @@ export default function App() {
       plan,
       reports: timeline.filter((t) => t.kind === 'block').map((t) => ({
         agent: t.agent, report: t.report, status: t.status, tools: (t.tools || []).map((x) => x.tool),
+        // inputs and results for the downloadable full report; results capped so 25 saved
+        // runs still fit in localStorage
+        calls: (t.tools || []).map((x) => ({
+          tool: x.tool, input: x.input ?? null,
+          result: x.result == null ? null : JSON.stringify(x.result).slice(0, 1500),
+        })),
       })),
       followups: timeline.filter((t) => t.kind === 'note').map((t) => t.text),
       decisions: timeline.filter((t) => t.kind === 'human').map((t) => t.text),

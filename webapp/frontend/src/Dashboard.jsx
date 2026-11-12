@@ -8,6 +8,7 @@ import CommandPalette from './CommandPalette.jsx'
 import Guide from './Guide.jsx'
 import { REPLIES, PAGE_HELP } from './titanCommands.js'
 import { FLEET, machineReport } from './fleet.js'
+import ReportText, { splitReport } from './reportText.jsx'
 import { TEAM, GUEST } from './team.js'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
@@ -122,7 +123,8 @@ export default function Dashboard(props) {
           {nav === 'scenarios' ? (
             <ScenariosView scenario={scenario} setScenario={setScenario} onRun={onRun} running={running} />
           ) : nav === 'chat' ? (
-            <ChatView timeline={timeline} running={running} onCommand={onCommand} runStatus={runStatus} doneCount={doneCount} mode={mode} />
+            <ChatView timeline={timeline} running={running} onCommand={onCommand} runStatus={runStatus} doneCount={doneCount} mode={mode}
+              lastRun={completed ? history[0] : null} alert={ALERT} />
           ) : nav === 'cost' ? (
             <CostView mode={mode} />
           ) : nav === 'audit' ? (
@@ -577,7 +579,7 @@ function ActivityRow({ b }) {
       <span className="ava" style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.name[0]}</span>
       <div className="bd">
         <div className="nm">{a.name}{b.how && <span className={`route-tag ${b.how === 'LLM-picked' ? 'llm' : ''}`}>{b.how === 'LLM-picked' ? 'LLM-routed' : 'auto-routed'}</span>}{b.status === 'done' && <span className="act-dot" style={{ background: '#16b364' }} />}</div>
-        <div className="msg">{b.report || 'Analyzing…'}</div>
+        {b.report ? <ReportText className="msg" text={b.report} /> : <div className="msg">Analyzing…</div>}
         {b.tools?.length > 0 && <div className="tools">{b.tools.map((t, i) => <span className="tchip" key={i}>{t.tool}</span>)}</div>}
       </div>
     </div>
@@ -614,7 +616,7 @@ function AuditView({ timeline }) {
           : timeline.map((t, i) => (
             <div className="pl" key={i}>
               <span className="tier MONITOR">{AUDIT_KIND[t.kind] || t.kind}</span>
-              <span className="tx">{t.kind === 'block' ? `${t.agent}: ${(t.report || '…').slice(0, 120)}` : t.text}</span>
+              <span className="tx">{t.kind === 'block' ? `${t.agent}: ${(splitReport(t.report).summary || t.report || '…').slice(0, 160)}` : t.text}</span>
             </div>
           ))}
       </div>
@@ -745,10 +747,20 @@ function buildReportMd(r, ALERT) {
   md += `**Mode:** ${r.mode}  \n**Failure risk:** ${r.risk}  \n**Outcome:** ${r.status}  \n**Challenges covered:** ${r.doneCount}/5\n\n`
   if (r.command) md += `**Operator prompt:** “${r.command}”\n\n`
   md += `## Alert\n${ALERT.machine_id} · ${ALERT.plant_name}, ${ALERT.sensor} ${ALERT.value}${ALERT.unit} (threshold ${ALERT.threshold}, ${ALERT.trend})\n\n`
+  const summaries = r.reports.map((a) => [a, splitReport(a.report).summary]).filter(([, s]) => s)
+  if (summaries.length) {
+    md += `## In short\n` + summaries.map(([a, s]) => `- **${AGENT_MAP[a.agent]?.name || a.agent}:** ${s}`).join('\n') + `\n\n`
+  }
   md += `## Agent reports\n`
   r.reports.forEach((a) => {
     md += `### ${AGENT_MAP[a.agent]?.name || a.agent}\n${a.report || '(no report)'}\n`
-    if (a.tools?.length) md += `\n_Tools used: ${a.tools.join(', ')}_\n`
+    if (a.calls?.length) {
+      md += `\n#### Tool calls\n`
+      a.calls.forEach((c, i) => {
+        md += `${i + 1}. \`${c.tool}\`` + (c.input ? ` with \`${JSON.stringify(c.input)}\`` : '') + `\n`
+        if (c.result) md += `\n   \`\`\`json\n   ${c.result}${c.result.length >= 1500 ? ' …(trimmed)' : ''}\n   \`\`\`\n`
+      })
+    } else if (a.tools?.length) md += `\n_Tools used: ${a.tools.join(', ')}_\n`
     md += `\n`
   })
   if (r.followups?.length) md += `## Agent-to-agent follow-ups\n` + r.followups.map((f) => `- ${f}`).join('\n') + `\n\n`
@@ -826,7 +838,7 @@ function ReportView({ history, onClearHistory, alert: ALERT }) {
                     <span className="ava" style={{ background: TINT[AGENT_MAP[a.agent]?.tint] || '#3b82f6' }}>{(AGENT_MAP[a.agent]?.name || a.agent)[0]}</span>
                     <div className="bd">
                       <div className="nm">{AGENT_MAP[a.agent]?.name || a.agent}</div>
-                      <div className="msg">{a.report || '-'}</div>
+                      {a.report ? <ReportText className="msg" text={a.report} /> : <div className="msg">-</div>}
                       {a.tools?.length > 0 && <div className="tools">{a.tools.map((t, j) => <span className="tchip" key={j}>{t}</span>)}</div>}
                     </div>
                   </div>
@@ -861,7 +873,7 @@ const CRISES = [
   'Cross-plant supply disruption today',
 ]
 
-function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode }) {
+function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode, lastRun, alert: ALERT }) {
   const [val, setVal] = useState('')
   const endRef = useRef(null)
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [timeline, running])
@@ -915,7 +927,7 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
                   <div className="ch-tools">{t.tools.map((x, j) => <span className="tchip" key={j}><span className="tchip-ic">⚙</span>{x.tool}</span>)}</div>
                 )}
                 {t.report
-                  ? <div className="ch-text">{t.report}</div>
+                  ? <ReportText className="ch-text" text={t.report} />
                   : thinking && <div className="ch-think">{t.tools?.length ? 'reasoning over tool results' : 'choosing tools'} <span className="ch-dots"><i /><i /><i /></span></div>}
               </div>
             </div>
@@ -923,6 +935,14 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
         })}
         <div ref={endRef} />
       </div>
+
+      {!running && lastRun && timeline.length > 0 && (
+        <div className="ch-dl">
+          <button className="info-btn" style={{ width: 'auto', padding: '8px 14px', marginTop: 0 }} onClick={() => downloadReport(lastRun, ALERT)}>
+            ↓ Download full report
+          </button>
+        </div>
+      )}
 
       {timeline.length === 0 && (
         <div className="ch-chips">
@@ -1047,7 +1067,7 @@ function AgentCard({ agent, block, status }) {
           <div className="agent-card-h">The rule it cannot break</div>
           <p className="agent-card-limit">{agent.limit}</p>
           <div className="agent-card-h">In this run</div>
-          <p className="agent-card-run">{block?.report ? block.report : status === 'active' ? 'Working on it now.' : 'Not run yet. Press Run on the Overview, or tell Titan "run the cascade".'}</p>
+          <p className="agent-card-run">{block?.report ? (splitReport(block.report).summary || block.report) : status === 'active' ? 'Working on it now.' : 'Not run yet. Press Run on the Overview, or tell Titan "run the cascade".'}</p>
         </div>
       </div>
     </div>
