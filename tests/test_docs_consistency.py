@@ -20,6 +20,12 @@ REPO = Path(__file__).resolve().parents[1]
 TOOL_CATALOG = REPO / "docs" / "tool_catalog.md"
 README = REPO / "README.md"
 CLAUDE_MD = REPO / "CLAUDE.md"
+# The README is the plain-language front page; the figures live in the technical reference.
+TECHNICAL = REPO / "docs" / "TECHNICAL.md"
+
+
+def _readme_text() -> str:
+    return "\n".join(p.read_text(encoding="utf-8") for p in (README, TECHNICAL))
 
 
 def _bound_tools() -> set[str]:
@@ -75,7 +81,7 @@ def test_the_catalog_points_at_the_real_wrapper_module():
 
 # --- headline numbers in the README must be the real ones ------------------ #
 def test_readme_tool_count_is_correct():
-    text = README.read_text(encoding="utf-8")
+    text = _readme_text()
     stated = re.search(r"(\d+) domain tools", text)
     assert stated, "the README repository layout no longer states a tool count"
     assert int(stated.group(1)) == len(_bound_tools())
@@ -85,7 +91,7 @@ def test_readme_corpus_figures_match_the_corpus():
     from rag.index import corpus_stats
 
     stats = corpus_stats()
-    text = README.read_text(encoding="utf-8")
+    text = _readme_text()
     assert f"{stats['documents']} documents" in text, (
         f"the README corpus figure is stale: the corpus holds {stats['documents']} documents"
     )
@@ -98,7 +104,7 @@ def test_readme_scenario_and_query_counts_match_the_datasets():
     from eval.scenarios import dataset_meta
 
     meta = dataset_meta()
-    text = README.read_text(encoding="utf-8")
+    text = _readme_text()
     assert f"**{meta['scenarios']}** labelled scenarios" in text, (
         f"the README says a different scenario count; the dataset holds {meta['scenarios']}"
     )
@@ -107,7 +113,7 @@ def test_readme_scenario_and_query_counts_match_the_datasets():
     )
 
 
-@pytest.mark.parametrize("doc", [README, CLAUDE_MD])
+@pytest.mark.parametrize("doc", [README, TECHNICAL, CLAUDE_MD])
 def test_docs_do_not_still_advertise_the_old_test_count(doc):
     """26 was the count before the offline suite grew. It appeared in four places and is
     the kind of number that silently becomes a lie."""
@@ -123,7 +129,7 @@ def test_the_documented_spend_ceiling_is_the_enforced_one():
     assert f"€{policy.COST_CEILING_EUR}" in CLAUDE_MD.read_text(encoding="utf-8"), (
         "CLAUDE.md section 5 states a different ceiling from policy.COST_CEILING_EUR"
     )
-    assert f"{policy.COST_CEILING_EUR} EUR" in README.read_text(encoding="utf-8")
+    assert f"{policy.COST_CEILING_EUR} EUR" in _readme_text()
 
 
 # Internal agent id -> the words the docs are allowed to call it. Checking the raw id
@@ -144,7 +150,7 @@ def test_the_agent_roster_is_the_same_everywhere():
     assert set(AGENT_NAMES) == set(AGENT_PROSE), (
         "the agent roster changed; update AGENT_PROSE in this test and the docs with it"
     )
-    readme = README.read_text(encoding="utf-8").lower()
+    readme = _readme_text().lower()
     catalog = _catalog_text().lower()
     for agent, spellings in AGENT_PROSE.items():
         assert any(s in readme for s in spellings), f"{agent} is missing from the README"
