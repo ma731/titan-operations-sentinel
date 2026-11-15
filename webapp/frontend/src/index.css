@@ -2,7 +2,7 @@
    Titan Operations Sentinel — Console design system  (Variant 3 · "TexorCloud")
    Dark near-black + atmospheric EMERALD nebula. Linear/Vercel-grade restraint.
    Emerald = brand/active/positive. Amber + Red = SEMANTIC risk only.
-   Fonts: Fira Sans (UI) · JetBrains Mono (telemetry) · Playfair Display (hero).
+   Fonts: Schibsted Grotesk (everything) · JetBrains Mono (codes and data).
    ========================================================================== */
 
 :root {
@@ -56,9 +56,9 @@
   --r-card: 16px;
   --r-pill: 999px;
 
-  --font-ui:      'Fira Sans', system-ui, sans-serif;
+  --font-ui:      'Schibsted Grotesk', system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, monospace;
-  --font-display: 'Playfair Display', Georgia, serif;
+  --font-display: 'Schibsted Grotesk', system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -326,10 +326,10 @@ body {
 @keyframes slide { to { background-position: 40px 0; } }
 .modal .body { padding: 28px 30px 30px; }
 .modal .kicker { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber-2); margin-bottom: 14px; }
-.modal h2 { font-family: var(--font-display); font-weight: 500; font-size: 25px; line-height: 1.25; margin-bottom: 13px; }
+.modal h2 { font-family: var(--font-display); font-weight: 600; font-size: 24px; line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 13px; text-wrap: balance; }
 .modal p { color: var(--text-dim); font-size: 13.5px; line-height: 1.6; margin-bottom: 6px; }
 .modal .figure { font-weight: 800; font-size: 38px; color: var(--amber-2); margin: 18px 0 5px; text-shadow: var(--glow-amber); font-variant-numeric: tabular-nums; }
-.modal .ceiling { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-mute); margin-bottom: 26px; }
+.modal .ceiling { font-size: 12.5px; line-height: 1.5; color: var(--text-mute); margin-bottom: 26px; }
 .modal .actions { display: flex; gap: 12px; }
 .btn { flex: 1; padding: 14px; border-radius: var(--r-pill); cursor: pointer; border: 1px solid var(--line-2);
   font-family: var(--font-ui); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 13px;

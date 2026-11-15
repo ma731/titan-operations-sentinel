@@ -4,12 +4,12 @@ import IELogo from './IELogo.jsx'
 import { TEAM, GUEST } from './team.js'
 
 const REEL = [
-  { name: 'Orchestrator', role: 'routes the team', color: '#ffd479' },
-  { name: 'Reliability', role: 'predicts the failure', color: '#4d9bff' },
-  { name: 'Supply Chain', role: 'sources parts by ROI', color: '#14e8a0' },
-  { name: 'Production', role: 'reroutes the line', color: '#a78bfa' },
-  { name: 'Quality', role: 'guards traceability', color: '#ffb84d' },
-  { name: 'Compliance', role: 'gates every action', color: '#ff6b81' },
+  { name: 'Coordinator', role: 'decides who goes next', color: '#ffd479' },
+  { name: 'Reliability', role: 'what is failing, and when', color: '#4d9bff' },
+  { name: 'Supply Chain', role: 'finds the parts and the price', color: '#14e8a0' },
+  { name: 'Production', role: 'keeps the line running', color: '#a78bfa' },
+  { name: 'Quality', role: 'checks for defects', color: '#ffb84d' },
+  { name: 'Safety', role: 'can stop the whole plan', color: '#ff6b81' },
 ]
 
 export default function SignIn({ onEnter }) {
@@ -31,7 +31,7 @@ export default function SignIn({ onEnter }) {
         <span className="ie-word">University</span>
       </div>
       <div className="si-corner tr" aria-label="Agentic AI for IT">
-        <span className="si-script">Agentic<span className="caps">AI</span><span className="lc">for</span><span className="caps">IT</span></span>
+        <span className="si-script">Agentic AI for IT</span>
       </div>
       {/* wavy bottom, color shifts with the active agent */}
       <svg className="si-waves" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
@@ -41,7 +41,8 @@ export default function SignIn({ onEnter }) {
 
       <div className="si-card">
         <div className="si-brand"><Logo size={40} accent={agent.color} /> <span>Operations Sentinel</span></div>
-        <div className="si-tagline">One sensor alert. Five domains.<br /><em>One costed plan.</em></div>
+        <div className="si-tagline">One sensor alert.<br />Five specialists.<br /><em>One costed plan.</em></div>
+        <p className="si-what">An AI team for a factory. When a machine starts to fail, it works out what is wrong, what the fix costs and whether it is safe, then asks a manager to approve the spend.</p>
 
         {/* agent showreel, cycles agent → agent like a video */}
         <div className="si-reel">
@@ -58,18 +59,16 @@ export default function SignIn({ onEnter }) {
           </div>
         </div>
 
-        {/* team profile picker, each presenter signs in as themselves */}
-        <div className="si-team-label">Sign in as</div>
+        {/* visitors go straight in; presenters can still sign in as themselves */}
+        <button className="si-demo" onClick={() => onEnter(GUEST)}>See the demo <span aria-hidden="true">→</span></button>
+        <p className="si-demo-note">A recorded run plays in your browser. No account, nothing to install.</p>
         <div className="si-team">
+          <span className="si-team-label">Presenting? Sign in as</span>
           {TEAM.map((m) => (
-            <button key={m.name} className="si-member" onClick={() => onEnter(m)} style={{ '--mc': m.color }}>
-              <span className="si-ava">{m.initials}</span>
-              <span className="si-mname">{m.name}</span>
-              <span className="si-arrow">→</span>
-            </button>
+            <button key={m.name} className="si-ava" onClick={() => onEnter(m)} style={{ '--mc': m.color }}
+              title={m.name} aria-label={`Sign in as ${m.name}`}>{m.initials}</button>
           ))}
         </div>
-        <button className="si-skip" onClick={() => onEnter(GUEST)}>Continue as guest</button>
       </div>
     </div>
   )

@@ -1,11 +1,11 @@
 // The Leipzig Plant 7 fleet shown in the console. Only CNC-07-LEI has an alert; the
 // recorded runs (and the demo data behind live runs) are about that machine.
 export const FLEET = [
-  { id: 'CNC-07-LEI', name: 'CNC Machining Center #7', status: 'critical' },
-  { id: 'CNC-08-LEI', name: 'CNC Machining Center #8', status: 'idle', vib: '2.1', temp: '+1', util: '0% (idle)', note: 'Available as reroute target for CNC-07.' },
-  { id: 'CNC-05-LEI', name: 'CNC Machining Center #5', status: 'ok', vib: '3.4', temp: '+3', util: '82%', note: 'Operating within all OEM limits.' },
-  { id: 'CNC-03-LEI', name: 'CNC Machining Center #3', status: 'ok', vib: '2.9', temp: '+2', util: '76%', note: 'Bearing replaced Sept 2025 (INC-0312).' },
-  { id: 'ROB-02-LEI', name: 'Robot Cell #2', status: 'ok', vib: '1.8', temp: '+1', util: '68%', note: 'Pick-and-place cell, nominal.' },
+  { id: 'CNC-07-LEI', label: 'Machine 7', name: 'CNC Machining Center #7', status: 'critical' },
+  { id: 'CNC-08-LEI', label: 'Machine 8', name: 'CNC Machining Center #8', status: 'idle', vib: '2.1', temp: '+1', util: '0% (idle)', note: 'Available as reroute target for CNC-07.' },
+  { id: 'CNC-05-LEI', label: 'Machine 5', name: 'CNC Machining Center #5', status: 'ok', vib: '3.4', temp: '+3', util: '82%', note: 'Operating within all OEM limits.' },
+  { id: 'CNC-03-LEI', label: 'Machine 3', name: 'CNC Machining Center #3', status: 'ok', vib: '2.9', temp: '+2', util: '76%', note: 'Bearing replaced Sept 2025 (INC-0312).' },
+  { id: 'ROB-02-LEI', label: 'Robot cell 2', name: 'Robot Cell #2', status: 'ok', vib: '1.8', temp: '+1', util: '68%', note: 'Pick-and-place cell, nominal.' },
 ]
 
 // Plain answer to "check CNC-08": what the triage gate would see, said honestly.

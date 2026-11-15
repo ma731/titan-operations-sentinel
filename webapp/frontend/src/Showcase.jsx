@@ -12,11 +12,11 @@ import Logo from './Logo.jsx'
 const shot = (name) => `${import.meta.env.BASE_URL}shots/${name}.png`
 
 const HERO_STATE = { reliability: 'done', supply_chain: 'done', production: 'active', quality: 'idle', compliance_safety: 'idle' }
-const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€180,000 / day AT RISK', '116h DOWNTIME AVOIDED FOR €3,200', '6 AI AGENTS', '5 DOMAINS', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
+const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€180,000 / day AT RISK', '116h DOWNTIME AVOIDED FOR €3,200', '6 AI AGENTS', '5 SPECIALISTS', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
 
 const STATS = [
   { n: '6', l: 'AI agents' },
-  { n: '5', l: 'Domains checked' },
+  { n: '5', l: 'Specialist checks' },
   { n: <>116<span className="g">h</span></>, l: 'Downtime avoided for €3,200' },
   { n: <>€0<span className="g"></span></>, l: 'Per replay run' },
 ]
@@ -25,13 +25,13 @@ const PROJECTS = [
   {
     id: 'console', cat: 'Demo', tag: 'Demo', title: 'Operations Console', year: '2026',
     bg: 'var(--c-dark)', dark: true, feature: true, span: 2, img: shot('console'),
-    blurb: 'Watch six agents perceive, reason across five domains, and converge on one costed plan. Replay a recorded run, or go live with your own key.',
+    blurb: 'Watch six agents take one alert, check maintenance, parts, production, quality and safety, and agree on one costed plan. Replay a recorded run, or go live with your own key.',
     launch: true,
   },
   {
-    id: 'agents', cat: 'Architecture', tag: 'Architecture', title: 'Six-Agent Orchestrator', year: '2026',
+    id: 'agents', cat: 'Architecture', tag: 'Architecture', title: 'A Team of Six Agents', year: '2026',
     bg: 'var(--c-lav)', img: shot('agents'),
-    blurb: 'An LLM supervisor routes ReAct specialists that pick their own tools, and lets them converse through a shared transcript.',
+    blurb: 'A coordinator agent routes ReAct specialists that pick their own tools, and lets them converse through a shared transcript.',
   },
   {
     id: 'approval', cat: 'Safety', tag: 'Human-in-the-loop', title: 'The €500 Approval Gate', year: '2026',
@@ -44,9 +44,9 @@ const PROJECTS = [
     blurb: 'Six agents converse through one shared transcript as the bearing-failure crisis unfolds in real time.',
   },
   {
-    id: 'compliance', cat: 'Safety', tag: 'Compliance', title: 'Safety Can HALT', year: '2026',
+    id: 'compliance', cat: 'Safety', tag: 'Safety', title: 'Safety Can HALT', year: '2026',
     bg: 'var(--c-blush)', img: shot('compliance'),
-    blurb: 'Every action is checked against OSHA / OEM limits and written to a full audit trail, Compliance can stop the plan outright.',
+    blurb: 'Every action is checked against OSHA / OEM limits and written to a full audit trail, the Safety agent can stop the plan outright.',
   },
   {
     id: 'feasible', cat: 'Engineering', tag: 'Feasibility', title: 'Zero-Cost Demo', year: '2026',
@@ -56,20 +56,20 @@ const PROJECTS = [
 ]
 
 const DETAILS = {
-  console: ['Six agents reason over one sensor alert', 'Supervisor routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
-  agents: ['An LLM supervisor routes between 6 agents', 'Each specialist is a ReAct agent that picks its own tools', 'They converse through one shared transcript', 'FOLLOWUP lets an agent ask another directly'],
-  approval: ['€500 autonomy ceiling on spend', 'Anything above pauses the whole plan', 'interrupt() gate → human approve / reject', 'Compliance can HALT independently of cost'],
+  console: ['Six agents reason over one sensor alert', 'A coordinator routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
+  agents: ['A coordinator agent routes between the specialists', 'Each specialist is a ReAct agent that picks its own tools', 'They converse through one shared transcript', 'FOLLOWUP lets an agent ask another directly'],
+  approval: ['€500 autonomy ceiling on spend', 'Anything above pauses the whole plan', 'interrupt() gate → human approve / reject', 'Safety can HALT independently of cost'],
   cascade: ['CNC-07-LEI bearing failure predicted 52-76h out', '€180,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each ends differently: human gate / under the ceiling / human review'],
-  compliance: ['Every proposed action gated vs OSHA / OEM limits', 'Compliance can HALT the entire plan', 'Full audit trail assembled per run', 'Safety is a hard override, not a suggestion'],
+  compliance: ['Every proposed action gated vs OSHA / OEM limits', 'Safety can HALT the entire plan', 'Full audit trail assembled per run', 'Safety is a hard override, not a suggestion'],
   feasible: ['Runs on free Gemini / OpenRouter tiers', '~62% transcript token trim', 'Recorded replay = €0, can-not-fail demo', 'One-line provider swap when limits bite'],
 }
 
 const STEPS = [
   { n: '01', t: 'Perceive', d: 'A plant raises over 22,000 alerts a day. A code-only gate decides which ones wake the agents.' },
-  { n: '02', t: 'Route', d: 'A supervisor decides which specialist acts next, guided autonomy, not a fixed script.' },
+  { n: '02', t: 'Route', d: 'A coordinator decides which specialist acts next, guided autonomy, not a fixed script.' },
   { n: '03', t: 'Reason', d: 'Each agent picks its own tools, reasons, and reports into a shared transcript.' },
-  { n: '04', t: 'Converge', d: 'Findings combine into one costed, safety-gated plan across five domains.' },
-  { n: '05', t: 'Decide', d: 'Compliance can HALT; spend over €500 pauses for a human. Then it acts.' },
+  { n: '04', t: 'Converge', d: 'Findings combine into one costed, safety-gated plan.' },
+  { n: '05', t: 'Decide', d: 'Safety can HALT; spend over €500 pauses for a human. Then it acts.' },
 ]
 
 // The 8 design-thinking pillars from the brief, answered for Titan Operations Sentinel.
@@ -77,9 +77,9 @@ const PILLARS = [
   { n: '01', t: 'Agent goals', d: 'Catch a failing machine early and hand the plant manager one costed, safety-gated plan. Value: at least 116h of unplanned downtime avoided, up to €870k at production value, for a €3,200 expedite.' },
   { n: '02', t: 'Input & context', d: 'Trigger: a sensor alert. Inputs: telemetry, inventory, suppliers, production, quality, compliance. Memory: shared transcript + run checkpoints.' },
   { n: '03', t: 'Tools & actions', d: '18 tools across the agents (read / write / execute). Spend over €500 or any safety action needs human approval.' },
-  { n: '04', t: 'Lifecycle', d: 'Perceive the alert, reason across five domains, act on a plan, and learn: case memory, human feedback, self-critique, and outcome validation.' },
+  { n: '04', t: 'Lifecycle', d: 'Perceive the alert, reason across the five specialist areas, act on a plan, and learn: case memory, human feedback, self-critique, and outcome validation.' },
   { n: '05', t: 'Architecture', d: 'Multi-agent: an LLM orchestrator routes five ReAct specialists that converse through one shared transcript.' },
-  { n: '06', t: 'Risks & guardrails', d: 'Hallucination guard (it refuses thin data), Compliance HALT, the €500 ceiling, and an interrupt() human gate.' },
+  { n: '06', t: 'Risks & guardrails', d: 'Hallucination guard (it refuses thin data), the Safety HALT, the €500 ceiling, and an interrupt() human gate.' },
   { n: '07', t: 'Example run', d: 'The Friday Cascade: bearing failure 52-76h out, parts gap, value math, then a human approves the expedite. Three scenarios.' },
   { n: '08', t: 'Tech stack', d: 'Python + LangGraph for the graph; FastAPI + React/Vite for this console. Provider-agnostic LLM (Gemini, Groq, Azure, Ollama). Docker for local runs; this demo is a static replay on GitHub Pages.' },
 ]
@@ -218,7 +218,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         <div className="sc-why">
           <div className="sc-why-col"><div className="sc-why-h">A dashboard</div><p>Shows you six panels and waits. The human does the cross-domain reasoning under time pressure.</p></div>
           <div className="sc-why-col"><div className="sc-why-h">An automation</div><p>Fires a fixed rule. It can't weigh ROI vs risk, adapt a reroute, or know when to ask a human.</p></div>
-          <div className="sc-why-col on"><div className="sc-why-h">Our agent</div><p>Reasons across five domains, decides, and hands you <b>one costed, safety-gated plan</b>, and escalates when the data is thin.</p></div>
+          <div className="sc-why-col on"><div className="sc-why-h">Our agent</div><p>Checks all five areas, decides, and hands you <b>one costed, safety-gated plan</b>, and escalates when the data is thin.</p></div>
         </div>
 
         <footer className="sc-footer" id="contact">
@@ -285,7 +285,7 @@ function AnimeGrid() {
 
 // headline whose words "materialize" (de-blur + rise) in sequence, fits the
 // "agents generate the plan" story (Aceternity Text-Generate technique).
-const HERO_LINES = [['One', 'sensor', 'alert.'], ['Five', 'domains.'], ['One', 'costed', 'plan.']]
+const HERO_LINES = [['One', 'sensor', 'alert.'], ['Five', 'specialists.'], ['One', 'costed', 'plan.']]
 function RevealHeadline() {
   let n = 0
   return (

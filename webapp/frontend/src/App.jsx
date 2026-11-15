@@ -12,7 +12,7 @@ const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
 const TICKER = [
   'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h',
-  'DOWNTIME €180,000 / day', '116h DOWNTIME AVOIDED FOR €3,200', '5 DOMAINS',
+  'DOWNTIME €180,000 / day', '116h DOWNTIME AVOIDED FOR €3,200', '5 SPECIALISTS',
   'HUMAN GATE > €500', 'RUNS ON FREE-TIER GEMINI',
 ]
 
@@ -386,7 +386,7 @@ function IdleHero() {
   return (
     <div className="console-hero">
       <div className="eyebrow">◈ Standing by · Titan Leipzig Plant 7</div>
-      <h1>One alert. Five domains. <em>One costed plan.</em></h1>
+      <h1>One alert. Five specialists. <em>One costed plan.</em></h1>
       <p className="lead">When a machine signals failure, six AI agents perceive, reason across every domain, and converge on a safety-gated action plan, with a human in the loop on every euro.</p>
       <div className="alert-card">
         <span className="pulse" />
@@ -405,14 +405,14 @@ function ApprovalModal({ req, onApprove, onReject }) {
       <div className="modal">
         <div className="bar" />
         <div className="body">
-          <div className="kicker">◈ Human-in-the-loop · approval required</div>
+          <div className="kicker">{req.when ? `${req.when} · ` : ''}a person decides</div>
           <h2>{req.question}</h2>
-          <p>This spend is over the agents' €500 limit. They cannot approve it themselves: a person must decide.</p>
+          <p>This is over the agents' €500 limit, so they cannot approve it themselves. {req.approver ? <><b>{req.approver}</b>, the {req.role}, decides.</> : 'The plant manager decides.'}</p>
           <div className="figure">€{(req.amount_eur ?? 0).toLocaleString()}</div>
-          <div className="ceiling">€{req.ceiling_eur} agent spending limit · routed to Plant Manager</div>
+          <div className="ceiling">Agents can spend up to €{req.ceiling_eur} on their own. Without the repair, Machine 7 stops {ALERT.fails_by}.</div>
           <div className="actions">
-            <button className="btn approve" onClick={onApprove}>✓ Approve</button>
-            <button className="btn reject" onClick={onReject}>✕ Reject</button>
+            <button className="btn approve" onClick={onApprove}>Approve €{(req.amount_eur ?? 0).toLocaleString()}</button>
+            <button className="btn reject" onClick={onReject}>Reject</button>
           </div>
         </div>
       </div>

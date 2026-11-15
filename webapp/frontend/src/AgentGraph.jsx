@@ -24,7 +24,7 @@ export default function AgentGraph({ agentStatus = {}, running, risk }) {
 
       <div className="ag-cap">
         <span className="ag-cap-t">Agent orchestration</span>
-        <span className="ag-cap-s">{running ? (anyActive ? 'supervisor routing…' : 'engaging agents…') : 'standing by'}</span>
+        <span className="ag-cap-s">{running ? (anyActive ? 'coordinator handing over…' : 'engaging agents…') : 'standing by'}</span>
       </div>
 
       <svg className="ag-svg" viewBox="0 0 760 444" preserveAspectRatio="xMidYMid meet">
@@ -73,8 +73,8 @@ export default function AgentGraph({ agentStatus = {}, running, risk }) {
             strokeDasharray="5 9" className="ag-orch-ring" />
           <circle cx={CX} cy={CY} r="34" fill="url(#ag-orch)" className={running ? 'ag-orch-core live' : 'ag-orch-core'} />
         </g>
-        <text x={CX} y={CY - 1} textAnchor="middle" className="ag-orch-label">SUP</text>
-        <text x={CX} y={CY + 11} textAnchor="middle" className="ag-orch-sub">ORCHESTRATOR</text>
+        <text x={CX} y={CY - 1} textAnchor="middle" className="ag-orch-label">CO</text>
+        <text x={CX} y={CY + 11} textAnchor="middle" className="ag-orch-sub">COORDINATOR</text>
 
         {/* agent nodes */}
         {NODES.map((n) => {
@@ -92,7 +92,7 @@ export default function AgentGraph({ agentStatus = {}, running, risk }) {
                 strokeWidth="1.5"
                 filter={st === 'active' || st === 'done' ? 'url(#ag-glow)' : undefined}
                 className={st === 'active' ? 'ag-core-live' : ''} />
-              <text x={n.x} y={n.y + 4} textAnchor="middle" className="ag-node-ic">{n.name[0]}</text>
+              <text x={n.x} y={n.y + 4} textAnchor="middle" className="ag-node-ic">{n.short}</text>
               <text x={n.x} y={n.y + 40} textAnchor="middle" className="ag-node-label">{n.name}</text>
               {st !== 'idle' && (
                 <text x={n.x} y={n.y + 53} textAnchor="middle" className="ag-node-state" fill={st === 'done' ? '#14e8a0' : n.col}>
