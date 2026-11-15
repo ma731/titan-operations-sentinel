@@ -5,9 +5,9 @@ import { REPLIES } from './titanCommands.js'
 import { AGENTS } from './agentsMeta.js'
 import './story.css'
 
-// The home page: the Friday Cascade told in six scenes over a 3D factory floor.
+// The home page: the Friday Cascade told in seven scenes over a 3D factory floor.
 // Scroll moves the story; the bar at the top works like stories (tap a segment to jump).
-const SCENES = ['Friday afternoon', 'The alert', 'The specialists', 'The decision', 'The repair', 'Monday morning']
+const SCENES = ['Friday afternoon', 'The alert', 'Inside Machine 7', 'The specialists', 'The decision', 'The repair', 'Monday morning']
 
 const SAID = {
   reliability: 'The bearing fails between Sunday evening and Monday evening.',
@@ -50,8 +50,8 @@ export default function Story({ onLaunch }) {
     sceneApi.current?.setProgress(s)
     fillRefs.current.forEach((el, i) => { if (el) el.style.transform = `scaleX(${Math.min(1, Math.max(0, s - i + 0.5))})` })
     setScene(Math.round(s))
-    setHeard(Math.min(5, Math.max(0, Math.floor((s - 1.45) / 0.2) + 1)))
-    if (s > 3.4) setApproved(true)
+    setHeard(Math.min(5, Math.max(0, Math.floor((s - 2.45) / 0.2) + 1)))
+    if (s > 4.4) setApproved(true)
   }, [])
 
   useEffect(() => {
@@ -150,7 +150,15 @@ export default function Story({ onLaunch }) {
           </div>
         </section>
 
-        <section ref={ref(2)} className={cls(2, 'tall')}>
+        <section ref={ref(2)} className={cls(2, 'low')}>
+          <div className="st-panel">
+            <p className="st-when">Inside Machine 7</p>
+            <h2>This is the part that is failing.</h2>
+            <p className="st-lead">The cutting tool spins thousands of times a minute on rings of steel balls called bearings. One ring is worn. That is what the sensor felt, and when it goes, the machine stops.</p>
+          </div>
+        </section>
+
+        <section ref={ref(3)} className={cls(3, 'tall')}>
           <div className="st-panel sticky">
             <p className="st-when">Friday, 16:32 to 16:33</p>
             <h2>Five specialists, about a minute.</h2>
@@ -167,19 +175,19 @@ export default function Story({ onLaunch }) {
           </div>
         </section>
 
-        <section ref={ref(3)} className={cls(3, 'centre')}>
+        <section ref={ref(4)} className={cls(4, 'centre')}>
           <div className={`st-slip ${approved ? 'done' : ''}`}>
             <div className="st-slip-bar" />
             <p className="st-when">Friday, 16:33 · a person decides</p>
             <h2>€3,200 is over the limit.</h2>
             <p>Agents can spend up to €500 on their own. Anything more stops and waits for <b>Anna Weber</b>, the plant manager. That rule is written in code, so no prompt can talk its way past it.</p>
-            <button className="st-approve" onClick={() => { setApproved(true); go(4) }} disabled={approved}>
+            <button className="st-approve" onClick={() => { setApproved(true); go(5) }} disabled={approved}>
               {approved ? 'Approved by Anna Weber, 16:33' : 'Approve €3,200'}
             </button>
           </div>
         </section>
 
-        <section ref={ref(4)} className={cls(4)}>
+        <section ref={ref(5)} className={cls(5)}>
           <div className="st-panel">
             <p className="st-when">Saturday, 06:00</p>
             <h2>The bearing arrives. The line keeps running.</h2>
@@ -187,7 +195,7 @@ export default function Story({ onLaunch }) {
           </div>
         </section>
 
-        <section ref={ref(5)} className={cls(5, 'centre last')}>
+        <section ref={ref(6)} className={cls(6, 'centre last')}>
           <div className="st-panel wide">
             <p className="st-when">Monday, 08:00</p>
             <h2>116 hours of downtime avoided, for €3,200.</h2>

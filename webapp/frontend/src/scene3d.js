@@ -3,6 +3,10 @@
 // to (0 = Friday afternoon ... 5 = Monday morning), fractions included.
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
 
 const GREEN = 0x14e8a0
 const AMBER = 0xffb84d
@@ -80,6 +84,113 @@ function makeMachine(mats, number, detailed) {
     g.add(plate)
   }
   return g
+}
+
+// The spindle of Machine 7, built part by part so it can take itself apart.
+// It lies along +X: motor on the left, cutting tool on the right.
+function labelSprite(text) {
+  const c = document.createElement('canvas')
+  c.width = 512; c.height = 96
+  const g = c.getContext('2d')
+  g.fillStyle = '#eef4f8'
+  g.font = '600 44px system-ui, sans-serif'
+  g.textAlign = 'center'; g.textBaseline = 'middle'
+  g.fillText(text, 256, 50)
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, opacity: 0, depthWrite: false }))
+  sp.scale.set(3.4, 0.64, 1)
+  return sp
+}
+
+function makeSpindle() {
+  const rig = new THREE.Group()
+  const steel = new THREE.MeshStandardMaterial({ color: 0xd3dbe4, roughness: 0.2, metalness: 1 })
+  const dark = new THREE.MeshStandardMaterial({ color: 0x202831, roughness: 0.42, metalness: 0.9 })
+  const shell = new THREE.MeshStandardMaterial({ color: 0x5b6875, roughness: 0.35, metalness: 0.9, side: THREE.DoubleSide })
+  const brass = new THREE.MeshStandardMaterial({ color: 0xd0a85c, roughness: 0.28, metalness: 1 })
+  const hot = new THREE.MeshStandardMaterial({ color: 0x9a3a3a, roughness: 0.35, metalness: 0.85, emissive: RED, emissiveIntensity: 0 })
+  const parts = []
+  const labels = []
+
+  const lathe = (pts, mat, arc = Math.PI * 2) => {
+    const m = new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r, x]) => new THREE.Vector2(r, x)), 72, 0, arc), mat)
+    m.rotation.z = -Math.PI / 2   // the lathe axis (Y) becomes the spindle axis (X)
+    return m
+  }
+  const ring = (ri, ro, w, mat) => lathe([[ri, -w], [ro, -w], [ro, w], [ri, w], [ri, -w]], mat)
+  const part = (at, out, spins, text, high = 2.05) => {
+    const p = new THREE.Group()
+    p.position.x = at
+    p.userData = { at, out, spins }
+    rig.add(p); parts.push(p)
+    if (text) {
+      const holder = new THREE.Group()   // labels ride along but never spin
+      holder.userData = { follow: p }
+      const sp = labelSprite(text)
+      sp.position.y = high
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, high - 0.8, 0), new THREE.Vector3(0, high - 0.33, 0)]),
+        new THREE.LineBasicMaterial({ color: 0xeef4f8, transparent: true, opacity: 0 }))
+      holder.add(sp, line)
+      rig.add(holder); labels.push(holder)
+    }
+    return p
+  }
+  const bearing = (p, ro, ballR, n, ballMat) => {
+    const rm = ro - ballR - 0.07
+    p.add(ring(ro - 0.07, ro, 0.14, steel), ring(rm - ballR - 0.07, rm - ballR, 0.14, steel))
+    const balls = []
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2
+      const b = new THREE.Mesh(new THREE.SphereGeometry(ballR, 20, 14), ballMat)
+      b.userData = { a, rm }
+      b.position.set(0, Math.cos(a) * rm, Math.sin(a) * rm)
+      p.add(b); balls.push(b)
+    }
+    return balls
+  }
+
+  const motor = part(-2.7, -6.9, false, 'Motor')
+  motor.add(lathe([[0, -0.9], [0.92, -0.9], [1, -0.8], [1, 0.8], [0.92, 0.9], [0, 0.9]], dark))
+  for (let i = -3; i <= 3; i++) { const fin = ring(1, 1.09, 0.035, steel); fin.position.x = i * 0.2; motor.add(fin) }
+  const cap = ring(0, 0.5, 0.03, brass); cap.position.x = -0.93; motor.add(cap)
+
+  const rear = part(-1.55, -4.9, true)
+  bearing(rear, 0.72, 0.085, 14, steel)
+
+  const shaft = part(0, -2.3, true, 'Shaft')
+  shaft.add(lathe([[0, -1.7], [0.28, -1.7], [0.28, -1.25], [0.36, -1.25], [0.36, 0.5], [0.44, 0.5], [0.44, 1.5], [0.32, 1.7], [0, 1.7]], steel))
+  const key = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.07, 0.11), dark); key.position.set(-0.4, 0.37, 0); shaft.add(key)
+
+  const housing = part(0.1, 1.15, false)
+  housing.add(lathe([[0.84, -1.1], [0.97, -1.1], [0.97, 1.1], [0.84, 1.1], [0.84, -1.1]], shell, Math.PI * 1.45))
+
+  const worn = part(0.72, 3.5, true, 'The worn bearing')
+  const wornBalls = bearing(worn, 0.8, 0.105, 13, hot)
+  const front = part(1.0, 4.55, true)
+  bearing(front, 0.8, 0.105, 13, steel)
+
+  const nose = part(1.3, 5.5, false)
+  nose.add(ring(0.5, 0.97, 0.09, dark))
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2
+    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.06, 6), brass)
+    bolt.rotation.z = Math.PI / 2
+    bolt.position.set(0.1, Math.cos(a) * 0.76, Math.sin(a) * 0.76)
+    nose.add(bolt)
+  }
+
+  const holder = part(1.8, 6.5, true, 'Tool holder')
+  holder.add(lathe([[0, -0.45], [0.3, -0.45], [0.2, -0.1], [0.46, -0.1], [0.46, 0.05], [0.3, 0.05], [0.24, 0.45], [0, 0.45]], steel))
+  for (const z of [-0.4, 0.4]) { const slot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.14), dark); slot.position.set(-0.02, 0, z); holder.add(slot) }
+
+  const tool = part(2.6, 7.6, true, 'Cutting tool', 1.3)
+  const mill = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.95, 4), brass)
+  mill.rotation.z = Math.PI / 2
+  tool.add(mill)
+
+  return { rig, parts, labels, wornBalls, hot }
 }
 
 export function createScene(canvas, { mobile = false } = {}) {
@@ -242,9 +353,33 @@ export function createScene(canvas, { mobile = false } = {}) {
     return j
   })
 
+  // --- inside Machine 7: the spindle, far above the hall so the two never overlap ---
+  const spindle = makeSpindle()
+  const HOME = new THREE.Vector3(0, 60, 0)
+  spindle.rig.position.copy(HOME)
+  spindle.rig.visible = false
+  scene.add(spindle.rig)
+  const studioKey = new THREE.DirectionalLight(0xffffff, 0)
+  studioKey.position.set(-4, 7, 9)
+  const studioRim = new THREE.DirectionalLight(0x6fc6ff, 0)
+  studioRim.position.set(6, 2, -8)
+  scene.add(studioKey, studioRim)
+  const backdrop = sprite(0x1f5a6e, 34)
+
+  // glow on the lights, on a laptop or better
+  let composer = null
+  if (!mobile) {
+    composer = new EffectComposer(renderer)
+    composer.addPass(new RenderPass(scene, camera))
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.2, 0.5, 0.92))
+    composer.addPass(new OutputPass())
+  }
+
   // --- state ---
   let target = 0
-  let s = 0
+  let cur = 0
+  let prev = performance.now()
+  let turn = 0
   let orbit = 0
   let spinAngle = 0
   let raf = 0
@@ -268,8 +403,12 @@ export function createScene(canvas, { mobile = false } = {}) {
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
     const time = now / 1000
-    s += (target - s) * (1 - Math.exp(-Math.max(0, dt) * 5))
-    if (!Number.isFinite(s)) s = 0
+    // follow the scroll at the same pace on a slow machine as on a fast one
+    cur += (target - cur) * (1 - Math.exp(-Math.min(1, Math.max(0, (now - prev) / 1000)) * 5))
+    prev = now
+    if (!Number.isFinite(cur)) cur = 0
+    // scene 2 happens inside the machine, so the hall's own clock waits there
+    const s = cur <= 1 ? cur : cur <= 2 ? 1 : cur - 1
 
     // camera: glide between shots, dwell on each one
     const i = Math.max(0, Math.min(SHOTS.length - 2, Math.floor(s)))
@@ -370,14 +509,55 @@ export function createScene(canvas, { mobile = false } = {}) {
     sun.intensity = 0.7 + 1.3 * day
     sun.color.set(0xffffff).lerp(colB.set(0xffc98a), day)
 
-    renderer.render(scene, camera)
+    // --- inside Machine 7: the spindle turns, then takes itself apart ---
+    const inside = cur > 1.5 && cur < 2.5
+    const apart = ramp(cur, 1.66, 2.0)
+    const tall = height > width
+    spindle.rig.visible = inside
+    studioKey.intensity = inside ? 1.5 : 0
+    studioRim.intensity = inside ? 1.2 : 0
+    backdrop.material.opacity = inside ? 0.32 : 0
+    if (inside) {
+      turn += dt * 11 * (1 - apart)
+      const rattle = (1 - apart) * 0.014
+      spindle.rig.position.set(HOME.x + Math.sin(time * 67) * rattle, HOME.y + Math.cos(time * 59) * rattle, HOME.z)
+      spindle.rig.rotation.z = tall ? -Math.PI / 2 : 0
+      spindle.parts.forEach((p) => {
+        p.position.x = lerp(p.userData.at, p.userData.out, apart)
+        if (p.userData.spins) p.rotation.x = turn
+      })
+      spindle.wornBalls.forEach((b, k) => {
+        const r = b.userData.rm * (1 + 0.55 * apart) + Math.sin(time * 40 + k * 2.1) * 0.012
+        b.position.set(0, Math.cos(b.userData.a) * r, Math.sin(b.userData.a) * r)
+      })
+      spindle.hot.emissiveIntensity = 0.35 + 1.5 * apart + 0.3 * Math.sin(time * 5)
+      const named = tall ? 0 : ramp(cur, 1.92, 2.06)
+      spindle.labels.forEach((l) => {
+        l.position.x = l.userData.follow.position.x
+        l.children.forEach((c) => { c.material.opacity = named * (c.isSprite ? 1 : 0.5) })
+      })
+      const yaw = lerp(-0.8, 0.26, apart) + Math.sin(time * 0.25) * 0.05
+      const dist = tall ? lerp(9, 21, apart) : lerp(7.5, 17.5, apart)
+      camera.position.set(HOME.x + Math.sin(yaw) * dist, HOME.y + (tall ? 0.4 : lerp(1.3, 3.0, apart)), HOME.z + Math.cos(yaw) * dist)
+      camera.lookAt(HOME)
+      camera.setViewOffset(width, height, 0, (tall ? 0.16 : 0.1) * height, width, height)
+      backdrop.position.copy(HOME).addScaledVector(tmp.copy(HOME).sub(camera.position).normalize(), 9)
+      scene.environmentIntensity = 0.7
+    }
+    // cut between the hall and the inside of the machine through a beat of darkness
+    const dip = Math.max(clamp01(1 - Math.abs(cur - 1.5) / 0.13), clamp01(1 - Math.abs(cur - 2.5) / 0.13))
+    renderer.toneMappingExposure = 1.15 * (1 - dip) ** 2
+
+    if (composer) composer.render()
+    else renderer.render(scene, camera)
   }
 
   return {
-    setProgress(v) { if (Number.isFinite(v)) target = Math.min(SHOTS.length - 1, Math.max(0, v)) },
+    setProgress(v) { if (Number.isFinite(v)) target = Math.min(SHOTS.length, Math.max(0, v)) },
     setSize(w, h) {
       width = w; height = h
       renderer.setSize(w, h, false)
+      composer?.setSize(w, h)
       camera.aspect = w / h
       camera.fov = w < 700 ? 52 : 38
       camera.updateProjectionMatrix()

@@ -66,6 +66,8 @@
 }
 .st-scene.tall { min-height: 230vh; align-items: flex-start; padding-block: 0; }
 .st-scene.centre { justify-content: center; align-items: flex-end; padding-bottom: 9vh; }
+.st-scene.low { align-items: flex-end; padding-bottom: 8vh; }
+.st-scene.low .st-panel { width: min(38rem, 100%); }
 .st-scene.last { align-items: center; padding-bottom: 96px; text-align: center; }
 
 .st-panel { position: relative; width: min(31rem, 100%); }
