@@ -12,7 +12,9 @@ manager to approve anything that spends real money.**
 **[Open the live demo](https://ma731.github.io/titan-operations-sentinel/)** (runs in the browser, nothing to install)
 · [Glossary](#glossary) · [Technical reference](docs/TECHNICAL.md)
 
-![One alert, six agents, a costed and safety-gated plan](docs/demo.gif)
+[![The whole story in 13 seconds: a work order for Machine 7 rides a belt past the five specialists, a person approves it, and it comes out as the plan](webapp/frontend/public/titan-factory-line.jpg)](https://ma731.github.io/titan-operations-sentinel/)
+
+*The whole story in 13 seconds. Click the picture to watch the film, with sound, on the live demo.*
 
 ---
 
@@ -20,7 +22,8 @@ manager to approve anything that spends real money.**
 
 Titan is a (fictional) manufacturer with plants in Leipzig and Amsterdam
 (Amsterdam also holds the central parts warehouse). The Leipzig plant
-has a cutting machine, **Machine 7**, that makes metal parts worth about **180,000 EUR a day**.
+has a cutting machine, **Machine 7**, that makes aluminium motor housings
+for electric cars, worth about **180,000 EUR a day**.
 
 On a Friday afternoon, the bearing that the machine's cutting head spins on starts to wear
 out. Left alone, the machine breaks in roughly two to three days and production stops.
@@ -34,8 +37,8 @@ Titan does that coordination in about a minute:
 | Step | Who | What happens |
 |---|---|---|
 | 1 | **Alert filter** (plain code, no AI) | Out of ~22,000 sensor alerts a day, it picks the one that matters |
-| 2 | **Maintenance agent** | "The bearing on Machine 7 will fail in about 52 to 76 hours" |
-| 3 | **Purchasing agent** | "We have no spare bearing here. Amsterdam has three. A rush delivery costs 3,200 EUR" |
+| 2 | **Reliability agent** (maintenance) | "The bearing on Machine 7 will fail in about 52 to 76 hours" |
+| 3 | **Supply Chain agent** (purchasing) | "We have no spare bearing here. Amsterdam has three. A rush delivery costs 3,200 EUR" |
 | 4 | **Production agent** | "Move Machine 7's jobs to Machines 5 and 8, without clashing with shifts or robots" |
 | 5 | **Quality agent** | "Is the failing bearing already causing defects? Can the backup machines hold quality?" |
 | 6 | **Safety agent** | "Every step is safe and within the rules" (it can stop the whole plan if not) |
@@ -49,6 +52,8 @@ full record of who decided what and why.
 Open the **[live demo](https://ma731.github.io/titan-operations-sentinel/)** and press
 **Run**. It plays back a recorded run, so there is no cost and nothing to set up. Press
 **Ask Titan** (bottom right) and the built-in assistant explains any screen, by text or voice.
+
+![The console: one alert, six agents, a costed and safety-gated plan](docs/demo.gif)
 
 To run it on your own machine with a real AI model, see [Run it yourself](#run-it-yourself).
 
@@ -65,8 +70,8 @@ To run it on your own machine with a real AI model, see [Run it yourself](#run-i
         v
  Coordinator agent ------------- decides which specialist goes next
         |
-        +--> Maintenance   what is failing, and when
-        +--> Purchasing    parts, suppliers, cost of each option
+        +--> Reliability   what is failing, and when
+        +--> Supply Chain  parts, suppliers, cost of each option
         +--> Production    who makes the parts in the meantime
         +--> Quality       is the backup safe for quality
         +--> Safety        is all of this safe and legal (can stop everything)
