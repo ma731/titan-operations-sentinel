@@ -180,3 +180,54 @@
   .st-team-said { grid-column: 2; }
   .st-slip { padding: 26px 22px 22px; }
 }
+/* ---- home page: the film up front, room between screens for the 3D scene to play, a decision to try ---- */
+.st-scene { min-height: 150vh; }
+.st-scene.hero { min-height: 100vh; min-height: 100svh; gap: clamp(24px, 4vw, 64px); padding-top: 110px; }
+.st-scene.hero .st-panel { flex: 0 1 30rem; width: auto; }
+.story h1 { font-size: clamp(2.1rem, 3.5vw, 3.3rem); }
+.st-film { flex: 1 1 0; min-width: 0; margin: 0; }
+.st-film video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; background: #0b0c0e; border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 50px 120px -40px rgba(0, 0, 0, 0.9), 0 0 0 8px rgba(255, 255, 255, 0.03), 0 0 140px -50px #2f6bff; }
+.st-film figcaption { margin-top: 14px; font-size: 13.5px; color: var(--mute); }
+.st-bar-end { justify-self: end; display: flex; align-items: center; gap: 6px; }
+.st-signin { border: 0; background: none; color: var(--ink-2); font-family: var(--ui); font-weight: 600; font-size: 13.5px; padding: 9px 12px; border-radius: 999px; cursor: pointer; }
+.st-signin:hover { color: var(--ink); background: rgba(255, 255, 255, 0.07); }
+.st-signin:focus-visible, .st-again:focus-visible, .st-opts button:focus-visible, .st-reject:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+.st-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.st-opts button { display: grid; gap: 2px; text-align: left; cursor: pointer; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); color: var(--ink-2); font-family: var(--ui); font-size: 13.5px; transition: border-color 0.2s var(--out), background 0.2s var(--out); }
+.st-opts button b { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.st-opts button:hover { background: rgba(255, 255, 255, 0.08); }
+.st-opts button.on { border-color: var(--amber); background: rgba(255, 184, 77, 0.12); }
+.st-slip.done .st-opts button.on { border-color: var(--brand); background: rgba(20, 232, 160, 0.1); }
+.st-two { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 22px; }
+.st-two .st-approve { margin-top: 0; }
+.st-reject { border: 1px solid rgba(255, 107, 129, 0.6); background: transparent; color: #ff8fa0; font-family: var(--ui); font-weight: 700; font-size: 16px; border-radius: 12px; cursor: pointer; transition: background 0.2s var(--out); }
+.st-reject:hover { background: rgba(255, 107, 129, 0.12); }
+.st-slip p.st-verdict { margin-top: 20px; padding: 13px 16px; border-radius: 12px; font-weight: 600; color: var(--ink); }
+.st-verdict.ok { background: rgba(20, 232, 160, 0.13); }
+.st-verdict.no { background: rgba(255, 107, 129, 0.14); }
+.st-again { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.st-slip .st-again { display: inline-block; margin-top: 12px; font-size: 14px; }
+.st-slip p.st-rule { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--mute); }
+.st-slip.rejected { border-color: rgba(255, 107, 129, 0.55); box-shadow: 0 0 90px -34px #ff6b81; }
+.st-slip.rejected .st-slip-bar { background: #ff6b81; }
+.st-slip.rejected .st-when { color: #ff8fa0; }
+@media (prefers-reduced-motion: no-preference) {
+  .st-scene .st-film { transition: opacity 0.9s var(--out), transform 0.9s var(--out), filter 0.9s var(--out); }
+  .st-scene:not(.in) .st-film { opacity: 0.16; transform: translateY(18px) scale(0.985); filter: blur(5px); }
+}
+@media (max-width: 900px) {
+  .st-scene.hero { flex-direction: column; align-items: stretch; justify-content: flex-end; }
+  .st-scene.hero .st-panel { flex: none; }
+  .st-film { flex: none; order: -1; }
+  .st-bar-end { display: none; }
+}
+/* screens are taller than the window so the 3D scene has room to play between them;
+   this keeps each screen's words inside the window when that screen is centred */
+.st-scene:not(.hero) { padding-block: calc(25vh + 96px); }
+.st-scene.low { padding-bottom: calc(25vh + 8vh); }
+.st-scene.centre:not(.last) { padding-bottom: calc(25vh + 5vh); }
+@media (max-width: 900px) {
+  .st-scene:not(.hero) { padding-block: calc(25vh + 84px) calc(25vh + 9vh); }
+  .st-scene.hero { padding-top: 84px; padding-bottom: 6vh; }
+}

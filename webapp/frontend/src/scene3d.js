@@ -378,6 +378,9 @@ export function createScene(canvas, { mobile = false } = {}) {
   // --- state ---
   let target = 0
   let cur = 0
+  let decision = 'wait'
+  let openK = 0
+  let rejectK = 0
   let prev = performance.now()
   let turn = 0
   let orbit = 0
@@ -466,9 +469,12 @@ export function createScene(canvas, { mobile = false } = {}) {
 
     // the gate closes around the machine, waits, then opens green
     const gate = ramp(s, 2.6, 3.0)
-    const open = ramp(s, 3.3, 3.75)
+    // the visitor can decide for themselves on the home page: approve opens the gate, reject turns it red
+    openK += ((decision === 'open' ? 1 : 0) - openK) * Math.min(1, dt * 4)
+    rejectK += ((decision === 'reject' ? 1 : 0) - rejectK) * Math.min(1, dt * 6)
+    const open = Math.max(ramp(s, 3.3, 3.75), openK)
     ringMat.opacity = 0.9 * gate * (1 - open)
-    ringMat.color.set(AMBER).lerp(colB.set(GREEN), ramp(s, 3.25, 3.4))
+    ringMat.color.set(AMBER).lerp(colB.set(GREEN), Math.max(ramp(s, 3.25, 3.4), openK)).lerp(colB.set(RED), rejectK * (1 - ramp(s, 3.25, 3.4)))
     rings.forEach((r, k) => {
       r.position.y = lerp(4.6, 1.15 + k * 0.5, gate)
       r.scale.setScalar(1 + open * 0.9)
@@ -553,6 +559,7 @@ export function createScene(canvas, { mobile = false } = {}) {
   }
 
   return {
+    setDecision(v) { decision = v },
     setProgress(v) { if (Number.isFinite(v)) target = Math.min(SHOTS.length, Math.max(0, v)) },
     setSize(w, h) {
       width = w; height = h

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { flushSync } from 'react-dom'
 import { ALERT, SCENARIOS, RESOLUTIONS } from './cascade.js'
-import Story from './Story.jsx'
+import Home from './Home.jsx'
+import SignIn from './SignIn.jsx'
 import Dashboard from './Dashboard.jsx'
 import { GUEST } from './team.js'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
@@ -271,7 +272,8 @@ export default function App() {
     })
   }, [completed, plan, risk, doneCount, exposure, timeline, user])
 
-  if (view === 'showcase') return <Story onLaunch={() => goView('console')} />
+  if (view === 'signin') return <SignIn onEnter={(m) => { setUser(m); goView('console') }} />
+  if (view === 'showcase') return <Home onLaunch={() => goView('console')} onSignIn={() => goView('signin')} />
 
   return (
     <>
