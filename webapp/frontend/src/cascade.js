@@ -82,7 +82,7 @@ const HUMAN_REJECTED = [
 
 // --- Escalation variant: telemetry dropout → insufficient data → human review ---
 const escalation = [
-  { t: 350, type: 'perception', message: 'Alert ALT-22847 received, CNC-07-LEI. The coordinator calls Maintenance first.' },
+  { t: 350, type: 'perception', message: 'Alert ALT-22847 received, CNC-07-LEI. The coordinator calls Reliability first.' },
   { t: 650, type: 'route', to: 'reliability', allowed: ['reliability'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'reliability', tool: 'alert_triage', input: { plant: 'LEI' }, result: { critical: 'CNC-07-LEI' } },
   { t: 600, type: 'tool_call', agent: 'reliability', tool: 'sensor_query', input: { window: 'dropout' }, result: { sensor_status: 'INTERRUPTED' } },

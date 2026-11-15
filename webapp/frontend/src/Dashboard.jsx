@@ -23,8 +23,8 @@ const NAV_GROUPS = [
     { id: 'scenarios', ic: '◇', label: 'Scenarios' },
   ] },
   { label: 'Each agent', items: [
-    { id: 'reliability', ic: '◔', label: 'Maintenance' },
-    { id: 'supply_chain', ic: '⇄', label: 'Purchasing' },
+    { id: 'reliability', ic: '◔', label: 'Reliability' },
+    { id: 'supply_chain', ic: '⇄', label: 'Supply chain' },
     { id: 'production', ic: '⚙', label: 'Production' },
     { id: 'quality', ic: '✓', label: 'Quality' },
     { id: 'compliance_safety', ic: '⚠', label: 'Safety' },
@@ -172,7 +172,7 @@ export default function Dashboard(props) {
 
               <div className="stat-row">
                 <Stat lbl="Active Alert" chip="blue" ic="◉" val={<AnimatedNumber value={1} format={(n) => Math.round(n)} />} sub={`${machineLabel(ALERT.machine_id)} · ${ALERT.alert_id}`} />
-                <Stat lbl="Failure Risk" chip="red" ic="⚠" val={risk} valClass={`risk-${risk}`} sub="from the maintenance check" />
+                <Stat lbl="Failure Risk" chip="red" ic="⚠" val={risk} valClass={`risk-${risk}`} sub="from the reliability check" />
                 <Stat lbl="Specialists reported" chip="green" ic="✓" val={<AnimatedNumber value={doneCount} format={(n) => `${Math.round(n)}/5`} />} sub="of the five checks" deltaUp />
                 <Stat lbl="Downtime Exposure" chip="orange" ic="€" val={<AnimatedNumber value={exposure || 0} format={(n) => `€${Math.round(n).toLocaleString()}`} />} sub="€7,500 / h accruing" />
               </div>
@@ -970,8 +970,8 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
 
 const COST_ROWS = [
   { who: 'Coordinator', tok: '1.5k', tint: 'orange' },
-  { who: 'Maintenance', tok: '3.2k', tint: 'blue' },
-  { who: 'Purchasing', tok: '3.8k', tint: 'green' },
+  { who: 'Reliability', tok: '3.2k', tint: 'blue' },
+  { who: 'Supply Chain', tok: '3.8k', tint: 'green' },
   { who: 'Production', tok: '2.9k', tint: 'purple' },
   { who: 'Quality', tok: '2.4k', tint: 'orange' },
   { who: 'Safety', tok: '3.1k', tint: 'red' },
