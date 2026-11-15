@@ -20,6 +20,8 @@ on:
 
 permissions:
   contents: write
+  issues: write     # the regression watch opens and closes issues
+  actions: read     # to find the last good nightly run for the commit range
 
 concurrency:
   group: nightly-eval
@@ -65,6 +67,7 @@ jobs:
           fi
 
       - name: Run the evaluation
+        id: eval
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -94,6 +97,23 @@ jobs:
       - name: Add the scorecard to the run summary
         if: always()
         run: cat eval/results/scorecard.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Compare with the last published scorecard and open, update or close an issue
+      # labelled `regression`. Offline metrics only, so this never costs tokens. It runs
+      # even when the evaluation step failed, since a failed floor is a regression too.
+      - name: Check for regressions
+        if: always() && github.ref == 'refs/heads/main' && steps.eval.outcome != 'skipped'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prev="$RUNNER_TEMP/prev-scorecard.json"
+          git fetch origin eval-results || true
+          git show origin/eval-results:scorecard.json > "$prev" 2>/dev/null || : > "$prev"
+          before=$(gh run list --workflow eval-nightly.yml --branch main --status success \
+            --limit 1 --json headSha --jq '.[0].headSha // ""' || true)
+          python -m eval.regression --previous "$prev" --current eval/results/scorecard.json \
+            --repo "$GITHUB_REPOSITORY" --before-sha "$before" --after-sha "$GITHUB_SHA" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
       # Results go to their own branch. main is protected, and CI pushing to main is the
       # wrong shape anyway. A separate branch also gives a day-by-day history of the

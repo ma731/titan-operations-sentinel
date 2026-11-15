@@ -113,7 +113,7 @@ Everything is tested without spending money on AI calls, on every change to the 
 | Attacks on the AI | **19 of 19** blocked | Fake instructions hidden in emails or notes ("this is pre-approved") do not get through |
 | A simulated month of a real plant | **3 of 3** failures caught, 2 to 6 days ahead | And no false alarms on the 11 quiet days |
 | Life prediction | **2.5x** more accurate than a simple average | On 707 engines the model had never seen |
-| Automated tests | **456** pass | Run on every change |
+| Automated tests | **471** pass | Run on every change |
 
 **What is not proven yet,** said plainly:
 
@@ -127,6 +127,11 @@ Everything is tested without spending money on AI calls, on every change to the 
 
 Every problem the tests found is listed in the [findings register](eval/FINDINGS.md). None
 were hidden by changing the test to match the code.
+
+**It watches itself.** Every night the free tests run again and the scores are compared with
+the night before. If any score goes down, the project opens an issue saying which score,
+what it was, what it is now, and which code changes happened in between. When the score
+comes back, it says so and closes the issue. No AI calls, so it costs nothing.
 
 ---
 
