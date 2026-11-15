@@ -289,3 +289,5 @@
 .sc-pillar-d { font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
 @media (max-width: 900px) { .sc-pillars { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 540px) { .sc-pillars { grid-template-columns: 1fr; } }
+/* phones: keep each sentence of the headline on its own line */
+@media (max-width: 480px) { .sc-hero h1 { font-size: 9.2vw; max-width: none; } }

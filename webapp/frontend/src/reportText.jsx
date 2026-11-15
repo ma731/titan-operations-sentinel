@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Plain from './plain.jsx'
 
 // Agents open their report with "SUMMARY:" (agents/factory.py, SHARED_FOOTER): two or
 // three plain sentences for a plant manager. Show that first and keep the audit detail
@@ -21,16 +22,16 @@ export function splitReport(text) {
 export default function ReportText({ text, className = '' }) {
   const [open, setOpen] = useState(false)
   const { summary, detail } = splitReport(text)
-  if (!summary) return <div className={className}>{text}</div>
+  if (!summary) return <div className={className}><Plain text={text} /></div>
   return (
     <div className={`${className} rt`}>
-      <div className="rt-sum">{summary}</div>
+      <div className="rt-sum"><Plain text={summary} /></div>
       {detail && (
         <>
           <button type="button" className="rt-more" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             {open ? 'Hide details' : 'Show details'}
           </button>
-          {open && <div className="rt-detail">{detail}</div>}
+          {open && <div className="rt-detail"><Plain text={detail} /></div>}
         </>
       )}
     </div>

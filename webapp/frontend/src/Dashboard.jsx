@@ -9,6 +9,7 @@ import Guide from './Guide.jsx'
 import { REPLIES, PAGE_HELP } from './titanCommands.js'
 import { FLEET, machineReport } from './fleet.js'
 import ReportText, { splitReport } from './reportText.jsx'
+import Plain, { machineLabel } from './plain.jsx'
 import { TEAM, GUEST } from './team.js'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
@@ -22,11 +23,11 @@ const NAV_GROUPS = [
     { id: 'scenarios', ic: '◇', label: 'Scenarios' },
   ] },
   { label: 'Each agent', items: [
-    { id: 'reliability', ic: '◔', label: 'Reliability' },
-    { id: 'supply_chain', ic: '⇄', label: 'Supply chain' },
+    { id: 'reliability', ic: '◔', label: 'Maintenance' },
+    { id: 'supply_chain', ic: '⇄', label: 'Purchasing' },
     { id: 'production', ic: '⚙', label: 'Production' },
     { id: 'quality', ic: '✓', label: 'Quality' },
-    { id: 'compliance_safety', ic: '⚠', label: 'Compliance' },
+    { id: 'compliance_safety', ic: '⚠', label: 'Safety' },
   ] },
   { label: 'Proof', items: [
     { id: 'audit', ic: '≣', label: 'Audit log' },
@@ -37,9 +38,9 @@ const NAV_GROUPS = [
 ]
 const ALL_NAV = NAV_GROUPS.flatMap((g) => g.items)
 const SCENARIOS = [
-  { id: 'happy', label: 'Cascade', desc: 'Full team → costed plan → human approval' },
-  { id: 'edge', label: 'Edge', desc: 'Cross-plant adaptation when local supply is disrupted' },
-  { id: 'escalation', label: 'Escalation', desc: 'Telemetry dropout → insufficient data → human review' },
+  { id: 'happy', label: 'Cascade', desc: 'The main story: all five specialists report, and a €3,200 rush order waits for a person.' },
+  { id: 'edge', label: 'Edge', desc: 'The usual supplier is down. A €420 transfer from another plant is under the limit, so nobody has to approve it.' },
+  { id: 'escalation', label: 'Escalation', desc: 'The sensor feed drops out. Titan refuses to guess and hands over to a person.' },
 ]
 
 export default function Dashboard(props) {
@@ -143,7 +144,7 @@ export default function Dashboard(props) {
               {!focusAgent && (
                 <div className="story-head">
                   <p className="dash-explain">
-                    A sensor on <b>CNC-07-LEI</b> just crossed its vibration limit. Press run and watch five AI agents check it, one domain at a time, and agree on <b>one costed plan</b>. Anything over <b>€500</b> stops for a person.
+                    It is {ALERT.raised_at}. A sensor on <b>Machine 7</b>, a metal-cutting machine in Leipzig, just crossed its vibration limit. Press run and watch five AI specialists check maintenance, parts, production, quality and safety, then agree on <b>one costed plan</b>. Anything over <b>€500</b> stops for a person.
                   </p>
                   {running
                     ? <button className="story-run stop" onClick={onStop}>■ Stop</button>
@@ -153,10 +154,11 @@ export default function Dashboard(props) {
               {!focusAgent && (
                 <div className="dash-tabs" role="group" aria-label="Scenario">
                   {SCENARIOS.map((s) => (
-                    <button key={s.id} className={`dash-tab ${scenario === s.id ? 'on' : ''}`} disabled={running} onClick={() => setScenario(s.id)} title={s.desc}>{s.label}</button>
+                    <button key={s.id} className={`dash-tab ${scenario === s.id ? 'on' : ''}`} disabled={running} onClick={() => setScenario(s.id)} aria-pressed={scenario === s.id}>{s.label}</button>
                   ))}
                 </div>
               )}
+              {!focusAgent && <p className="dash-tab-desc">{SCENARIOS.find((s) => s.id === scenario)?.desc}</p>}
               {!focusAgent && <StoryStrip timeline={timeline} running={running} doneCount={doneCount} runStatus={runStatus} plan={plan} />}
               {!focusAgent && plan?.roi && (
                 <div className={`story-result ${plan.status}`}>
@@ -169,9 +171,9 @@ export default function Dashboard(props) {
               {focusAgent && <AgentCard agent={AGENT_MAP[focusAgent]} block={shownBlocks[shownBlocks.length - 1]} status={agentStatus[focusAgent]} />}
 
               <div className="stat-row">
-                <Stat lbl="Active Alert" chip="blue" ic="◉" val={<AnimatedNumber value={1} format={(n) => Math.round(n)} />} sub="ALT-22847 · CNC-07-LEI" />
-                <Stat lbl="Failure Risk" chip="red" ic="⚠" val={risk} valClass={`risk-${risk}`} sub="from reliability triage" />
-                <Stat lbl="Domains checked" chip="green" ic="✓" val={<AnimatedNumber value={doneCount} format={(n) => `${Math.round(n)}/5`} />} sub="agents that reported" deltaUp />
+                <Stat lbl="Active Alert" chip="blue" ic="◉" val={<AnimatedNumber value={1} format={(n) => Math.round(n)} />} sub={`${machineLabel(ALERT.machine_id)} · ${ALERT.alert_id}`} />
+                <Stat lbl="Failure Risk" chip="red" ic="⚠" val={risk} valClass={`risk-${risk}`} sub="from the maintenance check" />
+                <Stat lbl="Specialists reported" chip="green" ic="✓" val={<AnimatedNumber value={doneCount} format={(n) => `${Math.round(n)}/5`} />} sub="of the five checks" deltaUp />
                 <Stat lbl="Downtime Exposure" chip="orange" ic="€" val={<AnimatedNumber value={exposure || 0} format={(n) => `€${Math.round(n).toLocaleString()}`} />} sub="€7,500 / h accruing" />
               </div>
 
@@ -186,7 +188,7 @@ export default function Dashboard(props) {
                 <div className="panel">
                   <div className="panel-h"><span className="t">Action Plan</span><span className="sub">{plan.status}</span></div>
                   {(plan.lines || []).map((l, i) => (
-                    <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>
+                    <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx"><Plain text={l.txt} /></span></div>
                   ))}
                   {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
                   {plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
@@ -206,7 +208,7 @@ export default function Dashboard(props) {
                 onClick={() => { setSelectedMachine(m); setAssetOpen(true) }}
                 title={m.id === ALERT.machine_id ? 'Open full asset profile' : 'Inspect this machine'}>
                 <span className="fleet-dot" />
-                <div className="fleet-bd"><div className="fleet-id">{m.id}</div><div className="fleet-nm">{m.name}</div></div>
+                <div className="fleet-bd"><div className="fleet-id">{m.label}</div><div className="fleet-nm">{m.id.startsWith('ROB') ? 'Robot cell' : 'Cutting machine'} · {m.id}</div></div>
                 <span className="fleet-st">{m.status === 'critical' ? 'ALERT' : m.status === 'idle' ? 'idle' : 'nominal'}</span>
               </button>
             ))}
@@ -215,7 +217,7 @@ export default function Dashboard(props) {
           <div className="info-h mt">Asset Information</div>
           <div className="asset">
             <span className="ic">{sel.id.startsWith('ROB') ? '🦾' : '⚙'}</span>
-            <div><div className="nm">{sel.id}</div><div className="sub">{selCritical ? ALERT.plant_name : sel.name}</div></div>
+            <div><div className="nm">{sel.label}</div><div className="sub">{sel.id} · {selCritical ? ALERT.plant_name : sel.name}</div></div>
           </div>
           {selCritical ? (
             <div className="kv">
@@ -247,11 +249,11 @@ export default function Dashboard(props) {
           {plan
             ? <>
                 <div className="sugg amber"><span className="si">💡</span><span>{plan.status === 'escalated' ? 'Insufficient data, route to on-call reliability engineer for manual inspection.' : 'Emergency Schaeffler expedite recommended, €3,200, inside the 52h window.'}</span></div>
-                <div className="sugg green"><span className="si">✅</span><span>{plan.status === 'complete' ? 'Plan signed off by Compliance. Throttle + reroute can execute automatically.' : 'Keep the alert open and re-run once clean telemetry is available.'}</span></div>
+                <div className="sugg green"><span className="si">✅</span><span>{plan.status === 'complete' ? 'Plan signed off by Safety. Throttle + reroute can execute automatically.' : 'Keep the alert open and re-run once clean telemetry is available.'}</span></div>
               </>
             : <>
                 <div className="sugg amber"><span className="si">💡</span><span>Run a scenario to generate costed, safety-gated recommendations.</span></div>
-                <div className="sugg green"><span className="si">✅</span><span>Compliance gates every action; spend over €500 routes to you.</span></div>
+                <div className="sugg green"><span className="si">✅</span><span>Safety checks every action; spend over €500 routes to you.</span></div>
               </>}
         </aside>
       </div>
@@ -309,7 +311,7 @@ export default function Dashboard(props) {
             }
             if (c.ctx === 'finding') {
               const b = [...timeline].reverse().find((t) => t.kind === 'block' && t.agent === c.agent && t.report)
-              return b ? `${AGENT_MAP[c.agent].name}: ${b.report}` : REPLIES.noFinding
+              return b ? `${AGENT_MAP[c.agent].name}: ${splitReport(b.report).summary || b.report}` : REPLIES.noFinding
             }
             return null
           }
@@ -330,8 +332,8 @@ function Coachmark({ onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
   const steps = [
-    { ic: '◉', t: 'An alert just fired', d: 'A sensor on CNC-07-LEI crossed its vibration limit. This console is the team of agents that responds.' },
-    { ic: '▶', t: 'Press Run', d: 'Six AI agents are dispatched. Watch the graph: the orchestrator routes them and they reason one domain at a time.' },
+    { ic: '◉', t: 'An alert just fired', d: 'A sensor on Machine 7, a metal-cutting machine, crossed its vibration limit. This console is the team of AI agents that responds.' },
+    { ic: '▶', t: 'Press Run', d: 'Six AI agents are dispatched. Watch the graph: a coordinator sends in one specialist at a time (maintenance, parts, production, quality, safety).' },
     { ic: '◈', t: 'They converge on a plan', d: 'Findings combine into one costed, safety-gated action plan. Anything over €500, or any safety risk, pauses for a human.' },
     { ic: '€', t: 'It runs free', d: 'Replay mode plays the recorded run with no API key and zero cost. Live mode uses a real model when you add a key.' },
   ]
@@ -402,7 +404,7 @@ function NominalAssetModal({ machine: m, plant, onClose }) {
         <button className="asset-close" onClick={onClose} aria-label="Close">✕</button>
         <div className="asset-head">
           <span className="asset-ic">{m.id.startsWith('ROB') ? '🦾' : '⚙'}</span>
-          <div><div className="asset-id">{m.id}</div><div className="asset-sub">{m.name} · {plant}</div></div>
+          <div><div className="asset-id">{m.label}</div><div className="asset-sub">{m.id} · {m.name} · {plant}</div></div>
           <span className="asset-risk risk-LOW">{m.status === 'idle' ? 'IDLE' : 'NOMINAL'}</span>
         </div>
         <div className="asset-body">
@@ -452,8 +454,8 @@ function AssetModal({ machine, alert: ALERT, risk, onClose }) {
         <div className="asset-head">
           <span className="asset-ic">⚙</span>
           <div>
-            <div className="asset-id">{ALERT.machine_id}</div>
-            <div className="asset-sub">{ASSET_SPEC.type} · {ALERT.plant_name}</div>
+            <div className="asset-id">{machineLabel(ALERT.machine_id)}</div>
+            <div className="asset-sub">{ALERT.machine_id} · {ASSET_SPEC.type} · {ALERT.plant_name}</div>
           </div>
           <span className={`asset-risk risk-${risk}`}>{risk === 'PENDING' ? 'MONITOR' : risk} RISK</span>
         </div>
@@ -576,7 +578,7 @@ function ActivityRow({ b }) {
   const live = b.status === 'active'
   return (
     <div className={`act ${live ? 'live' : ''}`}>
-      <span className="ava" style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.name[0]}</span>
+      <span className="ava" style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.short || a.name[0]}</span>
       <div className="bd">
         <div className="nm">{a.name}{b.how && <span className={`route-tag ${b.how === 'LLM-picked' ? 'llm' : ''}`}>{b.how === 'LLM-picked' ? 'LLM-routed' : 'auto-routed'}</span>}{b.status === 'done' && <span className="act-dot" style={{ background: '#16b364' }} />}</div>
         {b.report ? <ReportText className="msg" text={b.report} /> : <div className="msg">Analyzing…</div>}
@@ -631,7 +633,7 @@ function PlanView({ plan }) {
       {!plan ? <div className="panel"><div className="empty-note">No plan yet, run a scenario to completion.</div></div>
         : <div className="panel">
             <div className="panel-h"><span className="t">Final Plan</span><span className="sub">{plan.status}</span></div>
-            {(plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
+            {(plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx"><Plain text={l.txt} /></span></div>)}
             {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
             {plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
             <TierLegend />
@@ -855,7 +857,7 @@ function ReportView({ history, onClearHistory, alert: ALERT }) {
 
               <div className="panel">
                 <div className="panel-h"><span className="t">Final action plan</span><span className="sub">{run.plan.status}</span></div>
-                {(run.plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
+                {(run.plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx"><Plain text={l.txt} /></span></div>)}
                 {run.plan.text && !run.plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{run.plan.text}</div>}
                 {run.plan.roi && <div className="pl"><span className="tier AUTO">VALUE</span><span className="tx" style={{ fontWeight: 700 }}>{run.plan.roi}</span></div>}
               </div>
@@ -908,8 +910,8 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
         {timeline.length === 0 ? (
           <div className="empty-note">{running ? 'Dispatching the agents…' : 'Type a crisis below, or try an example, to dispatch the agents.'}</div>
         ) : timeline.map((t, i) => {
-          if (t.kind === 'system') return <div className="ch-sys" key={i}><span className="ch-sys-ic">◈</span>{t.text}</div>
-          if (t.kind === 'note') return <div className="ch-followup" key={i}><span className="ch-fu-tag">agent → agent</span> {t.text}</div>
+          if (t.kind === 'system') return <div className="ch-sys" key={i}><span className="ch-sys-ic">◈</span><Plain text={t.text} /></div>
+          if (t.kind === 'note') return <div className="ch-followup" key={i}><span className="ch-fu-tag">agent → agent</span> <Plain text={t.text} /></div>
           if (t.kind === 'human') return (
             <div className="ch-row me" key={i}>
               <div className="ch-bubble me"><div className="ch-nm">Plant Manager</div>{t.text}</div>
@@ -920,7 +922,7 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
           const thinking = t.status === 'active'
           return (
             <div className="ch-row" key={i}>
-              <span className={`ch-av ${thinking ? 'pulse' : ''}`} style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.name[0]}</span>
+              <span className={`ch-av ${thinking ? 'pulse' : ''}`} style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.short || a.name[0]}</span>
               <div className={`ch-bubble ${thinking ? 'thinking' : ''} ${t.status === 'error' ? 'err' : ''}`}>
                 <div className="ch-nm">{a.name}{thinking && <span className="ch-tag-live">reasoning</span>}</div>
                 {t.tools?.length > 0 && (
@@ -967,12 +969,12 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
 }
 
 const COST_ROWS = [
-  { who: 'Orchestrator routing', tok: '1.5k', tint: 'orange' },
-  { who: 'Reliability', tok: '3.2k', tint: 'blue' },
-  { who: 'Supply Chain', tok: '3.8k', tint: 'green' },
+  { who: 'Coordinator', tok: '1.5k', tint: 'orange' },
+  { who: 'Maintenance', tok: '3.2k', tint: 'blue' },
+  { who: 'Purchasing', tok: '3.8k', tint: 'green' },
   { who: 'Production', tok: '2.9k', tint: 'purple' },
   { who: 'Quality', tok: '2.4k', tint: 'orange' },
-  { who: 'Compliance', tok: '3.1k', tint: 'red' },
+  { who: 'Safety', tok: '3.1k', tint: 'red' },
   { who: 'Final synthesis', tok: '1.2k', tint: 'blue' },
 ]
 function CostView({ mode = 'replay' }) {
@@ -1032,7 +1034,7 @@ function StoryStrip({ timeline, running, doneCount, runStatus, plan }) {
     : 'Anything over €500 stops here'
   const steps = [
     { t: 'Alert', s: started ? 'One alert woke the agents' : 'A sensor crosses its limit', st: started ? 'done' : 'todo' },
-    { t: 'Agents', s: stopped && !plan ? `Stopped after ${doneCount} of 5` : `${doneCount} of 5 domains checked`,
+    { t: 'Agents', s: stopped && !plan ? `Stopped after ${doneCount} of 5` : `${doneCount} of 5 specialists reported`,
       st: doneCount === 5 ? 'done' : plan || stopped ? 'skip' : waiting ? 'done' : started ? 'now' : 'todo' },
     { t: 'Human gate', s: gateText, st: humanDone ? 'done' : waiting ? 'now' : plan ? 'skip' : 'todo' },
     { t: 'Plan', s: plan ? (plan.status === 'complete' ? 'Costed plan ready' : plan.status === 'halted' ? 'Stopped by safety' : 'Handed to a person') : stopped ? 'Run stopped' : 'One costed, safety-checked plan', st: plan ? 'done' : 'todo' },

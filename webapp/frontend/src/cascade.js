@@ -9,6 +9,8 @@ export const ALERT = {
   alert_id: 'ALT-22847',
   machine_id: 'CNC-07-LEI',
   plant_name: 'Titan Leipzig · Plant 7',
+  raised_at: 'Friday, 16:32',
+  fails_by: 'between Sunday evening and Monday evening',
   sensor: 'vibration',
   value: 7.2,
   unit: 'mm/s RMS',
@@ -20,7 +22,7 @@ export const ALERT = {
 }
 
 const happy = [
-  { t: 350, type: 'perception', message: 'Alert ALT-22847 received, CNC-07-LEI vibration 7.2 mm/s (threshold 6.0). Orchestrator engaging the specialist team.' },
+  { t: 350, type: 'perception', message: 'Alert ALT-22847 received, CNC-07-LEI vibration 7.2 mm/s (threshold 6.0). The coordinator is calling in the specialists.' },
 
   { t: 650, type: 'route', to: 'reliability', allowed: ['reliability'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'reliability', tool: 'alert_triage', input: { plant: 'LEI', stream: '22k alerts' }, result: { critical: 'CNC-07-LEI' } },
@@ -28,38 +30,38 @@ const happy = [
   { t: 550, type: 'tool_call', agent: 'reliability', tool: 'recall_similar_cases', input: { signature: 'spindle-bearing vibration' }, result: { top: 'INC-0288 (93%)', outcome: 'failed at 58h, expedite approved, succeeded' } },
   { t: 650, type: 'tool_call', agent: 'reliability', tool: 'rul_predictor', input: { match: 'INC-0288 precedent' }, result: { rul: '52-76h', conf: 0.95 } },
   { t: 500, type: 'tool_call', agent: 'reliability', tool: 'asset_profile', input: { machine: 'CNC-07-LEI' }, result: { parts: ['P-4421', 'P-7803'] } },
-  { t: 950, type: 'agent_report', agent: 'reliability', risk: 'HIGH', report: 'CNC-07-LEI confirmed as the critical asset from 22k alerts. Vibration rising 3.1 → 7.2 mm/s over 6h with a +14°C bearing-temp climb, signature of spindle-bearing failure. Recalled precedent INC-0288 (93% match): the same signature failed at 58h and the expedite was approved and succeeded. RUL 52-76h (95% conf). Parts required: P-4421 (bearing kit), P-7803 ×2 (seal set). No maintenance window for 9 days → schedule gap CRITICAL.' },
+  { t: 950, type: 'agent_report', agent: 'reliability', risk: 'HIGH', report: 'SUMMARY: The bearing that Machine 7\'s cutting head spins on is wearing out. I expect it to fail between Sunday evening and Monday evening, 52 to 76 hours from now. The next planned maintenance stop is 9 days away, so we cannot wait for it.\n\nCNC-07-LEI confirmed as the critical asset from 22k alerts. Vibration rising 3.1 → 7.2 mm/s over 6h with a +14°C bearing-temp climb, signature of spindle-bearing failure. Recalled precedent INC-0288 (93% match): the same signature failed at 58h and the expedite was approved and succeeded. RUL 52-76h (95% conf). Parts required: P-4421 (bearing kit), P-7803 ×2 (seal set). No maintenance window for 9 days → schedule gap CRITICAL.' },
 
   { t: 700, type: 'route', to: 'supply_chain', allowed: ['supply_chain', 'production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'parts_inventory', input: { parts: ['P-4421', 'P-7803'] }, result: { 'P-4421': '0 on-site', 'P-7803': '1/2 on-site' } },
   { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'supplier_catalog', input: { part: 'P-4421' }, result: { Schaeffler: '18h €3200' } },
   { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'expedite_cost', input: { downtime_h: 7500, window_h: '52-76', baseline_h: 192 }, result: { avoided: '116h · €870k', roi: '271.9:1', break_even: '0.32%' } },
   { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'tier2_supplier_risk', input: { supplier: 'Schaeffler' }, result: { tier2: 'LOW' } },
-  { t: 900, type: 'agent_report', agent: 'supply_chain', report: 'Parts gap confirmed: P-4421 zero on-site, P-7803 short one unit. Best option: Schaeffler expedite, 18h, €3,200 (LOW Tier-2 risk), 34h of buffer inside the 52h window. Against the 192h standard lead time, acting now avoids at least 116h of unplanned downtime (€870k at production value, an upper bound). The €420 Amsterdam transfer avoids the same, so the €2,780 premium buys buffer: worth it if the transfer has more than a 0.32% chance of arriving late. Spend exceeds the €500 autonomy ceiling → flag for human approval.' },
+  { t: 900, type: 'agent_report', agent: 'supply_chain', report: 'SUMMARY: We have no spare bearing in Leipzig. A rush delivery from the supplier takes 18 hours and costs €3,200. It avoids about 116 hours of stopped production. That is over my €500 limit, so a person has to approve it.\n\nParts gap confirmed: P-4421 zero on-site, P-7803 short one unit. Best option: Schaeffler expedite, 18h, €3,200 (LOW Tier-2 risk), 34h of buffer inside the 52h window. Against the 192h standard lead time, acting now avoids at least 116h of unplanned downtime (€870k at production value, an upper bound). The €420 Amsterdam transfer avoids the same, so the €2,780 premium buys buffer: worth it if the transfer has more than a 0.32% chance of arriving late. Spend exceeds the €500 autonomy ceiling → flag for human approval.' },
 
   { t: 650, type: 'route', to: 'production', allowed: ['production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'production', tool: 'robot_cell_status', input: { plant: 'LEI' }, result: { 'CNC-08': 'idle' } },
   { t: 550, type: 'tool_call', agent: 'production', tool: 'shift_conflict_check', input: { target: 'CNC-05' }, result: { conflict: 'op_Keller' } },
   { t: 600, type: 'tool_call', agent: 'production', tool: 'job_reroute', input: { from: 'CNC-07', to: 'CNC-08' }, result: { rerouted: 5 } },
-  { t: 900, type: 'agent_report', agent: 'production', report: 'Rerouted jobs J4421-J4425 off CNC-07. First-choice CNC-05 hit an operator conflict (op_Keller, overlapping shift), so adapted to CNC-08, idle, no human-robot conflict. Throughput preserved during the maintenance window.' },
+  { t: 900, type: 'agent_report', agent: 'production', report: 'SUMMARY: I moved Machine 7\'s five jobs to Machine 8, which is idle. Machine 5 was my first choice, but its operator\'s shift overlaps, so I changed the plan.\n\nRerouted jobs J4421-J4425 off CNC-07. First-choice CNC-05 hit an operator conflict (op_Keller, overlapping shift), so adapted to CNC-08, idle, no human-robot conflict. Throughput preserved during the maintenance window.' },
 
   { t: 600, type: 'decision', agent: 'production', message: 'Production → Quality: are CNC-05/CNC-08 reroute targets quality-safe for the extra load before I commit the reroute?' },
   { t: 650, type: 'route', to: 'quality', allowed: ['quality'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'quality', tool: 'telemetry_correlate', input: { machine: 'CNC-07-LEI' }, result: { corr: 'vibration↔defect 0.82' } },
   { t: 550, type: 'tool_call', agent: 'quality', tool: 'quality_history', input: { target: 'CNC-08-LEI' }, result: { ppm: 'within spec' } },
-  { t: 850, type: 'agent_report', agent: 'quality', report: 'Vibration strongly correlates with recent micro-defects on CNC-07 (r=0.82), reinforces the failure call. CNC-08 quality history is within spec and safe to absorb the extra load. No traceability concerns on the reroute.' },
+  { t: 850, type: 'agent_report', agent: 'quality', report: 'SUMMARY: The vibration is already causing small defects on Machine 7, which supports the failure call. Machine 8 has a clean quality record, so it can take the extra work.\n\nVibration strongly correlates with recent micro-defects on CNC-07 (r=0.82), reinforces the failure call. CNC-08 quality history is within spec and safe to absorb the extra load. No traceability concerns on the reroute.' },
 
   { t: 650, type: 'route', to: 'compliance_safety', allowed: ['compliance_safety'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'compliance_safety', tool: 'safety_gate', input: { actions: 4 }, result: { verdict: 'SIGN-OFF' } },
   { t: 550, type: 'tool_call', agent: 'compliance_safety', tool: 'audit_assemble', input: { run: 'ALT-22847' }, result: { events: 'logged' } },
-  { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'Gated all four proposed actions against OSHA / OEM limits: spindle throttle within safe band ✓, reroute compliant ✓, Saturday emergency window permitted with sign-off ✓, procurement within policy ✓. VERDICT: SIGN-OFF. Full audit trail assembled for run ALT-22847.' },
+  { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'SUMMARY: I checked all four proposed actions against the safety rules and the machine maker\'s limits. All four pass, so I sign off. Every step is recorded in the audit trail.\n\nGated all four proposed actions against OSHA / OEM limits: spindle throttle within safe band ✓, reroute compliant ✓, Saturday emergency window permitted with sign-off ✓, procurement within policy ✓. VERDICT: SIGN-OFF. Full audit trail assembled for run ALT-22847.' },
 
-  { t: 800, type: 'approval_request', ceiling_eur: 500, amount_eur: 3200, question: 'Authorize €3,200 emergency Schaeffler expedite + Saturday maintenance window?' },
+  { t: 800, type: 'approval_request', ceiling_eur: 500, amount_eur: 3200, question: 'Approve a €3,200 rush delivery of the bearing and a Saturday repair?', approver: 'Anna Weber', role: 'plant manager', when: 'Friday, 16:33' },
   // player pauses here until the human decides; human_decision + plan are appended on click.
 ]
 
 const HUMAN_APPROVED = [
-  { t: 250, type: 'human_decision', decision: 'APPROVED', by: 'Plant Manager' },
+  { t: 250, type: 'human_decision', decision: 'APPROVED', by: 'Anna Weber, plant manager' },
   { t: 700, type: 'plan', status: 'complete', roi: '116h of downtime avoided for €3,200 (€870k at production value, an upper bound)', lines: [
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM safe limits (buys runway to the window).' },
     { tier: 'AUTO', txt: 'Reroute jobs J4421-J4425 to CNC-08-LEI; notify shift lead.' },
@@ -70,7 +72,7 @@ const HUMAN_APPROVED = [
 ]
 
 const HUMAN_REJECTED = [
-  { t: 250, type: 'human_decision', decision: 'REJECTED', by: 'Plant Manager' },
+  { t: 250, type: 'human_decision', decision: 'REJECTED', by: 'Anna Weber, plant manager' },
   { t: 700, type: 'plan', status: 'escalated', lines: [
     { tier: 'ESCALATE', txt: 'Procurement rejected, escalating to operations director with the costed trade-off (€3,200 expedite vs €180k/day exposure).' },
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI to 60% to extend runway while the decision is reviewed.' },
@@ -80,12 +82,12 @@ const HUMAN_REJECTED = [
 
 // --- Escalation variant: telemetry dropout → insufficient data → human review ---
 const escalation = [
-  { t: 350, type: 'perception', message: 'Alert ALT-22847 received, CNC-07-LEI. Orchestrator engaging Reliability first.' },
+  { t: 350, type: 'perception', message: 'Alert ALT-22847 received, CNC-07-LEI. The coordinator calls Maintenance first.' },
   { t: 650, type: 'route', to: 'reliability', allowed: ['reliability'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'reliability', tool: 'alert_triage', input: { plant: 'LEI' }, result: { critical: 'CNC-07-LEI' } },
   { t: 600, type: 'tool_call', agent: 'reliability', tool: 'sensor_query', input: { window: 'dropout' }, result: { sensor_status: 'INTERRUPTED' } },
-  { t: 900, type: 'agent_report', agent: 'reliability', risk: 'ESCALATE', report: 'Telemetry feed interrupted mid-window, cannot establish a confident RUL or failure mode. Per guardrails, refusing to fabricate an assessment from unreliable data.' },
-  { t: 700, type: 'decision', agent: 'orchestrator', message: 'Low-confidence perception → halting before any action plan. Routing to human review.' },
+  { t: 900, type: 'agent_report', agent: 'reliability', risk: 'ESCALATE', report: 'SUMMARY: The sensor feed cut out, so I cannot say how long Machine 7 has left. I will not guess from broken data. A person needs to inspect the machine.\n\nTelemetry feed interrupted mid-window, cannot establish a confident RUL or failure mode. Per guardrails, refusing to fabricate an assessment from unreliable data.' },
+  { t: 700, type: 'decision', agent: 'orchestrator', message: 'The sensor data cannot be trusted, so no plan is made. Handing over to a person.' },
   { t: 700, type: 'plan', status: 'escalated', lines: [
     { tier: 'ESCALATE', txt: 'INSUFFICIENT DATA: route to on-call reliability engineer for manual inspection of CNC-07-LEI.' },
     { tier: 'MONITOR', txt: 'Keep the alert open; auto-re-run once a clean sensor window is available.' },
@@ -95,30 +97,30 @@ const escalation = [
 // --- Edge variant: primary supply DISRUPTED → cross-plant transfer UNDER the €500
 //     ceiling → fully autonomous, NO human gate (shows the autonomy-tier logic) ---
 const edge = [
-  { t: 350, type: 'perception', message: 'Alert ALT-22847 received, CNC-07-LEI. Primary supplier is flagged DISRUPTED today; orchestrator engaging the team.' },
+  { t: 350, type: 'perception', message: 'Alert ALT-22847 received, CNC-07-LEI. The usual supplier is flagged as disrupted today. The coordinator is calling in the specialists.' },
 
   { t: 650, type: 'route', to: 'reliability', allowed: ['reliability'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'reliability', tool: 'alert_triage', input: { plant: 'LEI' }, result: { critical: 'CNC-07-LEI' } },
   { t: 600, type: 'tool_call', agent: 'reliability', tool: 'rul_predictor', input: {}, result: { rul: '52-76h' } },
-  { t: 900, type: 'agent_report', agent: 'reliability', risk: 'HIGH', report: 'CNC-07-LEI confirmed, spindle-bearing failure, RUL 52-76h. Parts P-4421, P-7803 required. Same failure call as the base case.' },
+  { t: 900, type: 'agent_report', agent: 'reliability', risk: 'HIGH', report: 'SUMMARY: Same diagnosis as the main story: Machine 7\'s spindle bearing will fail in 52 to 76 hours.\n\nCNC-07-LEI confirmed, spindle-bearing failure, RUL 52-76h. Parts P-4421, P-7803 required. Same failure call as the base case.' },
 
   { t: 700, type: 'route', to: 'supply_chain', allowed: ['supply_chain', 'production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'supplier_catalog', input: { scenario: 'edge' }, result: { primary: 'DISRUPTED' } },
   { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'parts_inventory', input: { sister_plants: ['AMS', 'MUC'] }, result: { MUC: 'P-4421 in stock' } },
   { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'expedite_cost', input: { option: 'cross-plant MUC' }, result: { cost: 420, eta: '36h', avoided: '116h · €870k', roi: '2071.4:1' } },
-  { t: 950, type: 'agent_report', agent: 'supply_chain', report: 'Primary supplier DISRUPTED today, no expedite fits the 52h window. Adapted: cross-plant transfer from sister plant MUC, P-4421 in stock, 36h, €420. That is UNDER the €500 autonomy ceiling, so no human approval is required. Against the 192h standard lead time it avoids at least 116h of unplanned downtime (€870k at production value, an upper bound).' },
+  { t: 950, type: 'agent_report', agent: 'supply_chain', report: 'SUMMARY: Our usual supplier is disrupted today, so no rush order would arrive in time. A sister plant has the bearing in stock: 36 hours, €420. That is under my €500 limit, so I can go ahead without asking.\n\nPrimary supplier DISRUPTED today, no expedite fits the 52h window. Adapted: cross-plant transfer from sister plant MUC, P-4421 in stock, 36h, €420. That is UNDER the €500 autonomy ceiling, so no human approval is required. Against the 192h standard lead time it avoids at least 116h of unplanned downtime (€870k at production value, an upper bound).' },
 
   { t: 650, type: 'route', to: 'production', allowed: ['production', 'quality'], how: 'LLM-picked' },
   { t: 600, type: 'tool_call', agent: 'production', tool: 'job_reroute', input: { from: 'CNC-07', to: 'CNC-08' }, result: { rerouted: 5 } },
-  { t: 900, type: 'agent_report', agent: 'production', report: 'Rerouted jobs J4421-J4425 to CNC-08-LEI (idle, no shift/robot conflict) to cover the 36h transfer window.' },
+  { t: 900, type: 'agent_report', agent: 'production', report: 'SUMMARY: I moved Machine 7\'s five jobs to Machine 8 for the 36 hours the transfer takes. No clash with shifts or robots.\n\nRerouted jobs J4421-J4425 to CNC-08-LEI (idle, no shift/robot conflict) to cover the 36h transfer window.' },
 
   { t: 650, type: 'route', to: 'quality', allowed: ['quality'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'quality', tool: 'quality_history', input: { target: 'CNC-08-LEI' }, result: { ppm: 'within spec' } },
-  { t: 850, type: 'agent_report', agent: 'quality', report: 'CNC-08 is quality-safe for the extra load; the MUC part is the same OEM spec, no traceability concern.' },
+  { t: 850, type: 'agent_report', agent: 'quality', report: 'SUMMARY: Machine 8 can take the extra work without quality problems, and the transferred part is the same specification.\n\nCNC-08 is quality-safe for the extra load; the MUC part is the same OEM spec, no traceability concern.' },
 
   { t: 650, type: 'route', to: 'compliance_safety', allowed: ['compliance_safety'], how: 'forced' },
   { t: 600, type: 'tool_call', agent: 'compliance_safety', tool: 'safety_gate', input: { actions: 3 }, result: { verdict: 'SIGN-OFF' } },
-  { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'All actions within OSHA/OEM limits and under the spend ceiling. VERDICT: SIGN-OFF. No human gate needed, the plan can go ahead without approval.' },
+  { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'SUMMARY: Everything is within the safety limits and under the spending limit. I sign off, and nobody needs to approve.\n\nAll actions within OSHA/OEM limits and under the spend ceiling. VERDICT: SIGN-OFF. No human gate needed, the plan can go ahead without approval.' },
 
   { t: 800, type: 'plan', status: 'complete', roi: '116h of downtime avoided with a cross-plant transfer under the €500 ceiling, so no human gate', lines: [
     { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM limits.' },

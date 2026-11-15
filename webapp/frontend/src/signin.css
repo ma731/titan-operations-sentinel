@@ -7,7 +7,7 @@
   --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --d-display: 'Schibsted Grotesk', system-ui, sans-serif;
-  --d-serif: 'Playfair Display', Georgia, serif;
+  --d-serif: 'Schibsted Grotesk', system-ui, sans-serif;
   --d-mono: 'JetBrains Mono', ui-monospace, monospace;
   position: fixed; inset: 0; z-index: 100; overflow: hidden;
   background: radial-gradient(130% 100% at 50% 0%, #0c1320, #06090f 70%);
@@ -37,23 +37,16 @@
 .si-corner.tr { text-align: right; }
 .si-script {
   display: inline-flex; align-items: baseline; gap: 9px; padding-right: 2px;
-  font-family: 'Great Vibes', cursive; font-weight: 400; font-size: 44px; line-height: 0.9;
-  background: linear-gradient(180deg, #ffffff 30%, color-mix(in srgb, var(--accent) 72%, #ffffff));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-family: var(--d-display); font-weight: 600; font-size: 16px; line-height: 1; letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--accent) 22%, #ffffff);
   filter: drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 45%, transparent)) drop-shadow(0 2px 10px rgba(0,0,0,0.4));
   transition: filter 1.4s var(--ease-out);
 }
-/* crisp acronyms inside the script lockup, so AI / IT stay legible */
-.si-script .caps {
-  font-family: var(--d-display); font-weight: 700; font-size: 21px; letter-spacing: 0.04em;
-  transform: translateY(-2px); color: #fff; -webkit-text-fill-color: #fff;
-}
-.si-script .lc { font-size: 40px; }
 
 @media (max-width: 640px) {
   .si-corner.tl { left: 20px; top: 20px; }
   .si-corner.tr { right: 20px; top: 20px; }
-  .si-script { font-size: 32px; }
+  .si-script { font-size: 13px; }
   .si-corner.tl { padding-left: 0; border-left: 0; }
 }
 
@@ -83,8 +76,9 @@
 
 .si-brand { display: flex; align-items: center; gap: 12px; color: var(--accent); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; transition: color 1.4s var(--ease-out); }
 .si-brand span { color: #eef4fb; }
-.si-tagline { font-family: var(--d-serif); font-weight: 500; font-size: 25px; line-height: 1.15; margin: 22px 0 24px; letter-spacing: -0.01em; }
-.si-tagline em { color: var(--accent); font-style: italic; transition: color 1.4s var(--ease-out); }
+.si-tagline { font-family: var(--d-display); font-weight: 600; font-size: 26px; line-height: 1.12; margin: 22px 0 12px; letter-spacing: -0.025em; }
+.si-what { margin: 0 0 22px; font-size: 14px; line-height: 1.55; color: #b9c6d4; text-wrap: pretty; }
+.si-tagline em { color: var(--accent); font-style: normal; transition: color 1.4s var(--ease-out); }
 
 .si-reel { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 16px; margin-bottom: 22px; background: rgba(255,255,255,0.03); }
 .si-reel-eyebrow { font-family: var(--d-mono); font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: #8aa; }
@@ -96,21 +90,25 @@
 .si-reel-track { display: flex; gap: 6px; }
 .si-pip { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,0.14); transition: background 0.4s var(--ease-out); }
 
-.si-team-label { font-family: var(--d-mono); font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: #8aa; margin-bottom: 10px; }
-.si-team { display: flex; flex-direction: column; gap: 8px; }
-.si-member { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 9px 12px;
-  color: #eef4fb; font-family: var(--d-display);
-  transition: border-color 0.18s var(--ease-out), background 0.18s var(--ease-out), transform 0.1s var(--ease-out); }
-.si-member:hover { border-color: var(--mc); background: color-mix(in srgb, var(--mc) 12%, rgba(255,255,255,0.04)); }
-.si-member:active { transform: scale(0.99); }
-.si-ava { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; font-weight: 700; font-size: 12.5px; color: #06140e; background: var(--mc); box-shadow: 0 0 14px -4px var(--mc); }
-.si-mname { flex: 1; font-weight: 500; font-size: 14px; }
-.si-arrow { color: #6b7a8c; font-size: 14px; transition: transform 0.18s var(--ease-out), color 0.18s var(--ease-out); }
-.si-member:hover .si-arrow { color: var(--mc); transform: translateX(3px); }
-.si-skip { display: block; margin: 14px auto 0; background: none; border: 0; color: #8294a6; font-family: var(--d-mono); font-size: 11px; letter-spacing: 0.06em; cursor: pointer; }
-.si-skip:hover { color: #eef4fb; }
+.si-demo { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; cursor: pointer;
+  border: 0; border-radius: 14px; padding: 15px 18px; background: #14e8a0; color: #04130c;
+  font-family: var(--d-display); font-weight: 700; font-size: 16px; letter-spacing: -0.005em;
+  box-shadow: 0 14px 34px -16px #14e8a0; transition: transform 0.16s var(--ease-out), background 0.16s var(--ease-out); }
+.si-demo span { transition: transform 0.18s var(--ease-out); }
+.si-demo:hover { background: #3ff0b3; }
+.si-demo:hover span { transform: translateX(3px); }
+.si-demo:active { transform: scale(0.985); }
+.si-demo:focus-visible, .si-ava:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.si-demo-note { margin: 10px 0 0; text-align: center; font-size: 12.5px; color: #9fb0c2; }
+.si-team { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); }
+.si-team-label { flex: 1 1 auto; font-size: 12.5px; color: #9fb0c2; }
+.si-ava { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; cursor: pointer; border: 0;
+  font-family: var(--d-display); font-weight: 700; font-size: 12.5px; color: #06140e; background: var(--mc);
+  transition: transform 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out); }
+.si-ava:hover { transform: translateY(-2px); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc) 35%, transparent); }
+.si-ava:active { transform: scale(0.94); }
 
 @media (prefers-reduced-motion: reduce) {
   .si-aura, .si-stars, .si-wave, .si-card, .si-reel-stage, .si-pip { animation: none !important; }
 }
+@media (max-width: 440px) { .si-team-label { flex-basis: 100%; } }

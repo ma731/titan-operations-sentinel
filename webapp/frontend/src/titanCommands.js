@@ -10,8 +10,8 @@ const PAGES = [
   [/\b(audit|log)\b/, 'audit', 'the audit log'],
   [/\b(run )?history\b/, 'report', 'run history'],
   [/\b(learning|memory|past incidents?)\b/, 'learning', 'learning'],
-  [/\breliability\b/, 'reliability', 'the reliability agent'],
-  [/\bsupply( chain)?\b/, 'supply_chain', 'the supply chain agent'],
+  [/\b(reliability|maintenance agent)\b/, 'reliability', 'the reliability agent'],
+  [/\b(supply( chain)?|purchasing)\b/, 'supply_chain', 'the supply chain agent'],
   [/\bproduction\b/, 'production', 'the production agent'],
   [/\bquality\b/, 'quality', 'the quality agent'],
   [/\b(ai act|eu ai|regulation)\b/, 'aiact', 'the EU AI Act page'],
@@ -62,9 +62,9 @@ export function parseLocal(raw) {
 // when there is nothing to report, they fall through to the written answers.
 export function parseContext(raw) {
   const t = stripWake(raw).toLowerCase().replace(/[!.?, ]+$/g, '').trim()
-  const ag = t.match(/what did (the )?(reliability|supply( chain)?|production|quality|compliance)( agent)? (find|say|conclude|decide|do|recommend|report)/)
+  const ag = t.match(/what did (the )?(reliability|maintenance|supply( chain)?|purchasing|production|quality|compliance|safety)( agent)? (find|say|conclude|decide|do|recommend|report)/)
   if (ag) {
-    const id = { reliability: 'reliability', supply: 'supply_chain', 'supply chain': 'supply_chain', production: 'production', quality: 'quality', compliance: 'compliance_safety' }[ag[2]]
+    const id = { reliability: 'reliability', maintenance: 'reliability', purchasing: 'supply_chain', safety: 'compliance_safety', supply: 'supply_chain', 'supply chain': 'supply_chain', production: 'production', quality: 'quality', compliance: 'compliance_safety' }[ag[2]]
     return { ctx: 'finding', agent: id }
   }
   const m = t.match(/\b(cnc)[- ]?0?(\d)\b|\brob(?:ot)?[- ]?(?:cell[- ]?)?0?(\d)\b/)

@@ -2,7 +2,7 @@
 .guide-fab, .guide {
   --g-card: #ffffff; --g-bg: #f3f5f8; --g-ink: #14171c; --g-ink-2: #555e6b; --g-line: #e4e7ec;
   --g-accent: #0fbe85; --g-accent-ink: #04130d;
-  font-family: 'Fira Sans', system-ui, sans-serif;
+  font-family: 'Schibsted Grotesk', system-ui, sans-serif;
 }
 .guide-fab {
   position: fixed; z-index: 70; right: max(20px, env(safe-area-inset-right, 0px)); bottom: max(20px, env(safe-area-inset-bottom, 0px));
