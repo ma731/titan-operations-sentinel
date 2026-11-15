@@ -19,7 +19,7 @@ npm install
 npm run dev          # open http://localhost:5173
 ```
 
-Sign in (pick a presenter), **Launch console**, choose a scenario (**Cascade / Edge / Escalation**),
+The home page opens on a short film and a test bench. Press **Open the console** (or **Sign in** to pick a presenter), choose a scenario (**Cascade / Edge / Escalation**),
 press **▶ Run**, and approve/reject at the gate. No key, no backend, no spend. It always works on a
 projector. Or hit **▶ Present** for a hands-free, auto-narrated run.
 
@@ -72,7 +72,7 @@ VITE_API_PORT=8009
 - **Cost & Feasibility**, token/cost breakdown per agent.
 - **Audit Log** and **Action Plan** with an autonomy-tier legend (AUTO / APPROVE / ESCALATE).
 - **Plant Fleet** panel and a full **asset profile** for CNC-07-LEI.
-- **Per-presenter sign-in** with accent theming and an in-console switcher.
+- **Per-presenter sign-in** (optional, from the home page's top bar) with accent theming and an in-console switcher.
 - **⌘K command palette**, **Presenter** auto-play, and a first-load "what am I looking at?" coachmark.
 
 ## How it works
@@ -101,8 +101,8 @@ resume path and one audit record however the decision arrived.
 configuration rather than a description of it.
 - **Frontend** (`frontend/src/`): one event reducer (`App.jsx`) drives the whole UI from that event
   shape, identical for replay (`cascade.js`) and live, so what you rehearse is what you demo.
-- **Design**: light editorial showcase + light console; Schibsted Grotesk / Fira Sans / JetBrains
-  Mono; motion via CSS + anime.js, all reduced-motion aware.
+- **Design**: a dark home page with a 13 second film and a three.js scene, and the console; Schibsted
+  Grotesk / JetBrains Mono; motion via CSS and three.js, all reduced-motion aware.
 
 ## Demo-day tip
 Rehearse and present on **Replay**. Keep **Live** as the "yes, it's real" proof, ideally after

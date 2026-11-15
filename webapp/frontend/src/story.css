@@ -246,3 +246,4 @@
 .st-outcome { margin: 20px 0 0; padding: 15px 18px; border-radius: 12px; font-size: 15.5px; line-height: 1.5; font-weight: 600; color: var(--ink); min-height: 5.6em; background: rgba(255, 255, 255, 0.07); }
 .st-outcome.ok { background: rgba(20, 232, 160, 0.14); }
 .st-outcome.warn { background: rgba(255, 184, 77, 0.15); }
+@media (max-width: 900px) { .st-scene.hero { padding-bottom: 104px; } .st-outcome { margin-bottom: 64px; } }

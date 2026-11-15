@@ -15,7 +15,7 @@ const PAGES = [
   [/\bproduction\b/, 'production', 'the production agent'],
   [/\bquality\b/, 'quality', 'the quality agent'],
   [/\b(ai act|eu ai|regulation)\b/, 'aiact', 'the EU AI Act page'],
-  [/\b(compliance|safety)\b/, 'compliance_safety', 'the compliance agent'],
+  [/\b(compliance|safety)\b/, 'compliance_safety', 'the Safety agent'],
   [/\b(overview|home|dashboard|start page)\b/, 'dashboard', 'the overview'],
 ]
 
@@ -150,7 +150,7 @@ export const PAGE_HELP = {
   supply_chain: 'This is the supply chain agent\'s page: what it is for, the tools it can call, the rule it cannot break, and what it found in this run.',
   production: 'This is the production agent\'s page: what it is for, the tools it can call, the rule it cannot break, and what it found in this run.',
   quality: 'This is the quality agent\'s page: what it is for, the tools it can call, the rule it cannot break, and what it found in this run.',
-  compliance_safety: 'This is the compliance agent\'s page: what it is for, the tools it can call, the rule it cannot break, and what it found in this run.',
+  compliance_safety: 'This is the Safety agent\'s page: what it is for, the tools it can call, the rule it cannot break, and what it found in this run.',
 }
 
 export const PAGE_NAMES = PAGES.map((p) => p[2])

@@ -168,7 +168,7 @@ export default function Home({ onLaunch, onSignIn }) {
           <div className="st-panel">
             <p className="st-when">Inside Machine 7</p>
             <h2>This is the part that is failing.</h2>
-            <p className="st-lead">The cutting tool spins thousands of times a minute on rings of steel balls called bearings. One ring is worn. That is what the sensor felt, and when it goes, the machine stops.</p>
+            <p className="st-lead">Machine 7 cuts aluminium motor housings for electric cars, about €180,000 worth a day. Its cutting tool spins thousands of times a minute on rings of steel balls called bearings. One ring is worn. That is what the sensor felt, and when it goes, the machine stops.</p>
           </div>
         </section>
 

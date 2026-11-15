@@ -18,8 +18,8 @@ const TICKER = [
 ]
 
 const CHIPS = [
-  'CNC-07 vibration spiking, handle it',
-  'Sensor feed on CNC-07 dropped out',
+  'Machine 7 is vibrating, handle it',
+  'The sensor feed on Machine 7 dropped out',
   'Cross-plant supply disruption today',
 ]
 const scenarioFor = (text) => {
@@ -387,7 +387,7 @@ function CommandBar({ idle, running, onSubmit }) {
       <div className="cmd-bar">
         <span className="prompt-glyph">$</span>
         <input value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
-          placeholder="Describe the situation…  e.g. CNC-07 vibration spiking, handle it" disabled={running} />
+          placeholder="Describe the situation…  e.g. Machine 7 is vibrating, handle it" disabled={running} />
         <button className="cmd-send" onClick={submit} disabled={running} aria-label="Dispatch agents">→</button>
       </div>
     </div>

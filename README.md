@@ -53,7 +53,7 @@ Open the **[live demo](https://ma731.github.io/titan-operations-sentinel/)** and
 **Run**. It plays back a recorded run, so there is no cost and nothing to set up. Press
 **Ask Titan** (bottom right) and the built-in assistant explains any screen, by text or voice.
 
-![The console: one alert, six agents, a costed and safety-gated plan](docs/demo.gif)
+![The console part-way through a run: four of the five specialists have reported](docs/console.jpg)
 
 To run it on your own machine with a real AI model, see [Run it yourself](#run-it-yourself).
 

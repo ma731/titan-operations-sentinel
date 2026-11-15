@@ -144,7 +144,7 @@ export default function Dashboard(props) {
               {!focusAgent && (
                 <div className="story-head">
                   <p className="dash-explain">
-                    It is {ALERT.raised_at}. A sensor on <b>Machine 7</b>, a metal-cutting machine in Leipzig, just crossed its vibration limit. Press run and watch five AI specialists check maintenance, parts, production, quality and safety, then agree on <b>one costed plan</b>. Anything over <b>€500</b> stops for a person.
+                    It is {ALERT.raised_at}. A sensor on <b>Machine 7</b>, a machine in Leipzig that cuts motor housings for electric cars, just crossed its vibration limit. Press run and watch five AI specialists check maintenance, parts, production, quality and safety, then agree on <b>one costed plan</b>. Anything over <b>€500</b> stops for a person.
                   </p>
                   {running
                     ? <button className="story-run stop" onClick={onStop}>■ Stop</button>
@@ -870,8 +870,8 @@ function ReportView({ history, onClearHistory, alert: ALERT }) {
 }
 
 const CRISES = [
-  'CNC-07 vibration spiking, handle it',
-  'Sensor feed on CNC-07 just dropped out',
+  'Machine 7 is vibrating, handle it',
+  'The sensor feed on Machine 7 just dropped out',
   'Cross-plant supply disruption today',
 ]
 
@@ -959,7 +959,7 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
           value={val}
           onChange={(e) => setVal(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') send() }}
-          placeholder={running ? 'Agents are working…' : 'Describe the situation…  e.g. CNC-07 vibration spiking, handle it'}
+          placeholder={running ? 'Agents are working…' : 'Describe the situation…  e.g. Machine 7 is vibrating, handle it'}
           disabled={running}
         />
         <button className="ch-send" onClick={() => send()} disabled={running || !val.trim()} aria-label="Dispatch agents">↑</button>
