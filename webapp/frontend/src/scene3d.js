@@ -379,6 +379,12 @@ export function createScene(canvas, { mobile = false } = {}) {
   let target = 0
   let cur = 0
   let decision = 'wait'
+  let lab = null
+  let labAwake = 0
+  let labRing = 0
+  let labBlock = 0
+  let labNoteAt = -9
+  const labAgent = [0, 0, 0, 0, 0]
   let openK = 0
   let rejectK = 0
   let prev = performance.now()
@@ -515,6 +521,46 @@ export function createScene(canvas, { mobile = false } = {}) {
     sun.intensity = 0.7 + 1.3 * day
     sun.color.set(0xffffff).lerp(colB.set(0xffc98a), day)
 
+    // --- the test bench on the home page: the visitor sets the conditions and Machine 7 answers ---
+    if (lab && cur > 2.5 && cur < 3.6) {
+      const ease = Math.min(1, dt * 5)
+      const awake = lab.vib >= 6 && !lab.cable
+      const amp = lab.cable ? 0 : clamp01((lab.vib - 3) / 4)
+      m7.position.set(Math.sin(time * 61) * 0.02 * amp, 0, Math.cos(time * 53) * 0.015 * amp)
+      m7.rotation.z = Math.sin(time * 47) * 0.006 * amp
+      if (lab.cable) m7.userData.strip.color.set(0x5f7184).multiplyScalar(0.45 + 0.55 * (Math.sin(time * 9) > 0 ? 1 : 0))
+      else m7.userData.strip.color.set(GREEN).lerp(colB.set(RED), clamp01((lab.vib - 5.6) / 0.8))
+      labAwake += ((awake ? 1 : 0) - labAwake) * ease
+      theAlert.position.copy(alertTo)
+      theAlert.material.opacity = labAwake * (0.75 + 0.25 * Math.sin(time * 6))
+      theAlert.scale.setScalar(1.7 * (1 + 0.12 * Math.sin(time * 6)))
+      alertMat.opacity = 0.35
+      let seen = 0
+      agents.forEach((ag, k) => {
+        const want = lab.cable ? (k === 0 ? 1 : 0) : awake ? 1 : 0       // with no data only Reliability looks, then it stops
+        labAgent[k] += (want - labAgent[k]) * Math.min(1, dt * (3.2 - k * 0.35))
+        const ang = orbit + k * ((Math.PI * 2) / 5)
+        tmp.set(Math.cos(ang) * 2.35, 1.75 + Math.sin(time * 1.3 + k) * 0.22, Math.sin(ang) * 2.35)
+        ag.position.lerpVectors(coordPos, tmp, smooth(labAgent[k]))
+        ag.material.opacity = labAgent[k]
+        seen += labAgent[k]
+        coordPos.toArray(linkPos, k * 6); ag.position.toArray(linkPos, k * 6 + 3)
+      })
+      linkGeo.attributes.position.needsUpdate = true
+      linkMat.opacity = 0.34 * Math.min(1, seen)
+      coordinator.material.opacity = 0.95 * Math.min(1, seen)
+      agentGlow.intensity = 0.22 * seen
+      // the ring is the spending rule: amber and shut while a person is needed, green and gone when not, red when it blocks a trick
+      const blocking = lab.note && awake && time - labNoteAt < 1.6
+      const shut = lab.cable || (awake && (lab.price > 500 || blocking))
+      labRing += ((shut ? 1 : 0) - labRing) * ease
+      labBlock += ((blocking ? 1 : 0) - labBlock) * Math.min(1, dt * 9)
+      ringMat.opacity = 0.9 * labRing
+      ringMat.color.set(awake && lab.price <= 500 && !lab.cable ? GREEN : AMBER).lerp(colB.set(RED), labBlock)
+      rings.forEach((r, k) => { r.position.y = 1.15 + k * 0.5; r.scale.setScalar(1 + (1 - labRing) * 0.9 + labBlock * 0.06 * Math.sin(time * 40)); r.rotation.z = time * (k ? -0.25 : 0.25) })
+    }
+    if (lab) { skin.opacity = 0; person.visible = false; human.intensity = 0; if (!(cur > 2.5 && cur < 3.6)) ringMat.opacity = 0 }   // the film already shows the person and the gate
+
     // --- inside Machine 7: the spindle turns, then takes itself apart ---
     const inside = cur > 1.5 && cur < 2.5
     const apart = ramp(cur, 1.66, 2.0)
@@ -560,6 +606,7 @@ export function createScene(canvas, { mobile = false } = {}) {
 
   return {
     setDecision(v) { decision = v },
+    setLab(v) { if (v && v.note && !(lab && lab.note)) labNoteAt = performance.now() / 1000; lab = v },
     setProgress(v) { if (Number.isFinite(v)) target = Math.min(SHOTS.length, Math.max(0, v)) },
     setSize(w, h) {
       width = w; height = h

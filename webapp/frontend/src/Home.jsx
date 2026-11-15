@@ -8,13 +8,9 @@ import './story.css'
 // what is failing, a decision you can try, and the proof. Between screens the 3D scene
 // plays the rest of the story on its own (the alert, the specialists, the repair).
 const SCENES = ['The story in 13 seconds', 'Inside Machine 7', 'The decision', 'The proof']
-const STEP = 2   // the 3D scene has two beats for every screen of words
 const asset = (name) => `${import.meta.env.BASE_URL}${name}`
 
-const OPTIONS = {
-  rush: { label: 'Rush delivery', price: '€3,200', over: true, text: 'A new bearing from the supplier, here in 18 hours. It is over the €500 limit, so it waits for Anna Weber, the plant manager.' },
-  transfer: { label: 'From another plant', price: '€420', over: false, text: 'A bearing from a sister plant, here in 36 hours. It is under the €500 limit, so the agents go ahead on their own.' },
-}
+const CUR = [0, 2, 3, 6]   // which beat of the 3D scene sits behind each screen
 
 const canWebGL = () => {
   try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')) } catch { return false }
@@ -31,11 +27,18 @@ export default function Home({ onLaunch, onSignIn }) {
   const [scene, setScene] = useState(0)
   const [still, setStill] = useState(false)       // no 3D: reduced motion, or no WebGL
   const [muted, setMuted] = useState(true)
-  const [option, setOption] = useState('rush')
-  const [verdict, setVerdict] = useState(null)    // null | 'approved' | 'rejected'
-
-  const opt = OPTIONS[option]
-  const gate = !opt.over || verdict === 'approved' ? 'open' : verdict === 'rejected' ? 'reject' : 'wait'
+  // the test bench: what the visitor has done to Machine 7
+  const [vib, setVib] = useState(7.2)
+  const [cable, setCable] = useState(false)
+  const [note, setNote] = useState(false)
+  const [price, setPrice] = useState(3200)
+  const awake = vib >= 6 && !cable
+  const tone = cable ? 'warn' : !awake ? 'calm' : price > 500 ? 'warn' : 'ok'
+  const outcome = cable ? 'No sensor data. Titan refuses to guess and calls a person to inspect the machine.'
+    : !awake ? 'Under the limit. Titan stays asleep: the plant raises 22,000 alerts a day and this is not one that matters.'
+      : `${note ? 'The note is ignored: a note cannot change the spending rule. 19 of 19 tricks like it were blocked in testing. ' : ''}${price > 500
+        ? 'The fix costs €3,200, over the €500 limit, so the plan stops and waits for a person.'
+        : 'The fix costs €420, under the €500 limit, so the five specialists go ahead without asking.'}`
 
   // where the reader is: 0 when the first screen is centred, 1 when the second is, fractions between
   const measure = useCallback(() => {
@@ -49,7 +52,8 @@ export default function Home({ onLaunch, onSignIn }) {
       if (mid >= centres[i]) s = i + Math.min(1, (mid - centres[i]) / Math.max(1, centres[i + 1] - centres[i]))
     }
     if (!Number.isFinite(s)) s = 0
-    sceneApi.current?.setProgress(s * STEP)
+    const k = Math.min(CUR.length - 2, Math.floor(s))
+    sceneApi.current?.setProgress(CUR[k] + (CUR[k + 1] - CUR[k]) * (s - k))
     fillRefs.current.forEach((el, i) => { if (el) el.style.transform = `scaleX(${Math.min(1, Math.max(0, s - i + 0.5))})` })
     setScene(Math.abs(s - Math.round(s)) < 0.3 ? Math.round(s) : -1)   // between screens the words step back and the picture plays
   }, [])
@@ -85,7 +89,7 @@ export default function Home({ onLaunch, onSignIn }) {
     }
   }, [measure])
 
-  useEffect(() => { sceneApi.current?.setDecision(gate) }, [gate])
+  useEffect(() => { sceneApi.current?.setLab({ vib, cable, note, price }) }, [vib, cable, note, price, still, scene])
 
   // the film plays silently on a loop; with reduced motion it waits for a tap instead
   useEffect(() => {
@@ -168,30 +172,21 @@ export default function Home({ onLaunch, onSignIn }) {
           </div>
         </section>
 
-        <section ref={ref(2)} className={cls(2, 'centre')}>
-          <div className={`st-slip ${gate === 'open' ? 'done' : gate === 'reject' ? 'rejected' : ''}`}>
-            <div className="st-slip-bar" />
-            <p className="st-when">Friday, 16:33 · try it yourself</p>
-            <h2>Who is allowed to spend this?</h2>
-            <div className="st-opts" role="group" aria-label="Choose how to get the bearing">
-              {Object.entries(OPTIONS).map(([k, o]) => (
-                <button key={k} className={option === k ? 'on' : ''} aria-pressed={option === k} onClick={() => { setOption(k); setVerdict(null) }}>
-                  <span>{o.label}</span><b>{o.price}</b>
-                </button>
-              ))}
+        <section ref={ref(2)} className={cls(2)}>
+          <div className="st-panel st-lab">
+            <p className="st-when">Your turn</p>
+            <h2>Now try to break it.</h2>
+            <p className="st-lead">The film shows a good day. These are the bad ones. Change something and watch Machine 7.</p>
+            <label className="st-row">
+              <span>Wear the bearing <b>{vib.toFixed(1)} mm/s</b><i>limit 6.0</i></span>
+              <input type="range" min="3" max="9" step="0.1" value={vib} onChange={(e) => setVib(+e.target.value)} />
+            </label>
+            <div className="st-toggles">
+              <button aria-pressed={cable} className={cable ? 'on' : ''} onClick={() => setCable(!cable)}>Pull the sensor cable</button>
+              <button aria-pressed={note} className={note ? 'on' : ''} onClick={() => setNote(!note)}>Slip in a fake “pre-approved” note</button>
+              <button onClick={() => setPrice(price > 500 ? 420 : 3200)}>Make the fix cost {price > 500 ? '€420' : '€3,200'}</button>
             </div>
-            <p>{opt.text}</p>
-            {!opt.over && <p className="st-verdict ok">No approval needed. The plan goes ahead.</p>}
-            {opt.over && !verdict && (
-              <div className="st-two">
-                <button className="st-approve" onClick={() => setVerdict('approved')}>Approve €3,200</button>
-                <button className="st-reject" onClick={() => setVerdict('rejected')}>Reject</button>
-              </div>
-            )}
-            {opt.over && verdict === 'approved' && <p className="st-verdict ok">Approved by Anna Weber, Friday 16:33. The order goes out and the gate opens.</p>}
-            {opt.over && verdict === 'rejected' && <p className="st-verdict no">Rejected. The agents slow Machine 7 down to buy time and pass the decision up to the operations director.</p>}
-            {opt.over && verdict && <button className="st-again" onClick={() => setVerdict(null)}>Decide again</button>}
-            <p className="st-rule">The €500 rule is written in code, not in a prompt, so the AI cannot talk its way past it.</p>
+            <p className={`st-outcome ${tone}`} role="status">{outcome}</p>
           </div>
         </section>
 

@@ -231,3 +231,18 @@
   .st-scene:not(.hero) { padding-block: calc(25vh + 84px) calc(25vh + 9vh); }
   .st-scene.hero { padding-top: 84px; padding-bottom: 6vh; }
 }
+/* the test bench */
+.st-lab { width: min(33rem, 100%); }
+.st-row { display: grid; gap: 10px; margin-top: 28px; font-size: 15px; color: var(--ink-2); }
+.st-row span { display: flex; align-items: baseline; gap: 10px; }
+.st-row b { color: var(--ink); font-size: 20px; font-variant-numeric: tabular-nums; }
+.st-row i { margin-left: auto; font-style: normal; font-family: var(--mono); font-size: 12px; color: var(--mute); }
+.st-row input { width: 100%; accent-color: var(--amber); height: 28px; cursor: pointer; }
+.st-toggles { display: grid; gap: 8px; margin-top: 18px; }
+.st-toggles button { text-align: left; cursor: pointer; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.05); color: var(--ink); font-family: var(--ui); font-weight: 600; font-size: 15px; transition: background 0.2s var(--out), border-color 0.2s var(--out); }
+.st-toggles button:hover { background: rgba(255, 255, 255, 0.1); }
+.st-toggles button.on { border-color: var(--amber); background: rgba(255, 184, 77, 0.14); }
+.st-toggles button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.st-outcome { margin: 20px 0 0; padding: 15px 18px; border-radius: 12px; font-size: 15.5px; line-height: 1.5; font-weight: 600; color: var(--ink); min-height: 5.6em; background: rgba(255, 255, 255, 0.07); }
+.st-outcome.ok { background: rgba(20, 232, 160, 0.14); }
+.st-outcome.warn { background: rgba(255, 184, 77, 0.15); }
