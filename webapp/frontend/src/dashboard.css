@@ -641,3 +641,6 @@
 /* plain-language layer: the scenario in one sentence, and the code kept beside a plain machine name */
 .dash-tab-desc { margin: 0 0 20px; max-width: 68ch; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
 .code-tag { padding: 1px 5px; border-radius: 5px; border: 1px solid var(--line); font-family: var(--d-mono); font-size: 0.78em; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+/* a report's plain summary settles in as it arrives */
+@keyframes rt-in { from { opacity: 0; transform: translateY(6px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: no-preference) { .rt-sum { animation: rt-in 0.7s cubic-bezier(0.16,1,0.3,1) both; } }

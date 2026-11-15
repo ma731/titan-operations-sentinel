@@ -1,0 +1,180 @@
+/* ============================================================================
+   Home page story. A dark factory hall on a Friday evening: near-black, the
+   console's green for "fine", amber for "a person decides". One typeface.
+   ========================================================================== */
+.story {
+  --bg: #05080c;
+  --ink: #eef4f8;
+  --ink-2: #b9c6d2;
+  --mute: #8a9bab;
+  --line: rgba(255, 255, 255, 0.12);
+  --brand: #14e8a0;
+  --amber: #ffb84d;
+  --ag-0: #4d9bff; --ag-1: #14e8a0; --ag-2: #a78bfa; --ag-3: #ffb84d; --ag-4: #ff6b81;
+  --ui: 'Schibsted Grotesk', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --out: cubic-bezier(0.16, 1, 0.3, 1);
+  position: fixed; inset: 0; z-index: 5; overflow-x: hidden; overflow-y: auto;
+  background: var(--bg); color: var(--ink); font-family: var(--ui);
+  -webkit-font-smoothing: antialiased; scrollbar-width: thin; scrollbar-color: #24303b transparent;
+}
+.story * { box-sizing: border-box; }
+.st-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+
+/* no 3D (reduced motion, or no WebGL): a still hall drawn in CSS */
+.story-still {
+  background:
+    radial-gradient(60% 40% at 68% 62%, rgba(20, 232, 160, 0.10), transparent 70%),
+    radial-gradient(40% 30% at 70% 30%, rgba(255, 184, 77, 0.07), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 100% 64px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 64px 100%,
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* ---- top bar: brand, stories segments, the one action ---- */
+.st-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  display: grid; grid-template-columns: 1fr minmax(0, 520px) 1fr; align-items: center; gap: 24px;
+  padding-block: 14px;
+  padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
+  background: linear-gradient(rgba(5, 8, 12, 0.85), rgba(5, 8, 12, 0));
+}
+.st-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; white-space: nowrap; }
+.st-segs { display: flex; gap: 6px; }
+.st-seg {
+  flex: 1; height: 28px; padding: 12px 0; border: 0; background: none; cursor: pointer; position: relative;
+}
+.st-seg::before, .st-seg-fill { content: ''; position: absolute; left: 0; right: 0; top: 12px; height: 3px; border-radius: 3px; }
+.st-seg::before { background: rgba(255, 255, 255, 0.2); transition: background 0.2s; }
+.st-seg-fill { background: var(--ink); transform: scaleX(0); transform-origin: left; }
+.st-seg:hover::before { background: rgba(255, 255, 255, 0.36); }
+.st-seg:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+.st-open {
+  justify-self: end; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.06); color: var(--ink);
+  font-family: var(--ui); font-weight: 600; font-size: 13.5px; padding: 9px 16px; border-radius: 999px; cursor: pointer;
+  transition: background 0.18s var(--out), border-color 0.18s var(--out);
+}
+.st-open:hover { background: var(--brand); border-color: var(--brand); color: #04130c; }
+
+/* ---- scenes ---- */
+.st-scene {
+  position: relative; z-index: 1; min-height: 100vh; min-height: 100svh;
+  display: flex; align-items: center;
+  padding-block: 96px;
+  padding-left: max(24px, 6vw, env(safe-area-inset-left, 0px)); padding-right: max(24px, 6vw, env(safe-area-inset-right, 0px));
+}
+.st-scene.tall { min-height: 230vh; align-items: flex-start; padding-block: 0; }
+.st-scene.centre { justify-content: center; align-items: flex-end; padding-bottom: 9vh; }
+.st-scene.last { align-items: center; padding-bottom: 96px; text-align: center; }
+
+.st-panel { position: relative; width: min(31rem, 100%); }
+.st-panel.sticky { position: sticky; top: 0; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding-block: 96px; }
+.st-panel.wide { width: min(46rem, 100%); }
+.st-scene:first-child .st-panel { width: min(41rem, 100%); }
+/* soft pool of darkness behind the text so it reads over the hall: no card, no border */
+.st-panel::before, .st-slip::after {
+  content: ''; position: absolute; inset: -12% -22%; z-index: -1; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(5, 8, 12, 0.86), rgba(5, 8, 12, 0.55) 60%, transparent);
+}
+
+.st-when { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em; color: var(--brand); margin: 0 0 18px; }
+.story h1, .story h2 { margin: 0; font-weight: 600; text-wrap: balance; }
+.story h1 { font-size: clamp(2.3rem, 4.6vw, 4.1rem); line-height: 1.03; letter-spacing: -0.035em; }
+.story h2 { font-size: clamp(2rem, 3.7vw, 3.2rem); line-height: 1.06; letter-spacing: -0.032em; }
+.st-lead { margin: 20px 0 0; font-size: clamp(1.02rem, 1.25vw, 1.2rem); line-height: 1.55; color: var(--ink-2); max-width: 34rem; text-wrap: pretty; }
+.st-scene.last .st-lead { margin-inline: auto; }
+
+.st-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.st-scene.last .st-actions { justify-content: center; }
+.st-btn {
+  display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--brand); background: var(--brand); color: #04130c;
+  font-family: var(--ui); font-weight: 700; font-size: 15px; padding: 14px 24px; border-radius: 999px; cursor: pointer; text-decoration: none;
+  transition: transform 0.16s var(--out), background 0.16s var(--out), box-shadow 0.25s var(--out);
+}
+.st-btn:hover { background: #4df2b8; box-shadow: 0 0 44px -10px var(--brand); }
+.st-btn:active { transform: scale(0.97); }
+.st-btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.st-btn.ghost:hover { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
+.st-btn:focus-visible, .st-open:focus-visible, .st-approve:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+/* scene 1: the three readings */
+.st-read { display: flex; flex-wrap: wrap; gap: 14px 36px; margin: 34px 0 0; }
+.st-read dt { font-size: 13px; color: var(--mute); }
+.st-read dd { margin: 4px 0 0; font-size: 1.9rem; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.st-read dd small { font-size: 0.9rem; font-weight: 500; color: var(--ink-2); letter-spacing: 0; }
+.st-read div:first-child dd { color: #ff7d8a; }
+
+/* scene 2: each specialist speaks when it arrives */
+.st-team { list-style: none; margin: 30px 0 0; padding: 0; display: grid; gap: 4px; }
+.st-team li {
+  display: grid; grid-template-columns: 12px 7.2rem 1fr; align-items: baseline; gap: 12px; padding: 9px 0;
+  opacity: 0.28; transition: opacity 0.5s var(--out);
+}
+.st-team li.on { opacity: 1; }
+.st-team-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); align-self: center; transition: box-shadow 0.5s var(--out); }
+.st-team li.on .st-team-dot { box-shadow: 0 0 16px 2px var(--c); }
+.st-team-name { font-weight: 600; font-size: 15px; }
+.st-team-said { font-size: 15px; line-height: 1.45; color: var(--ink-2); clip-path: inset(0 100% 0 0); transition: clip-path 0.9s var(--out); }
+.st-team li.on .st-team-said { clip-path: inset(0 0 0 0); }
+
+/* scene 3: the decision slip. The one framed object on the page, same amber bar as the console's approval. */
+.st-slip {
+  position: relative; width: min(34rem, 100%); padding: 30px 32px 30px; border-radius: 18px;
+  background: rgba(10, 13, 18, 0.9); border: 1px solid rgba(255, 184, 77, 0.45);
+  box-shadow: 0 0 90px -30px var(--amber); transition: border-color 0.6s var(--out), box-shadow 0.6s var(--out);
+}
+.st-slip-bar {
+  position: absolute; top: 0; left: 18px; right: 18px; height: 5px; border-radius: 0 0 4px 4px;
+  background: repeating-linear-gradient(-45deg, var(--amber) 0 12px, #1a1408 12px 24px); transition: background 0.6s;
+}
+.st-slip .st-when { color: var(--amber); }
+.st-slip h2 { font-size: clamp(1.7rem, 2.9vw, 2.4rem); }
+.st-slip p:not(.st-when) { margin: 14px 0 0; font-size: 15.5px; line-height: 1.55; color: var(--ink-2); }
+.st-slip b { color: var(--ink); }
+.st-approve {
+  margin-top: 24px; width: 100%; border: 0; border-radius: 12px; padding: 15px 18px; cursor: pointer;
+  background: var(--amber); color: #1c1203; font-family: var(--ui); font-weight: 700; font-size: 16px;
+  transition: transform 0.16s var(--out), background 0.4s var(--out), color 0.4s var(--out);
+}
+.st-approve:hover:not(:disabled) { background: #ffca78; }
+.st-approve:active:not(:disabled) { transform: scale(0.985); }
+.st-slip.done { border-color: rgba(20, 232, 160, 0.5); box-shadow: 0 0 90px -34px var(--brand); }
+.st-slip.done .st-slip-bar { background: var(--brand); }
+.st-slip.done .st-when { color: var(--brand); }
+.st-approve:disabled { background: rgba(20, 232, 160, 0.14); color: var(--brand); cursor: default; }
+
+/* scene 5: proof and the honest limit */
+.st-proof { list-style: none; margin: 44px 0 0; padding: 22px 0 0; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 34px; font-size: 14.5px; color: var(--ink-2); }
+.st-proof b { color: var(--ink); font-weight: 700; }
+.st-fine { margin: 22px auto 0; font-size: 13px; line-height: 1.5; color: var(--mute); max-width: 40rem; }
+
+/* ---- entrances: content is visible by default; arriving scenes settle into focus ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .st-scene .st-panel > *, .st-scene .st-slip {
+    transition: opacity 0.9s var(--out), transform 0.9s var(--out), filter 0.9s var(--out);
+  }
+  .st-scene:not(.in) .st-panel > *, .st-scene:not(.in) .st-slip { opacity: 0.16; transform: translateY(18px); filter: blur(5px); }
+  .st-scene.in .st-panel > *:nth-child(2) { transition-delay: 0.06s; }
+  .st-scene.in .st-panel > *:nth-child(3) { transition-delay: 0.12s; }
+  .st-scene.in .st-panel > *:nth-child(4) { transition-delay: 0.18s; }
+  .st-scene.in .st-panel > *:nth-child(5) { transition-delay: 0.24s; }
+  .st-scene.in .st-panel > *:nth-child(6) { transition-delay: 0.3s; }
+  .st-seg-fill { transition: transform 0.25s linear; }
+}
+
+/* ---- phones: text sits low, the hall shows above it ---- */
+@media (max-width: 900px) {
+  .st-bar { grid-template-columns: auto 1fr; gap: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .st-brand span { display: none; }
+  .st-open { display: none; }
+  .st-scene { align-items: flex-end; padding-block: 84px 12vh; padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+  .st-scene.last { align-items: flex-end; text-align: left; }
+  .st-scene.last .st-actions, .st-proof { justify-content: flex-start; }
+  .st-scene.last .st-lead, .st-fine { margin-inline: 0; }
+  .st-panel.sticky { justify-content: flex-end; padding-block: 84px 12vh; }
+  .st-panel::before, .st-slip::after { inset: -14% -30%; background: radial-gradient(closest-side, rgba(5, 8, 12, 0.92), rgba(5, 8, 12, 0.7) 62%, transparent); }
+  .st-team li { grid-template-columns: 12px 1fr; }
+  .st-team-said { grid-column: 2; }
+  .st-slip { padding: 26px 22px 22px; }
+}

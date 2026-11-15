@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { flushSync } from 'react-dom'
 import { ALERT, SCENARIOS, RESOLUTIONS } from './cascade.js'
-import Showcase from './Showcase.jsx'
+import Story from './Story.jsx'
 import Dashboard from './Dashboard.jsx'
-import SignIn from './SignIn.jsx'
+import { GUEST } from './team.js'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
 import { machineReport } from './fleet.js'
 
@@ -29,8 +29,8 @@ const scenarioFor = (text) => {
 }
 
 export default function App() {
-  const [view, setView] = useState('signin')   // 'signin' | 'showcase' | 'console'
-  const [user, setUser] = useState(null)       // signed-in presenter (name, initials, color)
+  const [view, setView] = useState('showcase')   // 'showcase' (the story) | 'console'
+  const [user, setUser] = useState(GUEST)       // signed-in presenter (name, initials, color)
   const [history, setHistory] = useState(() => {
     try { return JSON.parse(localStorage.getItem('tos.history') || '[]') } catch { return [] }
   })
@@ -42,12 +42,13 @@ export default function App() {
     if (document.startViewTransition) document.startViewTransition(() => flushSync(() => setView(next)))
     else setView(next)
   }, [])
-  const signOut = () => { flushSync(() => setUser(null)); goView('signin') }
+  const signOut = () => { flushSync(() => setUser(GUEST)); goView('showcase') }
   const [scenario, setScenario] = useState('happy')
   const [mode, setMode] = useState('replay')
   const [running, setRunning] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [presenting, setPresenting] = useState(false)
+  const [landed, setLanded] = useState(null)
 
   const [timeline, setTimeline] = useState([])
   const [agentStatus, setAgentStatus] = useState(FRESH_STATUS)
@@ -201,6 +202,9 @@ export default function App() {
   approvalRef.current = approval
   const resolve = (choice, via = 'approval dialog') => {
     if (!approvalRef.current) return
+    // the moment the decision lands: say who decided, briefly, over the whole console
+    setLanded({ choice, who: approval?.approver })
+    setTimeout(() => setLanded(null), 2600)
     approvalRef.current = null
     setApproval(null)
     if (mode === 'live') {
@@ -267,8 +271,7 @@ export default function App() {
     })
   }, [completed, plan, risk, doneCount, exposure, timeline, user])
 
-  if (view === 'signin') return <SignIn onEnter={(m) => { setUser(m); goView('showcase') }} />
-  if (view === 'showcase') return <Showcase onLaunch={() => goView('console')} user={user} onSignOut={signOut} />
+  if (view === 'showcase') return <Story onLaunch={() => goView('console')} />
 
   return (
     <>
@@ -287,6 +290,13 @@ export default function App() {
         approvalPending={!!approval} onDecide={resolve}
       />
       {approval && <ApprovalModal req={approval} onApprove={() => resolve('approve')} onReject={() => resolve('reject')} />}
+      {landed && (
+        <div className={`landed ${landed.choice}`} role="status">
+          <span>{landed.choice === 'approve'
+            ? `Approved${landed.who ? ` by ${landed.who}` : ''}. The plan is released.`
+            : `Rejected${landed.who ? ` by ${landed.who}` : ''}. The plan goes back for review.`}</span>
+        </div>
+      )}
     </>
   )
 }
