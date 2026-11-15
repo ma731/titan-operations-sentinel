@@ -11,7 +11,7 @@ export const GUIDE = [
   {
     id: 'what', q: 'What does this do?',
     k: ['purpose', 'explain', 'overview', 'project'],
-    a: 'It turns one machine alert into one costed plan. A sensor on CNC-07 shows a spindle bearing about to fail. Five specialist agents each check one area (reliability, supply chain, production, quality, safety), an orchestrator decides who goes next, and the result is a plan the plant manager can act on. Anything that costs more than €500 waits for a person to approve it.',
+    a: 'It turns one machine alert into one costed plan. A sensor on Machine 7 shows a spindle bearing about to fail. Five specialist agents each check one area (reliability, supply chain, production, quality, safety), an coordinator decides who goes next, and the result is a plan the plant manager can act on. Anything that costs more than €500 waits for a person to approve it.',
     show: { nav: 'dashboard' }, label: 'Open the overview',
   },
   {
@@ -28,7 +28,7 @@ export const GUIDE = [
   {
     id: 'agents', q: 'What does each agent do?',
     k: ['agent', 'agents', 'orchestrator', 'supervisor', 'team', 'specialists'],
-    a: 'Reliability predicts the failure and how long the machine has left. Supply chain finds the parts and prices the options. Production moves jobs to other machines. Quality checks that the backup machine is safe to use. Compliance checks every action against safety limits and can stop the whole plan. The orchestrator decides which agent goes next.',
+    a: 'Reliability predicts the failure and how long the machine has left. Supply chain finds the parts and prices the options. Production moves jobs to other machines. Quality checks that the backup machine is safe to use. Compliance checks every action against safety limits and can stop the whole plan. The coordinator decides which agent goes next.',
     show: { nav: 'chat' }, label: 'Read their conversation',
   },
   {
@@ -62,7 +62,7 @@ export const GUIDE = [
   {
     id: 'safety', q: 'Can it do something dangerous?',
     k: ['danger', 'dangerous', 'safe', 'safety', 'halt', 'risk', 'harm', 'wrong', 'mistake', 'osha'],
-    a: 'Every action is checked against safety and machine limits, and the compliance agent can stop the whole plan. Anything that touches a safety system is flagged for a safety officer instead of being done automatically. The agents call tools that fetch, calculate and draft, but the rules that matter are enforced in code.',
+    a: 'Every action is checked against safety and machine limits, and the Safety agent can stop the whole plan. Anything that touches a safety system is flagged for a safety officer instead of being done automatically. The agents call tools that fetch, calculate and draft, but the rules that matter are enforced in code.',
   },
   {
     id: 'tiers', q: 'What do AUTO, APPROVE and MONITOR mean?',
@@ -94,7 +94,7 @@ export const GUIDE = [
   {
     id: 'patterns', q: 'What agent patterns does it use?',
     k: ['pattern', 'patterns', 'architecture', 'design', 'anthropic', 'evaluator', 'parallel', 'orchestrator-workers', 'workflow'],
-    a: 'It follows Anthropic\'s Building Effective Agents. Routing: a code-only gate decides which alerts wake the agents, then the orchestrator picks who goes next. Orchestrator-workers: one orchestrator, five specialists with their own tools and document search. Evaluator-optimizer: a check in code scores the final plan against the rules and sends it back once if it fails. Parallelisation: supply chain and production can run side by side, off by default. Guarantees stay in code, judgement in the model.',
+    a: 'It follows Anthropic\'s Building Effective Agents. Routing: a code-only gate decides which alerts wake the agents, then the coordinator picks who goes next. Orchestrator-workers: one coordinator, five specialists with their own tools and document search. Evaluator-optimizer: a check in code scores the final plan against the rules and sends it back once if it fails. Parallelisation: supply chain and production can run side by side, off by default. Guarantees stay in code, judgement in the model.',
   },
   {
     id: 'mcp', q: 'What is MCP, and does Titan use it?',
@@ -109,7 +109,7 @@ export const GUIDE = [
   {
     id: 'graph', q: 'What is the knowledge graph?',
     k: ['graph', 'knowledge', 'intelligence layer', 'dependencies', 'tier 2', 'tier-2', 'upstream'],
-    a: 'It is the intelligence layer: one connected model of plants, machines, parts, stock, suppliers and their own suppliers, technicians and robot cells. It answers questions no single file can. For example, the steel mill Ovako has a furnace outage: through Schaeffler that reaches CNC-07, about €180,000 of production a day, and the hydraulic seal set has no second supplier. Every answer shows the path it followed.',
+    a: 'It is the intelligence layer: one connected model of plants, machines, parts, stock, suppliers and their own suppliers, technicians and robot cells. It answers questions no single file can. For example, the steel mill Ovako has a furnace outage: through Schaeffler that reaches Machine 7, about €180,000 of production a day, and the hydraulic seal set has no second supplier. Every answer shows the path it followed.',
   },
   {
     id: 'redteam', q: 'Can someone trick the agents?',

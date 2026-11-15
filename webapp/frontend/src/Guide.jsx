@@ -7,6 +7,8 @@ import './guide.css'
 const BY_ID = Object.fromEntries(GUIDE.map((g) => [g.id, g]))
 const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null
 const CAN_SPEAK = canSpeak()
+// Hands-free: speech only counts when it starts with the wake words.
+const WAKE = /\b(?:hey|hi|ok|okay|hello|hola)[\s,]*titan\b[\s,.!:?]*/i
 const PRIVACY = 'Your browser turns speech into text (in Chrome, through Google). Nothing is recorded here.'
 const DO_CHIPS = ['Run the Cascade', 'Run the Edge scenario', 'Open the action plan']
 
@@ -28,6 +30,10 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
   const endRef = useRef(null)
   const inputRef = useRef(null)
   const recRef = useRef(null)
+  const [wake, setWake] = useState(false)       // hands-free: listening for "Hey Titan"
+  const wakeRec = useRef(null)
+  const wakeOn = useRef(false)
+  const armedUntil = useRef(0)                  // after a bare "Hey Titan", the next thing said is the request
   const askRef = useRef(null)      // latest ask(), so a voice result never acts on stale state
   const pendingRef = useRef(null)  // a spoken approve/reject waiting for 'yes'
   const voiceRef = useRef(false)   // was the last message spoken? then announcements speak too
@@ -44,7 +50,7 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('keydown', onKey)
-    return () => { document.removeEventListener('keydown', onKey); recRef.current?.abort?.() }
+    return () => { document.removeEventListener('keydown', onKey); recRef.current?.abort?.(); wakeOn.current = false; wakeRec.current?.abort?.() }
   }, [])
 
   const speak = (text, voice) => {
@@ -144,8 +150,43 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
     setMsgs((x) => [...x, { who: 'me', text: choice === 'approve' ? 'Approve' : 'Reject' }, { who: 'bot', text: reply, src: 'action' }])
   }
 
-  const toggleMic = () => {
+  // "Hey Titan": the browser keeps listening while this is on, and acts only on speech that starts with the wake words.
+  // It is off until the visitor turns it on, and a pill on screen says so the whole time.
+  const toggleWake = () => {
     if (!SR) return
+    if (wakeOn.current) { wakeOn.current = false; wakeRec.current?.abort?.(); setWake(false); setMicNote(''); return }
+    recRef.current?.abort?.()
+    wakeOn.current = true; setWake(true); setMicNote(`Say "Hey Titan, run the edge scenario". ${PRIVACY}`)
+    const start = () => {
+      if (!wakeOn.current) return
+      const rec = new SR()
+      rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = false
+      rec.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (!e.results[i].isFinal) continue
+          const said = e.results[i][0].transcript.trim()
+          const m = WAKE.exec(said)
+          if (!m && Date.now() > armedUntil.current) continue
+          const request = m ? said.slice(m.index + m[0].length).trim() : said
+          setOpen(true)
+          if (request) { armedUntil.current = 0; stopSpeaking(); askRef.current(request, true) }
+          else { armedUntil.current = Date.now() + 7000; setMsgs((x) => [...x, { who: 'bot', text: 'Yes? Go ahead.', src: 'action' }]) }
+        }
+      }
+      rec.onerror = (e) => {
+        if (e.error !== 'not-allowed' && e.error !== 'service-not-allowed') return
+        wakeOn.current = false; setWake(false)
+        setMicNote('Microphone is blocked for this site. Allow it in the browser to use "Hey Titan".')
+      }
+      rec.onend = () => { if (wakeOn.current) setTimeout(start, 250) }   // the browser stops after a pause: pick it up again
+      wakeRec.current = rec
+      try { rec.start() } catch { /* already running */ }
+    }
+    start()
+  }
+
+  const toggleMic = () => {
+    if (!SR || wakeOn.current) return
     if (listening) { recRef.current?.stop(); return }
     stopSpeaking()
     const rec = new SR()
@@ -173,6 +214,8 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
       <button className={`guide-fab ${open ? 'on' : ''} ${pendingDecision && !open ? 'alert' : ''}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="guide-panel">
         <span className="guide-fab-ic">{open ? '✕' : 'T'}</span>{open ? 'Close' : pendingDecision ? 'Decision waiting' : 'Ask Titan'}
       </button>
+
+      {wake && !open && <button className="guide-wake-pill" onClick={toggleWake}>Listening for “Hey Titan” · turn off</button>}
 
       {open && (
         <div className="guide" id="guide-panel" role="dialog" aria-label="Titan assistant">
@@ -239,7 +282,8 @@ export default function Guide({ mode = 'replay', onCommand, onAction, actionLabe
 
           {micNote && <div className="guide-note">{micNote}</div>}
           <form className="guide-in" onSubmit={(e) => { e.preventDefault(); ask(val) }}>
-            {SR && (
+            {SR && <button type="button" className={`guide-wake ${wake ? 'on' : ''}`} onClick={toggleWake} aria-pressed={wake} title={wake ? 'Stop listening for Hey Titan' : 'Listen for Hey Titan, hands-free'}>{wake ? 'Hey Titan: on' : 'Hey Titan'}</button>}
+            {SR && !wake && (
               <button type="button" className={`guide-mic ${listening ? 'on' : ''}`} onClick={toggleMic} aria-pressed={listening} title={listening ? 'Stop listening' : 'Speak to Titan'}>
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z" /></svg>
               </button>

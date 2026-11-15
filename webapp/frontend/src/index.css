@@ -376,3 +376,12 @@ body {
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root), ::view-transition-new(root) { animation: vt-fade-in 0.12s both; }
 }
+
+/* ---- the decision lands: a wash of colour and one line saying who decided ---- */
+.landed { position: fixed; inset: 0; z-index: 60; pointer-events: none; display: grid; place-items: center; --lc: var(--green); }
+.landed.reject { --lc: var(--red); }
+.landed::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--lc) 34%, transparent), transparent 62%); animation: landed-wash 2.6s cubic-bezier(0.16,1,0.3,1) both; }
+.landed span { position: relative; padding: 15px 26px; border-radius: 999px; background: #08110d; border: 1px solid var(--lc); color: #eef6f2; font-weight: 600; font-size: 16px; box-shadow: 0 0 60px -14px var(--lc); animation: landed-line 2.6s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes landed-wash { 0% { opacity: 0; transform: scale(0.5); } 14% { opacity: 1; } 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes landed-line { 0% { opacity: 0; transform: translateY(12px) scale(0.96); } 12% { opacity: 1; transform: none; } 82% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .landed::before { animation: none; opacity: 0.5; } .landed span { animation: vt-fade-in 0.2s both; } }

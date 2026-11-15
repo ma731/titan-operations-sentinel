@@ -641,3 +641,16 @@
 /* plain-language layer: the scenario in one sentence, and the code kept beside a plain machine name */
 .dash-tab-desc { margin: 0 0 20px; max-width: 68ch; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
 .code-tag { padding: 1px 5px; border-radius: 5px; border: 1px solid var(--line); font-family: var(--d-mono); font-size: 0.78em; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+/* a report's plain summary settles in as it arrives */
+@keyframes rt-in { from { opacity: 0; transform: translateY(6px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: no-preference) { .rt-sum { animation: rt-in 0.7s cubic-bezier(0.16,1,0.3,1) both; } }
+/* ---- one look with the home page: the console in the dark ---- */
+.dash {
+  --bg: #080c11; --card: #111820; --ink: #eef4f8; --ink-2: #b9c6d2; --muted: #8a9bab; --line: #232c37; --line-2: #18202a;
+  --side: #05080c; --side-2: #0d1218;
+  --blue-bg: rgba(59, 130, 246, 0.2); --green-bg: rgba(22, 179, 100, 0.2); --purple-bg: rgba(139, 92, 246, 0.22); --orange-bg: rgba(245, 158, 11, 0.2); --red-bg: rgba(239, 68, 68, 0.2);
+  color-scheme: dark;
+}
+.dash .dash-tab.on, .dash .info-btn, .dash .ch-bubble.me { background: #eef4f8; color: #0a0e13; }
+.dash .ch-bubble.me .ch-nm { color: rgba(10, 14, 19, 0.6); }
+.dash .pb-prov, .dash .pb-sel, .dash .pb-key { background: var(--card); color: var(--ink); }
