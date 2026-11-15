@@ -5,8 +5,8 @@ import { TEAM, GUEST } from './team.js'
 
 const REEL = [
   { name: 'Coordinator', role: 'decides who goes next', color: '#ffd479' },
-  { name: 'Maintenance', role: 'what is failing, and when', color: '#4d9bff' },
-  { name: 'Purchasing', role: 'finds the parts and the price', color: '#14e8a0' },
+  { name: 'Reliability', role: 'what is failing, and when', color: '#4d9bff' },
+  { name: 'Supply Chain', role: 'finds the parts and the price', color: '#14e8a0' },
   { name: 'Production', role: 'keeps the line running', color: '#a78bfa' },
   { name: 'Quality', role: 'checks for defects', color: '#ffb84d' },
   { name: 'Safety', role: 'can stop the whole plan', color: '#ff6b81' },

@@ -3,7 +3,7 @@
 // Tool lists mirror tools/lc.py (RELIABILITY_TOOLS etc.).
 export const AGENTS = [
   {
-    id: 'reliability', name: 'Maintenance', short: 'Ma', chal: 'Predictive maintenance', tint: 'blue', desc: 'Predicts the failure and remaining life',
+    id: 'reliability', name: 'Reliability', short: 'Re', chal: 'Predictive maintenance', tint: 'blue', desc: 'Predicts the failure and remaining life',
     what: 'Works out what is failing and how long the machine has left. It reads the sensors, compares them with past incidents and estimates the remaining life.',
     tools: [
       ['alert_triage', 'picks the critical alert out of the flood'],
@@ -17,7 +17,7 @@ export const AGENTS = [
     limit: 'Fails toward caution: if the data is missing or broken, it rates the risk high or hands over to a person instead of guessing.',
   },
   {
-    id: 'supply_chain', name: 'Purchasing', short: 'Pu', chal: 'Sourcing and supplier risk', tint: 'green', desc: 'Finds the parts and prices each option',
+    id: 'supply_chain', name: 'Supply Chain', short: 'Su', chal: 'Sourcing and supplier risk', tint: 'green', desc: 'Finds the parts and prices each option',
     what: 'Gets the parts in time at a sensible cost. It checks stock, compares suppliers and values each option against doing nothing.',
     tools: [
       ['parts_inventory', 'stock on site and at the central warehouse'],
